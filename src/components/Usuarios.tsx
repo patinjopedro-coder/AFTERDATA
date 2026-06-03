@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { POSItem, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
-import { Users, ChevronDown, ChevronUp, Calendar, Copy, Box } from 'lucide-react';
+import { formatRif } from '../utils';
+import { Users, ChevronDown, ChevronUp, Calendar, Copy, Box, Check } from 'lucide-react';
 
 interface UsuariosProps {
   serials: POSItem[];
@@ -18,21 +20,80 @@ export const Usuarios: React.FC<UsuariosProps> = ({
   usersProfiles,
   setUsersProfiles
 }) => {
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const handleCopyText = async (text: string, key: string) => {
+    await navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => setCopiedKey(null), 1500);
+  };
+
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+  const [activeTab, setActiveTab] = useState<'clientes' | 'usuarios'>('clientes');
+
+  const remitenteSerialsMap = useMemo(() => {
+    const map = new Map<string, POSItem[]>();
+    serials.forEach(s => {
+      const r = s.remitente ? s.remitente.toUpperCase().trim() : 'S/R (SIN REMITENTE)';
+      if (!map.has(r)) map.set(r, []);
+      map.get(r)!.push(s);
+    });
+    return map;
+  }, [serials]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [globalSearch]);
   
   // Profile Editing Modal State
   const [editingProfile, setEditingProfile] = useState<string | null>(null);
   const [tempName, setTempName] = useState('');
+  const [tempIsUsuario, setTempIsUsuario] = useState(false);
+  const [tempIsCliente, setTempIsCliente] = useState(false);
   const [tempArea, setTempArea] = useState('');
   const [tempCargo, setTempCargo] = useState('');
+  const [tempRif, setTempRif] = useState('');
+  const [tempRazonSocial, setTempRazonSocial] = useState('');
+  const [tempUbicacion, setTempUbicacion] = useState('');
+  const [tempTelefono, setTempTelefono] = useState('');
+
+  // Handle ESC key press locally to close editing modal in Usuarios
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setEditingProfile(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const openProfileEditor = (remName: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingProfile(remName);
     const p = usersProfiles[remName];
-    setTempName(p?.nombreCompleto || '');
+    
+    // Fallback from serials registered in Casillero
+    const associatedSerials = remitenteSerialsMap.get(remName.toUpperCase().trim()) || [];
+    const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
+    const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
+    const fallbackUbicacion = associatedSerials.find(s => s.destino)?.destino || '';
+    const isClienteBySerials = !!(fallbackRif || fallbackRazonSocial || associatedSerials.some(s => s.isCasillero));
+
+    setTempName(p?.nombreCompleto || fallbackRazonSocial || remName.toUpperCase().trim());
+    
+    // Fallback: Si no está guardado explícitamente como usuario o cliente, lo tratamos como cliente if there's any serial info, otherwise usuario
+    const hasCategory = p && (p.isUsuario || p.isCliente);
+    setTempIsUsuario(hasCategory ? !!p.isUsuario : !isClienteBySerials);
+    setTempIsCliente(hasCategory ? !!p.isCliente : isClienteBySerials);
+    
     setTempArea(p?.area || '');
     setTempCargo(p?.cargo || '');
+    setTempRif(p?.rif || fallbackRif || '');
+    setTempRazonSocial(p?.razonSocial || fallbackRazonSocial || '');
+    setTempUbicacion(p?.ubicacion || fallbackUbicacion || '');
+    setTempTelefono(p?.telefono || '');
   };
 
   const saveProfile = () => {
@@ -42,8 +103,14 @@ export const Usuarios: React.FC<UsuariosProps> = ({
       [editingProfile]: {
         remitenteId: editingProfile,
         nombreCompleto: tempName.toUpperCase(),
-        area: tempArea.toUpperCase(),
-        cargo: tempCargo.toUpperCase()
+        isUsuario: tempIsUsuario,
+        isCliente: tempIsCliente,
+        area: tempIsUsuario ? tempArea.toUpperCase().trim() : '',
+        cargo: tempIsUsuario ? tempCargo.toUpperCase().trim() : '',
+        rif: tempIsCliente ? formatRif(tempRif) : '',
+        razonSocial: tempIsCliente ? tempRazonSocial.toUpperCase().trim() : '',
+        ubicacion: tempIsCliente ? tempUbicacion.toUpperCase().trim() : '',
+        telefono: tempIsCliente ? tempTelefono.toUpperCase().trim() : ''
       }
     }));
     setEditingProfile(null);
@@ -88,6 +155,37 @@ export const Usuarios: React.FC<UsuariosProps> = ({
 
   const sortedRemitentes = Array.from(remitentesMap.keys()).sort();
 
+  const categorizedRemitentes = useMemo(() => {
+    const clients: string[] = [];
+    const users: string[] = [];
+
+    sortedRemitentes.forEach(remName => {
+      const p = usersProfiles[remName];
+      const hasProfile = !!p;
+      const isCliente = p ? !!p.isCliente : false;
+      
+      const associatedSerials = remitenteSerialsMap.get(remName.toUpperCase().trim()) || [];
+      const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
+      const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
+      const isClienteBySerials = !!(fallbackRif || fallbackRazonSocial || associatedSerials.some(s => s.isCasillero));
+
+      const showCliente = hasProfile ? isCliente : isClienteBySerials;
+
+      if (showCliente) {
+        clients.push(remName);
+      } else {
+        users.push(remName);
+      }
+    });
+
+    return { clients, users };
+  }, [sortedRemitentes, usersProfiles, remitenteSerialsMap]);
+
+  const activeRemitentes = activeTab === 'clientes' ? categorizedRemitentes.clients : categorizedRemitentes.users;
+  const totalPages = Math.ceil(activeRemitentes.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedRemitentes = activeRemitentes.slice(startIndex, startIndex + itemsPerPage);
+
   const toggleExpandUser = (user: string) => {
     const copy = new Set(expandedUsers);
     if (copy.has(user)) copy.delete(user);
@@ -100,72 +198,131 @@ export const Usuarios: React.FC<UsuariosProps> = ({
       case 'PENDIENTE':
       case 'ACTIVO':
       case 'SUSPENDIDO':
-        return 'bg-orange-500 text-white font-bold border border-orange-400/30';
+      case 'ENTREGADO':
+        return 'bg-amber-100 text-amber-800 border border-transparent rounded-lg px-2 py-0.5 font-bold uppercase';
       case 'CANCELADO':
+      case 'RECUPERADO':
+      case 'DISPONIBLE':
       case 'N#A':
-        return 'bg-emerald-600 text-white font-bold border border-emerald-500/30';
-      default: return 'bg-slate-800 text-slate-400 border border-slate-700/80';
+        return 'bg-emerald-100 text-emerald-800 border border-transparent rounded-lg px-2 py-0.5 font-bold uppercase';
+      case 'SIN ESTATUS':
+      default: return 'bg-slate-100 text-slate-700 border border-transparent rounded-lg px-2 py-0.5 font-bold uppercase';
     }
   };
 
   return (
-    <div className="flex flex-col gap-4 animate-fade-in text-slate-100 pb-16">
+    <div className="flex flex-col gap-4 animate-fade-in text-slate-700 pb-16 font-arial">
       
-      <div className="bg-[#1e2336] p-4 rounded-xl border border-[#2a2f42] flex justify-between items-center">
+      <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center text-slate-800 gap-4">
         <div>
-          <h2 className="text-sm font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-400" />
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+            <Users className="w-5 h-5 text-slate-700" />
             DIRECTORIO DE REMITENTES
           </h2>
         </div>
-        <span className="text-xs font-mono font-bold bg-[#151925] px-3 py-1.5 rounded-lg border border-[#2a2f42] text-slate-300">
-          Canales de Remitentes: {sortedRemitentes.length}
-        </span>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-arial font-bold bg-slate-100 px-3 py-1.5 rounded-xl text-slate-700">
+            Total Clientes: {categorizedRemitentes.clients.length}
+          </span>
+          <span className="text-xs font-arial font-bold bg-slate-100 px-3 py-1.5 rounded-xl text-slate-700">
+            Total Usuarios: {categorizedRemitentes.users.length}
+          </span>
+        </div>
+      </div>
+
+      {/* PESTAÑAS (TABS) DE SELECCIÓN */}
+      <div className="flex bg-slate-100/80 p-1 rounded-xl border border-slate-200 gap-1.5">
+        <button
+          onClick={() => { setActiveTab('clientes'); setCurrentPage(1); }}
+          className={`usuarios-tab-btn flex-1 py-2.5 text-xs font-extrabold uppercase rounded-lg transition-all cursor-pointer border-none ${
+            activeTab === 'clientes'
+              ? 'bg-[#22c55e] text-white-force shadow-sm font-black'
+              : 'bg-transparent text-slate-500 hover:text-slate-750 hover:bg-slate-200/50'
+          }`}
+        >
+          Clientes
+        </button>
+        <button
+          onClick={() => { setActiveTab('usuarios'); setCurrentPage(1); }}
+          className={`usuarios-tab-btn flex-1 py-2.5 text-xs font-extrabold uppercase rounded-lg transition-all cursor-pointer border-none ${
+            activeTab === 'usuarios'
+              ? 'bg-[#0f172a] text-white-force shadow-sm font-black'
+              : 'bg-transparent text-slate-500 hover:text-slate-750 hover:bg-slate-200/50'
+          }`}
+        >
+          Usuarios Disglobal
+        </button>
       </div>
 
       <div className="flex flex-col gap-3 font-sans">
-        {sortedRemitentes.length === 0 ? (
-          <div className="text-center py-10 bg-[#1e2336]/50 border border-[#2a2f42] rounded-xl text-slate-500 text-xs font-mono">
-            No se han registrado remitentes en la base de datos local.
+        {paginatedRemitentes.length === 0 ? (
+          <div className="text-center py-10 bg-white border border-slate-100 rounded-2xl text-slate-400 text-xs font-arial shadow-sm uppercase font-bold">
+            No se encontraron {activeTab === 'clientes' ? 'clientes' : 'usuarios'} registrados.
           </div>
         ) : (
-          sortedRemitentes.map(remName => {
+          paginatedRemitentes.map(remName => {
             const datesMap = remitentesMap.get(remName)!;
             const datesSorted = Array.from(datesMap.keys()).sort().reverse();
             const totalPOSCount = Array.from(datesMap.values()).reduce((sum, list) => sum + list.length, 0);
             const isExpanded = expandedUsers.has(remName) || !!globalSearch;
 
+            const p = usersProfiles[remName];
+            const isCliente = activeTab === 'clientes';
+            
+            const associatedSerials = remitenteSerialsMap.get(remName.toUpperCase().trim()) || [];
+            const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
+            const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
+            
+            const rif = p?.rif || fallbackRif || '';
+            const cargo = p?.cargo || '';
+            const area = p?.area || '';
+
             return (
               <div 
                 key={remName} 
-                className="bg-[#1e2336] rounded-xl border border-[#2a2f42] overflow-hidden"
+                className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden text-slate-800 hover:border-slate-350 transition-all animate-fade-in"
               >
                 {/* ACCORDION HEADER */}
                 <div 
                   onClick={() => toggleExpandUser(remName)}
-                  className="bg-[#1e2336] hover:bg-white/5 p-4 flex justify-between items-center cursor-pointer select-none transition-colors border-b border-transparent hover:border-[#2a2f42]"
+                  className="bg-white hover:bg-slate-50/50 p-4 flex justify-between items-center cursor-pointer select-none transition-colors border-b border-transparent hover:border-slate-100"
                 >
                   <div className="flex items-center gap-3">
                     <div 
                       onClick={(e) => openProfileEditor(remName, e)}
-                      className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 hover:bg-indigo-500/30 hover:scale-105 transition-all"
+                      className="w-8 h-8 rounded-xl bg-white user-btn flex items-center justify-center hover:scale-105 transition-all shadow-sm border border-slate-200"
                       title="Editar Perfil"
                     >
                       <Users size={16} />
                     </div>
                     <div>
-                      <h4 className="font-bold text-sm tracking-wide text-slate-200 uppercase flex items-center gap-2">
-                        {remName}
-                        {usersProfiles[remName] && (
-                          <span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 text-[9px] px-1.5 py-0.5 rounded uppercase">Perfil Asignado</span>
+                      <h4 className="font-bold text-sm tracking-wide text-slate-800 uppercase flex items-center flex-wrap gap-1.5 leading-tight">
+                        <span>{remName}</span>
+                        {isCliente ? (
+                          rif && (
+                            <span className="bg-blue-50 text-blue-700 border border-blue-100 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider">
+                              RIF: {rif}
+                            </span>
+                          )
+                        ) : (
+                          (cargo || area) && (
+                            <span className="bg-slate-100 text-slate-750 border border-slate-250 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider normal-case font-arial">
+                              {cargo ? `${cargo}` : 'Sin Cargo'} {area ? ` | Departamento: ${area}` : ''}
+                            </span>
+                          )
                         )}
                       </h4>
-                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">Consolidado del remitente</p>
+                      <p className="text-[10px] text-slate-500 font-arial mt-0.5">
+                        {isCliente 
+                          ? `Razón Social: ${p?.razonSocial || fallbackRazonSocial || 'No Registrada'}`
+                          : `Colaborador Disglobal`
+                        }
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <span className="text-xs font-mono font-bold text-slate-400 bg-[#151925] px-2.5 py-1 rounded border border-[#2a2f42]">
+                    <span className="text-xs font-arial font-bold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-xl">
                       {totalPOSCount} Equipos | {datesSorted.length} Ingresos
                     </span>
                     {isExpanded ? (
@@ -178,7 +335,7 @@ export const Usuarios: React.FC<UsuariosProps> = ({
 
                 {/* ACCORDION EXPANSION ITEMS */}
                 {isExpanded && (
-                  <div className="divide-y divide-slate-800/50 bg-slate-950/20 font-mono text-[11px]">
+                  <div className="divide-y divide-slate-100 bg-slate-50/50 font-arial text-[11px] text-slate-700">
                     {datesSorted.map(dateStr => {
                       const items = datesMap.get(dateStr)!;
                       const displayDate = dateStr.split('-').reverse().join('/');
@@ -186,10 +343,10 @@ export const Usuarios: React.FC<UsuariosProps> = ({
                       return (
                         <div key={dateStr} className="p-4 flex flex-col sm:flex-row sm:items-start gap-4">
                           
-                          <div className="sm:w-44 flex-shrink-0 flex items-center gap-1.5 text-blue-400 font-bold tracking-wide py-0.5 text-xs">
+                          <div className="sm:w-44 flex-shrink-0 flex items-center gap-1.5 text-slate-850 font-bold tracking-wide py-0.5 text-xs">
                             <Calendar size={13} className="text-slate-500" />
                             <span>{displayDate}</span>
-                            <span className="text-[10px] font-semibold text-slate-500">({items.length})</span>
+                            <span className="text-[10px] font-semibold text-slate-550">({items.length})</span>
                           </div>
 
                           <div className="flex-1 flex flex-wrap gap-2">
@@ -200,18 +357,24 @@ export const Usuarios: React.FC<UsuariosProps> = ({
                                   key={s.id}
                                   onClick={async (e) => {
                                     e.stopPropagation();
-                                    await navigator.clipboard.writeText(s.serial);
-                                    alert(`Serial ${s.serial} copiado al portapapeles.`);
+                                    handleCopyText(s.serial, `serial-${s.id}`);
                                   }}
                                   title={`${s.serial} - ${m.modelo}`}
-                                  className="group bg-slate-950 hover:bg-slate-900 border border-slate-850 hover:border-slate-700/80 px-2.5 py-1.5 rounded-lg flex items-center gap-2 select-all cursor-pointer transition-colors max-w-sm truncate shadow-sm"
+                                  className="group bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-300 px-2.5 py-1.5 rounded-xl flex items-center gap-2 select-all cursor-pointer transition-all max-w-sm truncate shadow-sm text-slate-800"
                                 >
-                                  <Box size={10} className="text-slate-600 group-hover:text-blue-400 transition-colors" />
+                                  <Box size={10} className="text-slate-550 group-hover:text-slate-800 transition-colors" />
                                   <div className="flex flex-col">
-                                    <span className="text-blue-300 font-bold tracking-wider">{s.serial}</span>
-                                    <span className="text-[9px] text-slate-600 font-sans leading-none">{m.modelo}</span>
+                                    <span className="text-slate-900 font-bold tracking-wider flex items-center gap-1">
+                                      <span>{s.serial}</span>
+                                      {copiedKey === `serial-${s.id}` && (
+                                        <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded p-0.5 ml-1 transition-all animate-fade-in shrink-0">
+                                          <Check className="w-2.5 h-2.5 text-white" />
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span className="text-[9px] text-slate-500 font-sans leading-none">{m.modelo}</span>
                                   </div>
-                                  <span className={`px-1 rounded text-[8px] font-black text-center ${getBadgeClass(s.status)}`}>
+                                  <span className={getBadgeClass(s.status)}>
                                     {s.status}
                                   </span>
                                 </div>
@@ -231,70 +394,166 @@ export const Usuarios: React.FC<UsuariosProps> = ({
         )}
       </div>
 
+      {totalPages > 1 && (
+        <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center text-xs text-slate-500">
+          <span>Página {currentPage} de {totalPages}</span>
+          <div className="flex gap-1">
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-100 disabled:opacity-30 rounded-lg text-[9px] uppercase font-bold text-slate-700 transition-colors cursor-pointer shadow-sm pagination-btn">Primera</button>
+            <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))} className="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-100 disabled:opacity-30 rounded-lg text-[9px] uppercase font-bold text-slate-700 transition-colors cursor-pointer shadow-sm pagination-btn">Atrás</button>
+            <span className="px-2 font-semibold text-slate-600 flex items-center">{currentPage} / {totalPages}</span>
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} className="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-100 disabled:opacity-30 rounded-lg text-[9px] uppercase font-bold text-slate-700 transition-colors cursor-pointer shadow-sm pagination-btn">Siguiente</button>
+            <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="px-2 py-1 bg-white hover:bg-slate-50 border border-slate-100 disabled:opacity-30 rounded-lg text-[9px] uppercase font-bold text-slate-700 transition-colors cursor-pointer shadow-sm pagination-btn">Fin</button>
+          </div>
+        </div>
+      )}
+
       {/* MODAL EDITAR PERFIL */}
-      {editingProfile && (
+      {editingProfile && createPortal(
         <div 
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 bg-slate-900/30 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in-overlay"
           onClick={() => setEditingProfile(null)}
         >
           <div 
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl flex flex-col gap-4"
+            className="bg-white border border-slate-100 rounded-2xl w-full max-w-md max-h-[85vh] p-6 shadow-xl flex flex-col gap-4 overflow-y-auto animate-fade-in"
             onClick={e => e.stopPropagation()}
           >
             <div>
-              <h3 className="text-sm font-bold text-blue-400 uppercase tracking-wider">Editar Perfil</h3>
-              <p className="text-[10px] text-slate-500 font-mono mt-1">Remitente: <span className="text-slate-300 font-bold">{editingProfile}</span></p>
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Editar Perfil</h3>
+              <p className="text-[10px] text-slate-550 font-arial mt-1">Remitente: <span className="text-slate-800 font-extrabold">{editingProfile}</span></p>
             </div>
             
-            <div className="flex flex-col gap-3 font-sans text-xs mt-2">
+            <div className="flex flex-col gap-3 font-arial text-xs mt-2">
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Nombre Completo</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Nombre Completo</label>
                 <input 
                   type="text" 
                   value={tempName} 
                   onChange={e => setTempName(e.target.value)}
                   placeholder="Ej. Pedro Pérez"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500 uppercase"
+                  className="w-full bg-slate-100 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
                 />
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Área / Departamento</label>
-                <input 
-                  type="text" 
-                  value={tempArea} 
-                  onChange={e => setTempArea(e.target.value)}
-                  placeholder="Ej. POSTVENTA"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500 uppercase"
-                />
+
+              {/* Categorías (Casillas) */}
+              <div className="flex gap-4 items-center justify-start my-1 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                <label className="flex items-center gap-2 font-bold text-[10px] text-slate-700 uppercase cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={tempIsUsuario} 
+                    onChange={e => setTempIsUsuario(e.target.checked)}
+                    className="w-4 h-4 accent-slate-900 rounded cursor-pointer"
+                  />
+                  <span>USUARIO</span>
+                </label>
+                <label className="flex items-center gap-2 font-bold text-[10px] text-slate-700 uppercase cursor-pointer select-none">
+                  <input 
+                    type="checkbox" 
+                    checked={tempIsCliente} 
+                    onChange={e => setTempIsCliente(e.target.checked)}
+                    className="w-4 h-4 accent-slate-900 rounded cursor-pointer"
+                  />
+                  <span>CLIENTE</span>
+                </label>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">Cargo</label>
-                <input 
-                  type="text" 
-                  value={tempCargo} 
-                  onChange={e => setTempCargo(e.target.value)}
-                  placeholder="Ej. Supervisor Logístico"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-blue-500 uppercase"
-                />
+
+              {/* USUARIO FIELDS */}
+              <div className={`flex flex-col gap-3 p-3 rounded-xl border transition-all ${tempIsUsuario ? 'bg-slate-50/50 border-slate-200' : 'bg-slate-50/20 border-slate-100 opacity-50'}`}>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-1">
+                  <span className="text-[10px] font-bold text-slate-650 uppercase">Datos de Usuario (Trabajador)</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Departamento</label>
+                  <input 
+                    type="text" 
+                    value={tempArea} 
+                    onChange={e => setTempArea(e.target.value)}
+                    placeholder="Ej. POSTVENTA"
+                    disabled={!tempIsUsuario}
+                    className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Cargo</label>
+                  <input 
+                    type="text" 
+                    value={tempCargo} 
+                    onChange={e => setTempCargo(e.target.value)}
+                    placeholder="Ej. Supervisor Logístico"
+                    disabled={!tempIsUsuario}
+                    className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+                  />
+                </div>
+              </div>
+
+              {/* CLIENTE FIELDS */}
+              <div className={`flex flex-col gap-3 p-3 rounded-xl border transition-all ${tempIsCliente ? 'bg-slate-50/50 border-slate-200' : 'bg-slate-50/20 border-slate-100 opacity-50'}`}>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1 mb-1">
+                  <span className="text-[10px] font-bold text-slate-650 uppercase">Datos de Cliente (Entrega Equipos)</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">RIF</label>
+                  <input 
+                    type="text" 
+                    value={tempRif} 
+                    onChange={e => setTempRif(e.target.value)}
+                    placeholder="Ej. J-12345678-9"
+                    disabled={!tempIsCliente}
+                    className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Razón Social</label>
+                  <input 
+                    type="text" 
+                    value={tempRazonSocial} 
+                    onChange={e => setTempRazonSocial(e.target.value)}
+                    placeholder="Ej. Inversiones 123 C.A."
+                    disabled={!tempIsCliente}
+                    className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Ubicación</label>
+                  <input 
+                    type="text" 
+                    value={tempUbicacion} 
+                    onChange={e => setTempUbicacion(e.target.value)}
+                    placeholder="Ej. Caracas, Chacao"
+                    disabled={!tempIsCliente}
+                    className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Número Telefónico</label>
+                  <input 
+                    type="text" 
+                    value={tempTelefono} 
+                    onChange={e => setTempTelefono(e.target.value)}
+                    placeholder="Ej. 0412-1234567"
+                    disabled={!tempIsCliente}
+                    className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+                  />
+                </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2 mt-4">
               <button 
                 onClick={() => setEditingProfile(null)}
-                className="flex-1 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase rounded-lg transition-colors"
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs uppercase rounded-xl border border-transparent transition-colors cursor-pointer"
               >
                 Cancelar
               </button>
               <button 
                 onClick={saveProfile}
-                className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase rounded-lg transition-colors"
+                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-xl border border-transparent transition-colors cursor-pointer"
               >
                 Guardar Perfil
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,10 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;550;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --font-simplifica: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+.font-arial {
+  font-family: Arial, Helvetica, sans-serif !important;
 }
 
 @keyframes fadeIn {
@@ -12,7 +16,6 @@
     opacity: 0;
     transform: translateY(4px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -23,67 +26,1334 @@
   animation: fadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.dashboard-bg {
-  background-color: #111421;
-  background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 45px 45px;
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-/* Custom modern scrollbars */
+.animate-fade-in-overlay {
+  animation: fadeInOverlay 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+/* Page Background with clean soft off-white canvas (#f8fafc) and faint grid pattern */
+.dashboard-bg {
+  background-color: #f8fafc !important;
+  background-image: linear-gradient(rgba(0, 0, 0, 0.065) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 0, 0, 0.065) 1px, transparent 1px) !important;
+  background-size: 20px 20px !important;
+}
+
+/* Custom minimal scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: #f8fafc;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #94a3b8;
 }
 
-/* Custom Text Shadow Glow Effects */
-@keyframes textGlowYellow {
-
-  0%,
-  100% {
-    text-shadow: 0 0 6px rgba(250, 204, 21, 0.4), 0 0 15px rgba(234, 179, 8, 0.2);
-  }
-
-  50% {
-    text-shadow: 0 0 14px rgba(250, 204, 21, 0.8), 0 0 28px rgba(234, 179, 8, 0.4);
-  }
-}
-
-@keyframes textGlowBlue {
-
-  0%,
-  100% {
-    text-shadow: 0 0 6px rgba(59, 130, 246, 0.4), 0 0 15px rgba(37, 99, 235, 0.2);
-  }
-
-  50% {
-    text-shadow: 0 0 14px rgba(59, 130, 246, 0.8), 0 0 28px rgba(37, 99, 235, 0.4);
-  }
-}
-
-.glow-yellow {
-  animation: textGlowYellow 4s infinite ease-in-out;
-}
-
-.glow-blue {
-  animation: textGlowBlue 4s infinite ease-in-out;
-}
-
-/* Force standard Inter font across common elements for professional consistency */
+/* Force standard Inter font across common elements */
 body, input, textarea, select, button {
-  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: "Arial", Helvetica, sans-serif !important;
 }
+
+/* ==========================================================================
+   AESTHETIC STYLE SYSTEM: High-Fidelity Soft UI / Neumorphism Look
+   ========================================================================== */
+
+/* 1. Backdrop & Sidebar backgrounds */
+body,
+.min-h-screen,
+.h-screen,
+[class*="bg-[#08080a]"],
+[class*="bg-[#18181b]"]:only-of-type,
+[class*="bg-[#f5f6f8]"] {
+  background-color: #f8fafc !important;
+  color: #34495e !important;
+}
+
+/* Sidebar: Light off-white with shadow and very clean appearance */
+aside {
+  background-color: #f1f5f9 !important;
+  border-right: 1px solid rgba(203, 213, 225, 0.8) !important;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.02) !important;
+}
+
+aside, aside span, aside p {
+  color: #64748b !important;
+}
+
+aside h1, aside h2, aside .text-white {
+  color: #34495e !important;
+}
+
+/* Sidebar top-left container where hamburger button resides: Refined to #2c3e50 background */
+aside div[class*="bg-[#2c3e50]"] {
+  background-color: #f1f5f9 !important;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.8) !important;
+}
+
+aside div[class*="bg-[#2c3e50]"] button {
+  background-color: #e2e8f0 !important;
+  border-color: rgba(203, 213, 225, 0.8) !important;
+  color: #34495e !important;
+}
+
+aside div[class*="bg-[#2c3e50]"] button:hover {
+  background-color: #cbd5e1 !important;
+}
+
+aside div[class*="bg-[#2c3e50]"] button svg,
+aside div[class*="bg-[#2c3e50]"] button svg * {
+  color: #34495e !important;
+  stroke: #34495e !important;
+}
+
+/* Sidebar navigation buttons */
+aside nav button {
+  background-color: transparent !important;
+  color: #64748b !important;
+  border: 1px solid transparent !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+}
+
+aside nav button:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+aside nav button:not(.active-tab):not(:hover) {
+  color: #ffffff !important;
+}
+
+aside nav button:not(.active-tab):not(:hover) *,
+aside nav button:not(.active-tab):not(:hover) svg,
+aside nav button:not(.active-tab):not(:hover) svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Active sidebar button: Floating card with ambient shadow */
+aside nav button[class*="bg-white"],
+aside nav button.active-tab {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: rgba(226, 232, 240, 0.8) !important;
+  box-shadow: 0 4px 15px -1px rgba(148, 163, 184, 0.12) !important;
+  font-weight: 700 !important;
+}
+
+aside nav button[class*="bg-white"] *,
+aside nav button.active-tab * {
+  color: #0f172a !important;
+}
+
+/* Active tab text / svg in sidebar active mode */
+aside nav button.active-tab svg,
+aside nav button.active-tab svg *,
+aside nav button[class*="bg-white"] svg,
+aside nav button[class*="bg-white"] svg * {
+  color: #34495e !important;
+  stroke: #34495e !important;
+}
+
+/* Header Bar: Pure White with very soft shadow */
+header {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid rgba(241, 245, 249, 0.8) !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03) !important;
+}
+
+header h2, header span, header .text-white {
+  color: #34495e !important;
+}
+
+/* Subheader / filters bar: Pure White or very soft light gray backdrop */
+section[class*="bg-[#141416]"],
+section[class*="bg-[#0a0a0c]"],
+section.bg-\[\#f8fafc\] {
+  background-color: #ffffff !important;
+  border-bottom: 1px solid rgba(241, 245, 249, 0.8) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.01) !important;
+}
+
+/* 2. Main Containers: Pure White cards (#ffffff), Rounded-2xl, soft floating shadow, NO border */
+[class*="bg-[#151518]"],
+[class*="bg-[#1e1e21]"],
+[class*="bg-[#16161d]"],
+[class*="bg-[#1f1f27]"],
+[class*="bg-[#18181b]"],
+.bg-white:not(button):not(input):not(textarea):not(select):not(.active-tab):not(.accessory-btn):not(.user-btn) {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(241, 245, 249, 0.8) !important;
+  border-radius: 1rem !important; /* rounded-2xl */
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Redefine dark-panel to be a clean white panel to support the Soft UI transition */
+.dark-panel {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(241, 245, 249, 0.8) !important;
+  color: #34495e !important;
+  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.2), 0 10px 15px -6px rgba(0, 0, 0, 0.15) !important;
+  border-radius: 1rem !important;
+}
+
+.dark-panel h2,
+.dark-panel h3,
+.dark-panel h4,
+.dark-panel span,
+.dark-panel label,
+.dark-panel p,
+.dark-panel div,
+.dark-panel li {
+  color: #34495e !important;
+}
+
+.dark-panel svg,
+.dark-panel svg * {
+  color: #0d9488 !important; /* Sophisticated turquoise/teal */
+  stroke: #0d9488 !important;
+}
+
+.dark-panel input,
+.dark-panel select,
+.dark-panel textarea,
+.dark-panel input[class*="bg-"],
+.dark-panel textarea[class*="bg-"],
+.dark-panel select[class*="bg-"],
+.dark-panel input[class*="bg-black"],
+.dark-panel textarea[class*="bg-black"],
+.dark-panel select[class*="bg-black"],
+.dark-panel button[class*="bg-black"],
+.dark-panel input[class*="bg-zinc-950"],
+.dark-panel textarea[class*="bg-zinc-950"],
+.dark-panel select[class*="bg-zinc-950"],
+.dark-panel button[class*="bg-zinc-950"] {
+  background-color: #f1f5f9 !important;
+  border: 1px solid transparent !important;
+  color: #34495e !important;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03) !important;
+}
+
+.dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.custom-entregado-btn):not(.status-filter-btn) {
+  background-color: #0a0a0a !important;
+  border: 1px solid #0a0a0a !important;
+  color: #ffffff !important;
+}
+
+.dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.custom-entregado-btn):not(.status-filter-btn):hover {
+  background-color: #f8fafc !important;
+  border-color: rgba(226, 232, 240, 0.9) !important;
+}
+
+/* Table rows styling: light gray rows with soft hover */
+tr[class*="bg-[#0f0f11]"],
+tr[class*="bg-[#151518]"] {
+  background-color: #f1f5f9 !important;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.8) !important;
+}
+
+tr {
+  background-color: #f1f5f9 !important;
+  border-bottom: 1px solid rgba(203, 213, 225, 0.6) !important;
+}
+
+tr:hover {
+  background-color: #e2e8f0 !important;
+}
+
+/* Selected row states: soft blue highlight with a blue left accent border */
+tr[class*="bg-zinc-800"],
+tr[class*="bg-white/5"] {
+  background-color: #f1f5f9 !important;
+}
+
+tr.selected-row,
+tr[class*="bg-blue-"],
+tr[class*="bg-blue-50"],
+tr[className*="bg-blue-50/50"] {
+  background-color: #dbeafe !important;
+  border-left: 4px solid #2563eb !important;
+}
+
+/* Premium high-contrast checkboxes styling */
+input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #1e3e62 !important;
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked {
+  filter: drop-shadow(0 1px 2px rgba(30, 62, 98, 0.15));
+}
+
+/* Stronger shadow utility for premium cards */
+.shadow-strong {
+  box-shadow: 0 12px 30px -5px rgba(0,0,0,0.2), 0 10px 15px -6px rgba(0,0,0,0.15) !important;
+}
+
+input,
+textarea,
+select,
+input[class*="bg-"],
+textarea[class*="bg-"],
+select[class*="bg-"],
+input[class*="bg-black"],
+textarea[class*="bg-black"],
+select[class*="bg-black"],
+button[class*="bg-black"],
+input[class*="bg-zinc-950"],
+textarea[class*="bg-zinc-950"],
+select[class*="bg-zinc-950"],
+button[class*="bg-zinc-950"],
+.search-input {
+  background-color: #e2e8f0 !important;
+  border: 1px solid transparent !important;
+  color: #000000 !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  background-color: #f1f5f9 !important;
+  border-color: rgba(148, 163, 184, 0.4) !important;
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05), 0 0 0 3px rgba(148, 163, 184, 0.1) !important;
+  outline: none !important;
+}
+
+/* Empty or very subtle placeholders */
+::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+::-webkit-input-placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* 4. Global border overrides: Remove harsh borders */
+[class*="border-[#3f3f46]"]:not(:focus):not(input):not(textarea):not(select),
+[class*="border-zinc-700"]:not(:focus):not(input):not(textarea):not(select),
+[class*="border-zinc-800"]:not(:focus):not(input):not(textarea):not(select),
+[class*="border-zinc-750"]:not(:focus):not(input):not(textarea):not(select),
+[class*="border-zinc-600"]:not(:focus):not(input):not(textarea):not(select),
+[class*="border-r"]:not(:focus):not(aside):not(input):not(textarea):not(select),
+[class*="border-b"]:not(:focus):not(input):not(textarea):not(select),
+[class*="border-t"]:not(:focus):not(input):not(textarea):not(select),
+[class*="border-l"]:not(:focus):not(input):not(textarea):not(select),
+[class*="divide-"] > *,
+.border:not(:focus):not(input):not(textarea):not(select),
+.border-b:not(:focus):not(input):not(textarea):not(select),
+.border-t:not(:focus):not(input):not(textarea):not(select),
+.border-l:not(:focus):not(input):not(textarea):not(select),
+.border-r:not(:focus):not(input):not(textarea):not(select),
+.border-x:not(:focus):not(input):not(textarea):not(select),
+.border-y:not(:focus):not(input):not(textarea):not(select),
+.divide-y > * {
+  border-color: rgba(203, 213, 225, 0.8) !important;
+}
+
+/* 5. Buttons and Actions */
+/* Default Zinc/Secondary Button and all general buttons: Black background, white text */
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) {
+  background-color: #0a0a0a !important;
+  border: 1px solid #0a0a0a !important;
+  color: #ffffff !important;
+  border-radius: 0.75rem !important; /* rounded-xl */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):hover {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg,
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Specific contrast style definitions for light/white buttons */
+.active-tab svg,
+.active-tab svg * {
+  color: #1e293b !important;
+  stroke: #1e293b !important;
+}
+
+
+
+/* Force dark buttons to keep white text */
+.bg-slate-900,
+.bg-black,
+button.bg-slate-900,
+button.bg-black,
+.bg-slate-900 *:not(option),
+.bg-black *:not(option) {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Custom button classes to override default button styling */
+.btn-blue {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border: 1px solid #2563eb !important;
+}
+.btn-blue *,
+.btn-blue svg,
+.btn-blue svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+.btn-blue:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.btn-green {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  border: 1px solid #16a34a !important;
+}
+.btn-green *,
+.btn-green svg,
+.btn-green svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+.btn-green:hover {
+  background-color: #15803d !important;
+  border-color: #15803d !important;
+}
+
+/* Accessory buttons (FORRO, BATERIA, etc.): Modern toggle style */
+.accessory-btn {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.accessory-btn:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+.accessory-btn.active {
+  background-color: #16a34a !important; /* Elegant green color once confirmed/selected */
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(22, 163, 74, 0.15) !important;
+}
+
+/* Specific text overrides to ensure active state is white and inactive is slate */
+body .accessory-btn.active,
+body .accessory-btn.active *,
+body .accessory-btn.active span,
+body .accessory-btn.active svg,
+body .accessory-btn.active svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+body .accessory-btn:not(.active),
+body .accessory-btn:not(.active) *,
+body .accessory-btn:not(.active) span,
+body .accessory-btn:not(.active) svg,
+body .accessory-btn:not(.active) svg * {
+  color: #475569 !important;
+  stroke: #475569 !important;
+}
+
+/* Text overrides: Matte Dark Slate Grey (#34495e) */
+.text-zinc-100,
+.text-zinc-200,
+.text-zinc-300,
+.text-white {
+  color: #34495e !important;
+}
+
+.text-zinc-400,
+.text-zinc-450,
+.text-zinc-550,
+.text-zinc-600,
+.text-zinc-650 {
+  color: #475569 !important;
+}
+
+/* Table elements text */
+tr td, tr th {
+  color: #334155 !important;
+}
+
+/* Dark card Total Recibidos (Card 1) overrides: refined to soft floating white card */
+[class*="bg-[#1e1e24]"],
+[class*="bg-[#0b192c]"],
+[class*="bg-[#2c3e50]"] {
+  background-color: #ffffff !important;
+  border-color: rgba(241, 245, 249, 0.8) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="bg-[#1e1e24]"] *,
+[class*="bg-[#0b192c]"] *,
+[class*="bg-[#2c3e50]"] * {
+  color: #34495e !important;
+}
+
+/* Specific search input border and icon coloring for high contrast */
+.search-input {
+  background-color: #f1f5f9 !important;
+  border: 1px solid transparent !important;
+  color: #34495e !important;
+}
+
+.search-input:focus {
+  border-color: rgba(148, 163, 184, 0.4) !important;
+}
+
+/* Edit / Delete action buttons styling */
+.action-btn-edit,
+button[class*="text-white"][class*="hover:bg-[#27272a]"],
+button[class*="text-slate-700"][class*="border-slate-200"] {
+  background-color: #16a34a !important; /* Bold green background */
+  color: #ffffff !important; /* White text for high contrast */
+  border: 1px solid transparent !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.action-btn-edit:hover,
+button[class*="text-white"][class*="hover:bg-[#27272a]"]:hover {
+  background-color: #15803d !important;
+}
+
+.action-btn-edit *,
+.action-btn-edit svg,
+.action-btn-edit svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.action-btn-delete,
+button[class*="text-red-400"][class*="hover:bg-red-500"] {
+  background-color: #fee2e2 !important; /* Soft Pastel Red */
+  color: #b91c1c !important; /* Red icon */
+  border: 1px solid transparent !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.action-btn-delete:hover,
+button[class*="text-red-400"][class*="hover:bg-red-500"]:hover {
+  background-color: #fecdd3 !important;
+}
+
+/* User Profile avatar icon button: white bg, black silhouette icon with no shadow */
+.user-btn {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+.user-btn svg,
+.user-btn svg * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  fill: #000000 !important;
+  filter: none !important;
+}
+
+/* Orange status: PENDIENTE, SUSPENDIDO, ACTIVO, ENTREGADO */
+[class*="bg-amber-100"],
+[class*="bg-orange-"] {
+  background-color: #f97316 !important; /* Orange */
+  color: #ffffff !important; /* White text */
+  border: 1px solid #f97316 !important;
+  border-radius: 0.5rem !important;
+}
+
+[class*="bg-amber-100"] *:not(option),
+[class*="bg-orange-"] *:not(option) {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Green status: CANCELADO, DISPONIBLE, N#A, RECUPERADO */
+[class*="bg-emerald-100"],
+[class*="bg-green-"] {
+  background-color: #16a34a !important; /* Green */
+  color: #ffffff !important; /* White text */
+  border: 1px solid #16a34a !important;
+  border-radius: 0.5rem !important;
+}
+
+[class*="bg-emerald-100"] *:not(option),
+[class*="bg-green-"] *:not(option) {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* White text on logo pill badge */
+.logo-pill {
+  color: #ffffff !important;
+}
+
+/* Profile details inside modal */
+[class*="fixed"] [class*="bg-[#0f0f11]"] {
+  background-color: #e2e8f0 !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+}
+
+.fixed.inset-0.bg-black\/80,
+.fixed.inset-0.bg-black\/90 {
+  background-color: rgba(15, 23, 42, 0.25) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* Force white text class to bypass dark charcoal global text overrides */
+.text-white-force,
+.text-white-force *:not(option),
+.dark-panel .text-white-force,
+.dark-panel .text-white-force *:not(option),
+.dark-panel span.text-white-force,
+span.text-white-force,
+svg.text-white-force,
+button.text-white-force,
+button .text-white-force {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Force specific style override for status dropdown select elements */
+body select.status-select-orange,
+html body select.status-select-orange {
+  background-color: #f97316 !important;
+  color: #ffffff !important;
+  border: 1px solid #f97316 !important;
+}
+body select.status-select-orange *,
+html body select.status-select-orange * {
+  color: #ffffff !important;
+}
+
+body select.status-select-green,
+html body select.status-select-green {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  border: 1px solid #16a34a !important;
+}
+body select.status-select-green *,
+html body select.status-select-green * {
+  color: #ffffff !important;
+}
+
+/* Metrics and Statistics specific text styles to ensure high contrast dark black */
+.estadisticas-tab-container h3,
+.estadisticas-tab-container h4,
+.estadisticas-tab-container span,
+.estadisticas-tab-container div,
+.estadisticas-tab-container p,
+.estadisticas-tab-container label,
+.estadisticas-tab-container text,
+.estadisticas-tab-container tr td,
+.estadisticas-tab-container tr th {
+  color: #000000 !important;
+}
+
+/* Ensure SVG text elements in charts are also dark black */
+.estadisticas-tab-container svg text {
+  fill: #000000 !important;
+}
+
+/* Restore white text for buttons, badges, and elements inside dark background containers in metrics tab */
+.estadisticas-tab-container .bg-slate-900,
+.estadisticas-tab-container .bg-slate-900 *:not(option),
+.estadisticas-tab-container .bg-black,
+.estadisticas-tab-container .bg-black *:not(option),
+.estadisticas-tab-container .bg-orange-500,
+.estadisticas-tab-container .bg-orange-500 *:not(option),
+.estadisticas-tab-container .bg-green-600,
+.estadisticas-tab-container .bg-green-600 *:not(option),
+.estadisticas-tab-container button:not(.stats-sims-btn),
+.estadisticas-tab-container button:not(.stats-sims-btn) *:not(option),
+.estadisticas-tab-container .text-white-force,
+.estadisticas-tab-container .text-white-force *:not(option) {
+  color: #ffffff !important;
+}
+
+/* Intensified box shadows and border colors for premium separation in the Statistics & Metrics tab */
+.estadisticas-tab-container .bg-white.rounded-2xl {
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08), 0 10px 10px rgba(0, 0, 0, 0.06) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.estadisticas-tab-container .bg-white.rounded-2xl:hover {
+  box-shadow: 0 25px 45px -10px rgba(0, 0, 0, 0.16), 0 16px 20px -8px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(100, 116, 139, 0.55) !important;
+  transform: translateY(-2px) !important;
+}
+
+.estadisticas-tab-container .bg-slate-50.rounded-xl,
+.estadisticas-tab-container .bg-blue-50\/40.rounded-xl,
+.estadisticas-tab-container .bg-amber-50\/40.rounded-xl {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+  border: 1.5px solid rgba(203, 213, 225, 0.7) !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.estadisticas-tab-container .bg-slate-50.rounded-xl:hover,
+.estadisticas-tab-container .bg-blue-50\/40.rounded-xl:hover,
+.estadisticas-tab-container .bg-amber-50\/40.rounded-xl:hover {
+  box-shadow: 0 10px 18px -4px rgba(0, 0, 0, 0.08), 0 5px 8px -3px rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(148, 163, 184, 0.8) !important;
+  transform: scale(1.02) !important;
+}
+
+.estadisticas-tab-container button.stats-sims-btn {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06), 0 6px 10px rgba(0, 0, 0, 0.04) !important;
+  border: 1.5px solid rgba(148, 163, 184, 0.35) !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.estadisticas-tab-container button.stats-sims-btn:hover {
+  box-shadow: 0 20px 32px -5px rgba(0, 0, 0, 0.12), 0 10px 15px -4px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(100, 116, 139, 0.6) !important;
+  transform: translateY(-2px) !important;
+}
+
+.estadisticas-tab-container .rounded-full.shadow-sm {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Force black text for options inside dropdown selects to prevent invisible white text on white bg */
+body select option,
+html body select option,
+.text-white-force option,
+.text-white-force select option,
+.status-select-orange option,
+.status-select-green option,
+[class*="bg-amber-100"] option,
+[class*="bg-emerald-100"] option,
+select option {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Premium Light Gray with slate text for Casillero inputs */
+.casillero-input,
+textarea.casillero-input,
+input.casillero-input,
+select.casillero-input {
+  background-color: #f1f5f9 !important; /* bg-slate-100 */
+  color: #1e293b !important; /* text-slate-800 */
+  border: 1px solid #cbd5e1 !important; /* border-slate-300 */
+  border-radius: 0.5rem !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  transition: all 0.2s ease !important;
+}
+.casillero-input:focus,
+textarea.casillero-input:focus,
+input.casillero-input:focus,
+select.casillero-input:focus {
+  background-color: #ffffff !important;
+  border-color: #3b82f6 !important; /* Focused blue border */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  outline: none !important;
+}
+.casillero-input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Pagination buttons styling: Black background, white text */
+.pagination-btn,
+button.pagination-btn,
+.pagination-btn:not(:disabled),
+button.pagination-btn:not(:disabled) {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  transition: all 0.2s ease !important;
+}
+.pagination-btn:hover:not(:disabled),
+button.pagination-btn:hover:not(:disabled) {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+  color: #ffffff !important;
+}
+.pagination-btn:disabled,
+button.pagination-btn:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  background-color: #000000 !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  border-color: #000000 !important;
+}
+.pagination-btn:disabled *,
+button.pagination-btn:disabled * {
+  color: rgba(255, 255, 255, 0.4) !important;
+  stroke: rgba(255, 255, 255, 0.4) !important;
+}
+.pagination-btn:not(:disabled) *,
+.pagination-btn:not(:disabled) svg,
+.pagination-btn:not(:disabled) svg *,
+body .pagination-btn:not(:disabled) *,
+body .pagination-btn:not(:disabled) span {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Filter buttons for the control tab */
+.filter-btn,
+button.filter-btn {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border: 1px solid transparent !important;
+  border-radius: 0.375rem !important; /* rounded-md */
+  padding: 0.25rem 0.5rem !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+  transition: all 0.15s ease !important;
+}
+.filter-btn:hover,
+button.filter-btn:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+.filter-btn.active-filter,
+button.filter-btn.active-filter {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+.filter-btn.active-filter.filter-btn-active-black {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border-color: #000000 !important;
+}
+.filter-btn.active-filter.filter-btn-active-orange {
+  background-color: #f97316 !important; /* Orange */
+  color: #ffffff !important;
+  border-color: #f97316 !important;
+}
+.filter-btn.active-filter.filter-btn-active-green {
+  background-color: #16a34a !important; /* Green */
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+}
+.filter-btn.active-filter.filter-btn-active-gray {
+  background-color: #4b5563 !important; /* Dark Slate Gray */
+  color: #ffffff !important;
+  border-color: #4b5563 !important;
+}
+.filter-btn.active-filter *,
+button.filter-btn.active-filter *,
+.filter-btn.active-filter.filter-btn-active-black *,
+.filter-btn.active-filter.filter-btn-active-orange *,
+.filter-btn.active-filter.filter-btn-active-green *,
+.filter-btn.active-filter.filter-btn-active-gray * {
+  color: #ffffff !important;
+}
+
+/* Bulk actions inputs and buttons */
+.bulk-select,
+select.bulk-select {
+  background-color: #f1f5f9 !important;
+  color: #34495e !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 0.375rem !important; /* rounded-md */
+  font-size: 11px !important;
+  padding: 0.25rem 0.5rem !important;
+  height: 28px !important;
+  box-shadow: none !important;
+}
+
+.bulk-btn,
+button.bulk-btn {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  border-radius: 0.375rem !important; /* rounded-md */
+  font-size: 11px !important;
+  padding: 0.25rem 0.5rem !important;
+  height: 28px !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+}
+.bulk-btn:hover,
+button.bulk-btn:hover {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+/* Card styling for rows in the Casillero table */
+.casillero-table {
+  border-collapse: separate !important;
+  border-spacing: 0 14px !important; /* Spacing between cards */
+  margin-top: -14px !important;
+}
+
+.casillero-table thead tr {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.casillero-table thead th {
+  border: none !important;
+  padding-bottom: 0px !important;
+  background-color: transparent !important;
+}
+
+.casillero-table tbody tr {
+  background-color: #ffffff !important;
+  box-shadow: 0 10px 22px -4px rgba(0, 0, 0, 0.12), 0 6px 12px -5px rgba(0, 0, 0, 0.08) !important; /* Enhanced ambient shadow */
+  border: 1px solid rgba(148, 163, 184, 0.25) !important;
+  transition: all 0.2s ease !important;
+}
+
+.casillero-table tbody tr:hover {
+  background-color: #f8fafc !important;
+  transform: translateY(-2px); /* Premium lift effect */
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.18), 0 10px 10px -5px rgba(0, 0, 0, 0.08) !important; /* Prominent hover shadow */
+}
+
+/* Rounded corners for individual cells in the card-row */
+.casillero-table tbody tr td {
+  border-top: 1px solid rgba(148, 163, 184, 0.25) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25) !important;
+  padding-top: 16px !important;
+  padding-bottom: 16px !important;
+  background-color: inherit !important; /* Inherit white or select-blue background color */
+}
+
+.casillero-table tbody tr td:first-child {
+  border-left: 1px solid rgba(148, 163, 184, 0.25) !important;
+  border-top-left-radius: 1rem !important; /* rounded-2xl */
+  border-bottom-left-radius: 1rem !important;
+}
+
+.casillero-table tbody tr td:last-child {
+  border-right: 1px solid rgba(148, 163, 184, 0.25) !important;
+  border-top-right-radius: 1rem !important; /* rounded-2xl */
+  border-bottom-right-radius: 1rem !important;
+}
+
+/* Handle selected card state */
+.casillero-table tbody tr[class*="bg-blue-50/50"] {
+  background-color: #eff6ff !important;
+}
+
+.casillero-table tbody tr[class*="bg-blue-50/50"] td {
+  border-color: rgba(37, 99, 235, 0.15) !important;
+}
+
+.casillero-table tbody tr[class*="bg-blue-50/50"] td:first-child {
+  border-left: 4px solid #2563eb !important; /* Bold blue highlight indicator bar on selection */
+}
+
+/* Left accent border for items added from CRUCE */
+.casillero-table tbody tr[class*="border-l-2"] td:first-child {
+  border-left: 4px solid #64748b !important;
+}
+
+/* Force Arial font across everything inside font-arial containers (inputs, textareas, spans, select, etc.) */
+.font-arial,
+.font-arial *,
+.font-arial input,
+.font-arial textarea,
+.font-arial select,
+.font-arial button {
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+/* Force uniform font sizes inside font-arial containers, keeping headers and metric numbers clean */
+.font-arial span:not([class*="text-["]):not(.text-white-force),
+.font-arial p:not([class*="text-["]),
+.font-arial label:not([class*="text-["]),
+.font-arial input:not([class*="text-["]),
+.font-arial select:not([class*="text-["]),
+.font-arial textarea:not([class*="text-["]),
+.font-arial button:not([class*="text-["]):not(.pagination-btn),
+.font-arial td:not([class*="text-["]),
+.font-arial th:not([class*="text-["]),
+.font-arial div:not(.text-3xl):not(.text-base):not(.text-lg):not(.text-xl):not(.text-2xl):not([class*="text-["]):not(.pagination-btn) {
+  font-size: 12px !important;
+}
+
+/* Force pure white text and icons on default black, green, blue, and orange buttons and all their inner elements */
+button.btn-green,
+button.btn-green *,
+button.btn-blue,
+button.btn-blue *,
+button.bg-green-600,
+button.bg-green-600 *,
+button.bg-emerald-600,
+button.bg-emerald-600 *,
+button.bg-blue-600,
+button.bg-blue-600 *,
+button.bg-orange-600,
+button.bg-orange-600 *,
+button.bg-orange-500,
+button.bg-orange-500 *,
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn),
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn) * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Ensure all status badges and match labels with class text-white keep white text */
+.font-arial span.text-white,
+.font-arial span[class*="text-white"],
+.font-arial span.bg-emerald-600,
+.font-arial span.bg-orange-600,
+.font-arial span.bg-slate-500 {
+  color: #ffffff !important;
+}
+
+/* Mark shadows more prominently for cards/panels inside Cruce tab to differentiate borders */
+.font-arial .dark-panel {
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.12), 0 10px 15px -5px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(148, 163, 184, 0.35) !important;
+}
+
+/* Also enhance shadow and border on standard metrics cards */
+.font-arial .shadow-md {
+  box-shadow: 0 12px 24px -3px rgba(0, 0, 0, 0.12), 0 6px 12px -2px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+/* Much stronger shadows in Gestion General area for better element distinction */
+.gestion-general-tab .dark-panel,
+.gestion-general-tab .bg-white.rounded-xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.28), 0 15px 25px -10px rgba(0, 0, 0, 0.18) !important;
+  border: 1px solid rgba(100, 116, 139, 0.45) !important;
+  transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out !important;
+}
+
+.gestion-general-tab .dark-panel:hover,
+.gestion-general-tab .bg-white.rounded-xl:hover {
+  box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.35), 0 20px 30px -12px rgba(0, 0, 0, 0.22) !important;
+  border-color: rgba(71, 85, 105, 0.6) !important;
+}
+
+/* Explicit style for stats-sims-btn in Estadisticas: white with custom box shadow and black text */
+button.stats-sims-btn {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(203, 213, 225, 0.6) !important;
+  box-shadow: 0 10px 20px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -2px rgba(0, 0, 0, 0.08) !important;
+}
+button.stats-sims-btn,
+button.stats-sims-btn * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+button.stats-sims-btn:hover {
+  background-color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.8) !important;
+  box-shadow: 0 12px 24px -3px rgba(0, 0, 0, 0.2), 0 6px 10px -2px rgba(0, 0, 0, 0.1) !important;
+}
+button.stats-sims-btn:hover * {
+  color: #000000 !important;
+}
+
+/* Increased drop shadow and borders for Modelos configuration tab */
+.modelos-tab-container .bg-white {
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.16), 0 8px 15px -5px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(148, 163, 184, 0.45) !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+.modelos-tab-container .bg-white:hover {
+  box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.22), 0 10px 20px -5px rgba(0, 0, 0, 0.12) !important;
+  border-color: rgba(100, 116, 139, 0.6) !important;
+}
+
+/* Animated Login Logo Keyframes */
+@keyframes loginScreenGreen {
+  0%, 100% {
+    fill: #ffffff !important;
+    stroke: currentColor !important;
+    filter: none !important;
+  }
+  50% {
+    fill: #22c55e !important;
+    stroke: #22c55e !important;
+    filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.75)) !important;
+  }
+}
+
+@keyframes loginCheckmark {
+  0%, 25% {
+    opacity: 0 !important;
+    stroke-dashoffset: 20 !important;
+  }
+  40%, 85% {
+    opacity: 1 !important;
+    stroke-dashoffset: 0 !important;
+  }
+  100% {
+    opacity: 0 !important;
+    stroke-dashoffset: 20 !important;
+  }
+}
+
+.login-screen-anim {
+  animation: loginScreenGreen 3s ease-in-out infinite !important;
+}
+
+.login-checkmark-anim {
+  stroke-dasharray: 20 !important;
+  stroke-dashoffset: 20 !important;
+  animation: loginCheckmark 3s ease-in-out infinite !important;
+}
+
+/* Animated Logo Keyframes */
+@keyframes drawD {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes drawLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes popCheck {
+  0% {
+    transform: translate(425px, 125px) scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(425px, 125px) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes screenGlow {
+  to {
+    opacity: 0.85;
+  }
+}
+
+.logo-d-path {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: drawD 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.connection-line-path {
+  animation: drawLine 1s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
+}
+
+.checkmark-group {
+  animation: popCheck 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 2.2s forwards;
+}
+
+.pos-screen-glow {
+  animation: screenGlow 0.5s ease-in-out 2.1s forwards;
+}
+
+/* Premium Login Logo animations */
+@keyframes logoEntrance {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -35%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.animate-logo-entrance {
+  animation: logoEntrance 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+.animate-logo-float {
+  animation: logoFloat 4s ease-in-out infinite;
+}
+
+/* Custom Status Filter Buttons in Gestion General */
+button.status-filter-btn {
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-weight: 900 !important; /* negritas extra bold */
+  text-transform: uppercase !important;
+  font-size: 12px !important; /* letras más grandes */
+  letter-spacing: 0.05em !important;
+  padding: 8px 14px !important;
+  border-radius: 0.5rem !important; /* rounded-lg */
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1px solid transparent !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+/* Button colors - Resting colors */
+button.status-btn-todos {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+button.status-btn-todos,
+button.status-btn-todos * {
+  color: #ffffff !important;
+}
+
+button.status-btn-orange {
+  background-color: #ea580c !important; /* orange background */
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+}
+button.status-btn-orange,
+button.status-btn-orange * {
+  color: #ffffff !important;
+}
+
+button.status-btn-green {
+  background-color: #16a34a !important; /* green background */
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+}
+button.status-btn-green,
+button.status-btn-green * {
+  color: #ffffff !important;
+}
+
+button.status-btn-gray {
+  background-color: #64748b !important; /* gray background */
+  border-color: #64748b !important;
+  color: #ffffff !important;
+}
+button.status-btn-gray,
+button.status-btn-gray * {
+  color: #ffffff !important;
+}
+
+/* Hover state: do not change colors */
+button.status-btn-todos:hover {
+  background-color: #000000 !important;
+  border-color: #000000 !important;
+  color: #ffffff !important;
+}
+button.status-btn-todos:hover * {
+  color: #ffffff !important;
+}
+
+button.status-btn-orange:hover {
+  background-color: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+}
+button.status-btn-orange:hover * {
+  color: #ffffff !important;
+}
+
+button.status-btn-green:hover {
+  background-color: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+}
+button.status-btn-green:hover * {
+  color: #ffffff !important;
+}
+
+button.status-btn-gray:hover {
+  background-color: #64748b !important;
+  border-color: #64748b !important;
+  color: #ffffff !important;
+}
+button.status-btn-gray:hover * {
+  color: #ffffff !important;
+}
+
+/* Active vs Inactive state styling: active glows, inactive is dimmed */
+button.status-filter-btn.active-filter {
+  opacity: 1 !important;
+  transform: scale(1.05) !important;
+}
+
+button.status-btn-todos.active-filter {
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), 0 0 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+button.status-btn-orange.active-filter {
+  box-shadow: 0 0 15px #ea580c, 0 0 5px #ffffff !important;
+}
+
+button.status-btn-green.active-filter {
+  box-shadow: 0 0 15px #16a34a, 0 0 5px #ffffff !important;
+}
+
+button.status-btn-gray.active-filter {
+  box-shadow: 0 0 15px #64748b, 0 0 5px #ffffff !important;
+}
+
+button.status-filter-btn:not(.active-filter) {
+  opacity: 0.55 !important;
+  transform: scale(1) !important;
+  box-shadow: none !important;
+}
+
+button.status-filter-btn:not(.active-filter):hover {
+  opacity: 0.8 !important;
+}
+
+/* Custom class for technician delivery button in clicked (ENTREGADO) state */
+button.custom-entregado-btn {
+  background-color: #94a3b8 !important; /* slate-400 */
+  border-color: #94a3b8 !important;
+  color: #ffffff !important;
+  border-radius: 0.5rem !important; /* rounded-lg */
+}
+
+button.custom-entregado-btn:hover {
+  background-color: #64748b !important; /* slate-500 */
+  border-color: #64748b !important;
+  color: #ffffff !important;
+}
+

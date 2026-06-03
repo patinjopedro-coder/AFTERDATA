@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { POSItem, EnvioExterno, ModelConfig, POSStatus, UserProfile } from './types';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { POSItem, EnvioExterno, ModelConfig, POSStatus, UserProfile, StandbyItem } from './types';
 import { INITIAL_SERIALS, INITIAL_MODELS } from './data';
 import { getDBItem, setDBItem } from './db';
+import { sanitizeSerials, formatRif } from './utils';
 import { GestionGeneral } from './components/GestionGeneral';
 import { LogoIcon } from './components/LogoIcon';
 import { Casillero } from './components/Casillero';
@@ -11,46 +13,51 @@ import { EquiposEnviados } from './components/EquiposEnviados';
 import { Modelos } from './components/Modelos';
 import { Estadisticas } from './components/Estadisticas';
 import { Usuarios } from './components/Usuarios';
+import { GestionSimCards } from './components/GestionSimCards';
+import { Login } from './components/Login';
+import { StandBy } from './components/StandBy';
 
 // Lucide icons
 import {
   Database, FileSpreadsheet, Download, RefreshCw,
-  Trash2, Layers, Search, Calendar, FolderCheck,
-  Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send
+  Trash2, Layers, Search, Calendar, FolderCheck, Clock,
+  Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
+  Menu, Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut
 } from 'lucide-react';
-
-// -------------------------------------------------------------
-// HELPER: Sanitize / deduplicate serial IDs
-// -------------------------------------------------------------
-function sanitizeSerials(loaded: POSItem[]): POSItem[] {
-  const seenIds = new Set<number>();
-  const currentMax = loaded.reduce((max, item) =>
-    (item && item.id && typeof item.id === 'number' && !isNaN(item.id)) ? Math.max(max, item.id) : max,
-    0
-  );
-  let nextUniqueId = currentMax + 1;
-
-  return loaded.map((item) => {
-    if (!item || !item.id || typeof item.id !== 'number' || isNaN(item.id) || seenIds.has(item.id)) {
-      const assignedId = nextUniqueId++;
-      seenIds.add(assignedId);
-      return { ...item, id: assignedId };
-    }
-    seenIds.add(item.id);
-    return item;
-  });
-}
 
 export default function App() {
   // -------------------------------------------------------------
   // STATE DEFINITIONS — start with empty defaults, load from IndexedDB
   // -------------------------------------------------------------
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('disglobal_authenticated') === 'true';
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [serials, setSerials] = useState<POSItem[]>([]);
   const [enviosExternos, setEnviosExternos] = useState<EnvioExterno[]>([]);
   const [modelosDB, setModelosDB] = useState<Record<string, ModelConfig>>(INITIAL_MODELS);
   const [usersProfiles, setUsersProfiles] = useState<Record<string, UserProfile>>({});
   const [currentTab, setCurrentTab] = useState<string>('general');
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [simCardBatches, setSimCardBatches] = useState<any[]>([]);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+
+  // STAND-BY and Batch states
+  const [standbyList, setStandbyList] = useState<StandbyItem[]>([]);
+  const [activeCruceBatchId, setActiveCruceBatchId] = useState<string>('');
+  const [standbyAlerts, setStandbyAlerts] = useState<{
+    id: string;
+    serial?: string;
+    guia?: string;
+    mensaje: string;
+  }[]>([]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('disglobal_authenticated');
+    localStorage.removeItem('disglobal_username');
+    setIsAuthenticated(false);
+    setShowUserMenu(false);
+  };
 
   // Global Filter States (shared reactively between tables)
   const [globalSearch, setGlobalSearch] = useState('');
@@ -68,6 +75,9 @@ export default function App() {
   // Global User Profile Modal State
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
 
+  // Notifications Menu State
+  const [showNotificationsMenu, setShowNotificationsMenu] = useState(false);
+
   // -------------------------------------------------------------
   // LOAD ALL DATA FROM INDEXEDDB ON MOUNT
   // db.ts handles automatic migration from localStorage automatically
@@ -75,27 +85,79 @@ export default function App() {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [loadedSerials, loadedEnvios, loadedModelos, loadedProfiles, loadedTab] = await Promise.all([
+        const [
+          loadedSerials,
+          loadedEnvios,
+          loadedModelos,
+          loadedProfiles,
+          loadedTab,
+          loadedSimBatches,
+          loadedStandby,
+          loadedActiveBatch
+        ] = await Promise.all([
           getDBItem<POSItem[]>('serialesDB', INITIAL_SERIALS),
           getDBItem<EnvioExterno[]>('enviosExternosDB', []),
           getDBItem<Record<string, ModelConfig>>('modelosDB', INITIAL_MODELS),
           getDBItem<Record<string, UserProfile>>('usersProfilesDB', {}),
           getDBItem<string>('currentTab', 'general'),
+          getDBItem<any[]>('simCardBatchesDB', []),
+          getDBItem<StandbyItem[]>('standbyListDB', []),
+          getDBItem<string>('activeCruceBatchIdDB', '')
         ]);
 
-        setSerials(sanitizeSerials(Array.isArray(loadedSerials) ? loadedSerials : INITIAL_SERIALS));
+        const rawSerials = Array.isArray(loadedSerials) ? loadedSerials : INITIAL_SERIALS;
+        const cleanedSerials = rawSerials.map(item => {
+          if (item && item.observaciones) {
+            const obsUpper = item.observaciones.trim().toUpperCase();
+            if (obsUpper === 'LISTO PARA REVISIÓN FÍSICA' || obsUpper === 'LISTO PARA REVISION FISICA') {
+              return { ...item, observaciones: '' };
+            }
+          }
+          return item;
+        });
+        setSerials(sanitizeSerials(cleanedSerials));
         setEnviosExternos(Array.isArray(loadedEnvios) ? loadedEnvios : []);
         setModelosDB(loadedModelos && typeof loadedModelos === 'object' ? loadedModelos : INITIAL_MODELS);
         setUsersProfiles(loadedProfiles && typeof loadedProfiles === 'object' ? loadedProfiles : {});
         setCurrentTab(typeof loadedTab === 'string' ? loadedTab : 'general');
+        setSimCardBatches(Array.isArray(loadedSimBatches) ? loadedSimBatches : []);
+        setStandbyList(Array.isArray(loadedStandby) ? loadedStandby : []);
+        setActiveCruceBatchId(typeof loadedActiveBatch === 'string' ? loadedActiveBatch : '');
       } catch (e) {
-        console.error('Error loading from IndexedDB:', e);
+        console.error('Error loading from DB:', e);
       } finally {
         setIsLoading(false);
       }
     }
     loadAll();
   }, []);
+
+  // Handle ESC key press globally to close user profile, history tooltip, and user menu
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setViewingProfile(null);
+        setHistoryTooltip(null);
+        setShowUserMenu(false);
+        setShowNotificationsMenu(false);
+      }
+    };
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (showUserMenu && !target.closest('.relative')) {
+        setShowUserMenu(false);
+      }
+      if (showNotificationsMenu && !target.closest('.notification-container')) {
+        setShowNotificationsMenu(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showUserMenu, showNotificationsMenu]);
 
   // -------------------------------------------------------------
   // PERSIST STATES TO INDEXEDDB ON EVERY CHANGE
@@ -120,6 +182,72 @@ export default function App() {
   useEffect(() => {
     if (!isLoading) setDBItem('currentTab', currentTab);
   }, [currentTab, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) setDBItem('simCardBatchesDB', simCardBatches);
+  }, [simCardBatches, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) setDBItem('standbyListDB', standbyList);
+  }, [standbyList, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) setDBItem('activeCruceBatchIdDB', activeCruceBatchId);
+  }, [activeCruceBatchId, isLoading]);
+
+  // Reactively monitor serials to match standbyList pending items and fire notifications
+  useEffect(() => {
+    if (isLoading || standbyList.length === 0) return;
+
+    let hasChanges = false;
+    const updated = standbyList.map(item => {
+      if (item.status === 'PROCESADO') return item;
+
+      // Check if serial or guia has entered system
+      const match = serials.find(s => {
+        const serialMatch = item.serial && s.serial && s.serial.trim().toUpperCase() === item.serial.trim().toUpperCase();
+        const substituteMatch = item.serial && s.serialSustituto && s.serialSustituto.trim().toUpperCase() === item.serial.trim().toUpperCase();
+        const guiaMatch = item.guia && (
+          (s.source && s.source.trim().toUpperCase() === item.guia.trim().toUpperCase()) ||
+          (s.guiaSalidaCliente && s.guiaSalidaCliente.trim().toUpperCase() === item.guia.trim().toUpperCase())
+        );
+        return serialMatch || substituteMatch || guiaMatch;
+      });
+
+      if (match) {
+        hasChanges = true;
+        const alertId = `STBY-ALERT-${item.id}-${Date.now()}`;
+        const detail = item.serial && item.guia 
+          ? `Serial [${item.serial}] y Guía [${item.guia}]` 
+          : item.serial 
+            ? `Serial [${item.serial}]` 
+            : `Guía [${item.guia}]`;
+
+        setStandbyAlerts(prev => [...prev, {
+          id: alertId,
+          serial: item.serial,
+          guia: item.guia,
+          mensaje: `El equipo en camino con ${detail} ha sido recibido e ingresado al sistema.`
+        }]);
+
+        // Auto remove alert after 8 seconds
+        setTimeout(() => {
+          setStandbyAlerts(prev => prev.filter(a => a.id !== alertId));
+        }, 8000);
+
+        return {
+          ...item,
+          status: 'PROCESADO',
+          processedDate: new Date().toISOString().split('T')[0]
+        };
+      }
+      return item;
+    });
+
+    if (hasChanges) {
+      setStandbyList(updated);
+    }
+  }, [serials, isLoading, standbyList]);
 
   // -------------------------------------------------------------
   // MASTER HEADER CONTROL ACTIONS
@@ -178,6 +306,8 @@ export default function App() {
             const idxResp = parsedHeaders.findIndex(h => h.includes('RESPONSABLE'));
             const idxTicket = parsedHeaders.findIndex(h => h.includes('TICKET'));
             const idxDestino = parsedHeaders.findIndex(h => h.includes('DESTINO'));
+            const idxBanco = parsedHeaders.findIndex(h => h.includes('BANCO'));
+            const idxBsf = parsedHeaders.findIndex(h => h.includes('BSF') || h.includes('BS'));
 
             const importedItems: POSItem[] = [];
 
@@ -206,7 +336,7 @@ export default function App() {
                 source: idxSource !== -1 ? cols[idxSource].toUpperCase() : '',
                 isCasillero: idxSource !== -1 && !!cols[idxSource],
                 selected: false,
-                rif: idxRif !== -1 ? cols[idxRif].toUpperCase() : '',
+                rif: idxRif !== -1 ? formatRif(cols[idxRif]) : '',
                 razonSocial: idxRazon !== -1 ? cols[idxRazon].toUpperCase() : '',
                 observaciones: idxObs !== -1 ? cols[idxObs] : '',
                 responsable: idxResp !== -1 ? cols[idxResp] : '',
@@ -228,7 +358,9 @@ export default function App() {
                 destinoSalida: idxDestinoSalida !== -1 ? cols[idxDestinoSalida] : '',
                 fechaConfirmada: false,
                 ticket: idxTicket !== -1 ? cols[idxTicket].toUpperCase() : '',
-                destino: idxDestino !== -1 ? cols[idxDestino].toUpperCase() : ''
+                destino: idxDestino !== -1 ? cols[idxDestino].toUpperCase() : '',
+                banco: idxBanco !== -1 ? cols[idxBanco]?.toUpperCase() : '',
+                bsf: idxBsf !== -1 ? cols[idxBsf]?.toUpperCase() : ''
               });
             }
 
@@ -264,8 +396,9 @@ export default function App() {
   };
 
   const handleExportCSV = () => {
+    const filtered = serials.filter(s => includeCasillero || !s.isCasillero);
     let csv = "SERIAL,ESTADO,REMITENTE,RIF,RAZON_SOCIAL,TICKET,GUIA_ENTRADA,DESTINO,FECHA_INGRESO\n";
-    serials.forEach(s => {
+    filtered.forEach(s => {
       csv += `"${s.serial}","${s.status}","${s.remitente}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.source || ''}","${s.destino || ''}","${s.date}"\n`;
     });
 
@@ -273,9 +406,11 @@ export default function App() {
     const url = URL.createObjectURL(blob);
     const d = new Date();
     const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const filename = includeCasillero ? `disglobal_tracking_report_${localDate}.csv` : `disglobal_tracking_report_sin_casillero_${localDate}.csv`;
+
     const link = document.createElement("a");
     link.href = url;
-    link.download = `disglobal_tracking_report_${localDate}.csv`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -302,9 +437,9 @@ export default function App() {
   };
 
   const handleExportFullCSVBackup = () => {
-    let csv = "ID,SERIAL,STATUS,REMITENTE,GUI_ENTRADA,RIF,RAZON_SOCIAL,TICKET,DESTINO,OBSERVACIONES,RESPONSABLE,FORRO,BATERIA,CARGADOR,CAJA,SIM,SIM_NUMBER,OPERADORA,MODELO_NEGOCIO,ENTREGADO_TECNICO,FECHA_LLEGADA\n";
+    let csv = "ID,SERIAL,STATUS,REMITENTE,GUI_ENTRADA,RIF,RAZON_SOCIAL,TICKET,DESTINO,OBSERVACIONES,RESPONSABLE,FORRO,BATERIA,CARGADOR,CAJA,SIM,SIM_NUMBER,OPERADORA,MODELO_NEGOCIO,ENTREGADO_TECNICO,FECHA_LLEGADA,BANCO,BSF\n";
     serials.forEach(s => {
-      csv += `"${s.id}","${s.serial}","${s.status}","${s.remitente}","${s.source || ''}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.destino || ''}","${s.observaciones || ''}","${s.responsable || ''}","${s.forro}","${s.bateria}","${s.cargador}","${s.caja}","${s.sim}","${s.simNumber || ''}","${s.operadora || ''}","${s.modeloNegocio || ''}","${s.entregadoTecnico}","${s.date}"\n`;
+      csv += `"${s.id}","${s.serial}","${s.status}","${s.remitente}","${s.source || ''}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.destino || ''}","${s.observaciones || ''}","${s.responsable || ''}","${s.forro}","${s.bateria}","${s.cargador}","${s.caja}","${s.sim}","${s.simNumber || ''}","${s.operadora || ''}","${s.modeloNegocio || ''}","${s.entregadoTecnico}","${s.date}","${s.banco || ''}","${s.bsf || ''}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -341,26 +476,141 @@ export default function App() {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };
 
+  const getProfileWithFallback = (remName: string) => {
+    const p = usersProfiles[remName];
+    if (p && (p.isUsuario || p.isCliente)) return p;
+    
+    // Find fallback from serials
+    const associatedSerials = serials.filter(s => s.remitente && s.remitente.toUpperCase().trim() === remName.toUpperCase().trim());
+    const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
+    const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
+    const fallbackUbicacion = associatedSerials.find(s => s.destino)?.destino || '';
+    const isCliente = !!(fallbackRif || fallbackRazonSocial);
+
+    return {
+      remitenteId: remName,
+      nombreCompleto: p?.nombreCompleto || fallbackRazonSocial || remName,
+      isUsuario: p?.isUsuario !== undefined ? p.isUsuario : !isCliente,
+      isCliente: p?.isCliente !== undefined ? p.isCliente : isCliente,
+      area: p?.area || '',
+      cargo: p?.cargo || '',
+      rif: p?.rif || fallbackRif,
+      razonSocial: p?.razonSocial || fallbackRazonSocial || remName,
+      ubicacion: p?.ubicacion || fallbackUbicacion,
+      telefono: p?.telefono || ''
+    };
+  };
+
+  // Dynamic Notification Calculation: serials added with different dates
+  const duplicateSerialsList = useMemo(() => {
+    const serialMap: Record<string, string[]> = {};
+    serials.forEach(s => {
+      if (!s.serial) return;
+      const cleanSerial = s.serial.trim().toUpperCase();
+      if (!serialMap[cleanSerial]) {
+        serialMap[cleanSerial] = [];
+      }
+      const d = s.date || '';
+      if (!serialMap[cleanSerial].includes(d)) {
+        serialMap[cleanSerial].push(d);
+      }
+    });
+
+    const list: { serial: string; dates: string[] }[] = [];
+    Object.entries(serialMap).forEach(([serial, dates]) => {
+      if (dates.length > 1) {
+        list.push({ serial, dates });
+      }
+    });
+    return list;
+  }, [serials]);
+
+  // Dynamic Notification Calculation: SIM cards duplicated or repeated in cancellation logs
+  const duplicateSimsList = useMemo(() => {
+    const simMap: Record<string, { batchTitle: string; date: string }[]> = {};
+    (simCardBatches || []).forEach(b => {
+      (b.serials || []).forEach((s: string) => {
+        if (!s) return;
+        const cleanSim = s.trim().toUpperCase();
+        if (!simMap[cleanSim]) {
+          simMap[cleanSim] = [];
+        }
+        simMap[cleanSim].push({ batchTitle: b.title, date: b.date });
+      });
+    });
+
+    const list: { sim: string; occurrences: { batchTitle: string; date: string }[] }[] = [];
+    Object.entries(simMap).forEach(([sim, occurrences]) => {
+      if (occurrences.length > 1) {
+        list.push({ sim, occurrences });
+      }
+    });
+    return list;
+  }, [simCardBatches]);
+
+  const [showNotificationBadge, setShowNotificationBadge] = useState(true);
+  const prevNotificationsLength = useRef(0);
+
+  const totalNotificationsLen = duplicateSerialsList.length + duplicateSimsList.length;
+
+  useEffect(() => {
+    if (totalNotificationsLen > prevNotificationsLength.current) {
+      setShowNotificationBadge(true);
+    }
+    prevNotificationsLength.current = totalNotificationsLen;
+  }, [totalNotificationsLen]);
+
+  const notificationCount = totalNotificationsLen;
+
+  // Batch processing logic
+  const uniqueBatches = useMemo(() => {
+    const batches = new Set<string>();
+    serials.forEach(s => {
+      if (s.cruceBatchId) batches.add(s.cruceBatchId);
+    });
+    return Array.from(batches).sort().reverse(); // Newest first
+  }, [serials]);
+
+  const allBatchesOptions = useMemo(() => {
+    const list = [...uniqueBatches];
+    if (activeCruceBatchId && !list.includes(activeCruceBatchId)) {
+      list.unshift(activeCruceBatchId);
+    }
+    return list;
+  }, [uniqueBatches, activeCruceBatchId]);
+
+  // Autodetect newest batch if activeCruceBatchId is empty and batches exist
+  useEffect(() => {
+    if (!isLoading && !activeCruceBatchId && uniqueBatches.length > 0) {
+      setActiveCruceBatchId(uniqueBatches[0]);
+    }
+  }, [uniqueBatches, activeCruceBatchId, isLoading]);
+
   // -------------------------------------------------------------
   // LOADING SCREEN
   // -------------------------------------------------------------
+  // Show Login screen if not authenticated
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-6 font-sans">
-        <LogoIcon className="w-28 h-28 filter drop-shadow-[0_0_24px_rgba(14,165,233,0.35)] animate-pulse" />
+      <div className="min-h-screen bg-[#08080a] flex flex-col items-center justify-center gap-6 font-sans">
+        <LogoIcon className="w-24 h-24 animate-pulse shrink-0" color="#ffffff" />
         <div className="flex flex-col items-center gap-2">
-          <p className="text-blue-400 font-mono text-sm uppercase tracking-[0.2em] animate-pulse">
+          <p className="text-zinc-400 font-mono text-xs uppercase tracking-[0.2em]">
             Cargando base de datos...
           </p>
-          <p className="text-slate-600 font-mono text-xs tracking-wider">
-            DISGLOBAL TRACKING · IndexedDB
+          <p className="text-zinc-650 font-mono text-[10px] tracking-wider">
+            TRACKING · IndexedDB
           </p>
         </div>
         <div className="flex gap-1.5 mt-2">
           {[0, 1, 2].map(i => (
             <span
               key={i}
-              className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"
+              className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce"
               style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}
@@ -370,292 +620,480 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen dashboard-bg font-sans antialiased text-slate-100 flex flex-col selection:bg-blue-600/60 selection:text-white">
+    <div className="min-h-screen bg-[#08080a] text-zinc-300 flex font-sans antialiased overflow-hidden h-screen">
 
-      {/* GLOBAL HEADER BAR */}
-      <header className="bg-[#151925]/80 border-b border-[#2a2f42] backdrop-blur-md sticky top-0 z-40 py-5 px-6 md:px-12 lg:px-16">
-        <div className="w-full flex flex-col lg:flex-row justify-between items-center gap-6 lg:gap-8">
-
-          <div className="flex items-center gap-4 cursor-pointer select-none">
-            <LogoIcon className="w-20 h-20 md:w-24 md:h-24 filter drop-shadow-[0_0_16px_rgba(14,165,233,0.2)] transition-all hover:scale-105 duration-300" />
-            <div>
-              <h1 className="text-xl md:text-2xl lg:text-[28px] font-simplifica uppercase tracking-[0.16em] leading-none flex items-center flex-wrap gap-2">
-                <span className="text-yellow-400 font-extrabold glow-yellow">DISGLOBAL</span>{' '}
-                <span className="text-blue-500 font-light glow-blue hover:text-blue-400 transition-colors">TRACKING</span>
-              </h1>
-              <p className="text-xs text-slate-500 font-mono tracking-wider mt-1.5 uppercase">REGISTROS • FECHAS • RIF • SERIALES</p>
+      {/* 1. SIDEBAR IZQUIERDA VERTICAL */}
+      <aside className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-[#f8fafc] border-r border-slate-200 flex flex-col justify-between shrink-0 h-full select-none z-10`}>
+        
+        <div className="flex flex-col gap-6">
+          {/* Logo aislado en la parte superior */}
+          <div className="flex flex-col items-center pb-3 border-b border-slate-200">
+            {/* Logo */}
+            <div className={`flex items-center gap-3 py-4 w-full ${isSidebarCollapsed ? 'justify-center mt-2 px-1' : 'justify-start pl-4'}`}>
+              <LogoIcon className="w-12 h-12 text-black shrink-0" color="#000000" />
+              {!isSidebarCollapsed && (
+                <div className="animate-fade-in">
+                  <h1 className="text-xs font-black text-black uppercase tracking-wider leading-none">
+                    TRACKING
+                  </h1>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center lg:justify-end gap-x-5 gap-y-3.5">
-            <button
-              onClick={handleImportCSVData}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-emerald-500/5 hover:bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+          {/* Menú de Navegación Vertical */}
+          <nav className={`flex flex-col gap-1.5 px-3`}>
+            {/* Botón para desplazar / Colapsar alineado con los demás */}
+            <button 
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title="Menú"
+              className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider rounded-xl transition-all border cursor-pointer text-left w-full bg-transparent text-slate-500 hover:bg-slate-200/50 hover:text-slate-900 border-transparent`}
             >
-              <FileSpreadsheet size={13} className="text-emerald-500/80" />
-              <span>Importar Datos</span>
+              <Menu size={18} className="text-slate-500" />
+              {!isSidebarCollapsed && <span className="truncate">Menú</span>}
             </button>
-
-            <button
-              onClick={handleExportCSV}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-blue-500/5 hover:bg-blue-500/15 text-blue-400 border border-blue-500/20 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
-            >
-              <Download size={13} className="text-blue-500/80" />
-              <span>Exportar CSV</span>
-            </button>
-
-            <button
-              onClick={handleExportJSON}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-slate-800/25 hover:bg-slate-800 text-slate-400 border border-slate-800 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Terminal size={13} className="text-slate-500" />
-              <span>Exportar JSON</span>
-            </button>
-
-
-
-            <button
-              onClick={handleExportFullCSVBackup}
-              className="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-slate-800/25 hover:bg-slate-800 text-slate-400 border border-slate-800 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer"
-            >
-              <Database size={13} className="text-slate-500" />
-              <span>BD Completa</span>
-            </button>
-          </div>
-
-        </div>
-      </header>
-
-      {/* DETALLE FILTROS REACTIVOS UNIFICADOS DE TABLA */}
-      <section className="bg-[#1e2336] border-b border-[#2a2f42] p-4 md:px-8 lg:px-12 flex-shrink-0">
-        <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3">
-
-          {/* SEARCH BAR UNIT */}
-          <div className="relative">
-            <input
-              type="text"
-              value={globalSearch}
-              onChange={e => setGlobalSearch(e.target.value)}
-              placeholder="BUSCAR SERIAL, RIF, GUIA O REMITENTE"
-              className="w-full text-[11px] p-3 pl-8 bg-[#151925] border border-[#2a2f42] rounded-xl text-slate-100 uppercase placeholder-slate-450 font-sans font-bold tracking-wide focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-            />
-            <Search size={14} className="absolute left-2.5 top-4 text-slate-500" />
-            {globalSearch && (
-              <button
-                onClick={() => setGlobalSearch('')}
-                className="absolute right-3 top-3 text-[10px] font-bold text-slate-500 hover:text-slate-300"
-              >
-                Limpiar
-              </button>
-            )}
-          </div>
-
-          {/* DATE RANGE SPLIT */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="relative">
-              <input
-                type="date"
-                value={dateFrom}
-                onChange={e => setDateFrom(e.target.value)}
-                className="w-full text-xs p-2.5 bg-[#151925] border border-[#2a2f42] rounded-xl text-slate-300 font-mono uppercase"
-              />
-              <span className="absolute -top-2 left-3 px-1 text-[8px] bg-[#1e2336] text-slate-400 font-black tracking-widest uppercase">Desde</span>
-            </div>
-
-            <div className="relative">
-              <input
-                type="date"
-                value={dateTo}
-                onChange={e => setDateTo(e.target.value)}
-                className="w-full text-xs p-2.5 bg-[#151925] border border-[#2a2f42] rounded-xl text-slate-300 font-mono uppercase"
-              />
-              <span className="absolute -top-2 left-3 px-1 text-[8px] bg-[#1e2336] text-slate-400 font-black tracking-widest uppercase">Hasta</span>
-            </div>
-          </div>
-
-          {/* INCLUSIVE CHECK */}
-          <div className="flex items-center justify-end md:justify-center lg:justify-end gap-3 px-2">
-            <label className="flex items-center gap-2 text-xs font-bold text-slate-400 select-none cursor-pointer tracking-wider">
-              <input
-                type="checkbox"
-                checked={includeCasillero}
-                onChange={e => setIncludeCasillero(e.target.checked)}
-                className="rounded text-blue-500 bg-slate-900 border-slate-800"
-              />
-              <span>INCLUIR EQUIPOS DE CASILLERO</span>
-            </label>
-          </div>
-
-        </div>
-      </section>
-
-      {/* SECCIÓN 3: PESTAÑAS DE NAVEGACIÓN PRINCIPAL */}
-      <nav className="bg-transparent w-full px-4 md:px-8 lg:px-12 mt-6">
-        <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-[#2a2f42]/50">
-          {[
-            { id: 'general', label: 'Gestión General', icon: Layers },
-            { id: 'casillero', label: 'Casillero', icon: FolderCheck },
-            { id: 'hacerEnvio', label: 'Hacer Envío', icon: Send },
-            { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
-            { id: 'envios', label: 'Equipos Enviados', icon: FileSpreadsheet },
-            { id: 'modelos', label: 'Modelos Registrados', icon: Settings },
-            { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
-            { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users }
-          ].map(t => {
-            const Icon = t.icon;
-            const isActive = currentTab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setCurrentTab(t.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider font-sans transition-all rounded-xl cursor-pointer ${isActive
-                  ? 'bg-[#3b82f6] text-white border border-[#3b82f6]/20 shadow-md shadow-blue-500/10'
-                  : 'bg-[#1e2336] hover:bg-[#252a40] hover:text-slate-200 text-slate-400 border border-[#2a2f42]'
+            {[
+              { id: 'general', label: 'Gestión General', icon: Home },
+              { id: 'casillero', label: 'Casillero', icon: Flag },
+              { id: 'hacerEnvio', label: 'Hacer Envío', icon: ArrowUpRight },
+              { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
+              { id: 'standby', label: 'Stand-by', icon: Clock },
+              { id: 'envios', label: 'Equipos Enviados', icon: FileSpreadsheet },
+              { id: 'simcards', label: 'Gestión de SIM-Cards', icon: CardSim },
+              { id: 'modelos', label: 'Modelos Registrados', icon: Smartphone },
+              { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
+              { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users }
+            ].map(t => {
+              const Icon = t.icon;
+              const isActive = currentTab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setCurrentTab(t.id)}
+                  title={t.label}
+                  className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider rounded-xl transition-all border cursor-pointer text-left w-full ${
+                    isActive
+                      ? 'bg-white text-slate-800 border-slate-200 shadow-sm font-black active-tab'
+                      : 'bg-transparent text-slate-500 hover:bg-slate-200/50 hover:text-slate-900 border-transparent'
                   }`}
+                >
+                  <Icon size={18} className={isActive ? 'text-slate-800' : 'text-slate-500'} />
+                  {!isSidebarCollapsed && <span className="truncate">{t.label}</span>}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Estatus en el pie del Sidebar */}
+        <div className={`border-t border-slate-200 pt-4 p-4 text-[9px] text-slate-400 font-mono flex flex-col gap-1.5 ${isSidebarCollapsed ? 'items-center' : ''}`}>
+          {!isSidebarCollapsed ? (
+            <>
+              <span>© {new Date().getFullYear()} TRACKING</span>
+              <span className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
+                Storage: IndexedDB
+              </span>
+            </>
+          ) : (
+            <span className="w-2.5 h-2.5 rounded-full bg-green-600 animate-pulse" title="Storage Connected"></span>
+          )}
+        </div>
+      </aside>
+
+      {/* 2. CONTENEDOR DE CONTENIDO PRINCIPAL (DERECHA) */}
+      <div className="flex-1 flex flex-col min-w-0 h-full bg-[#f5f6f8] overflow-hidden">
+
+        {/* HEADER BAR CON TÍTULOS Y ACCIONES DE IMPORTACIÓN/EXPORTACIÓN */}
+        <header className="bg-white border-b border-slate-200 py-4 px-8 flex justify-between items-center gap-4 shrink-0 shadow-sm">
+          <div className="flex items-center gap-6">
+            <div className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-1">
+              <span className="text-[10px] font-bold bg-[#2c3e50] text-white px-2 py-0.5 rounded-full font-mono uppercase tracking-widest" style={{ color: '#ffffff' }}>TRACKING</span>
+            </div>
+            
+            <div className="h-4 w-px bg-slate-300"></div>
+            
+            <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              {currentTab === 'general' && 'Gestión General de Seriales'}
+              {currentTab === 'casillero' && 'Control de Casillero'}
+              {currentTab === 'hacerEnvio' && 'Envío Logístico'}
+              {currentTab === 'cruce' && 'Cruce Inteligente de Seriales'}
+              {currentTab === 'standby' && 'Equipos en Camino (Stand-by)'}
+              {currentTab === 'envios' && 'Equipos Despachados / Enviados'}
+              {currentTab === 'simcards' && 'Gestión de SIM-Cards / Historial de Anulaciones'}
+              {currentTab === 'modelos' && 'Configuración de Modelos'}
+              {currentTab === 'estadisticas' && 'Métricas y Estadísticas'}
+              {currentTab === 'usuarios' && 'Directorio de Remitentes'}
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-5">
+            {/* ACCIONES DE IMPORTACIÓN/EXPORTACIÓN COMPACTAS */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={handleImportCSVData}
+                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                title="Importar CSV"
               >
-                <Icon size={19} className={isActive ? 'text-white' : 'text-slate-400'} />
-                <span>{t.label}</span>
+                <FileSpreadsheet size={15} />
               </button>
-            );
-          })}
-        </div>
-      </nav>
 
-      {/* CORE BODY CONTAINER */}
-      <main className="w-full p-4 md:p-8 lg:px-12 flex-grow">
+              <button
+                onClick={handleExportCSV}
+                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                title="Exportar CSV"
+              >
+                <Download size={15} />
+              </button>
 
-        {currentTab === 'general' && (
-          <GestionGeneral
-            serials={serials}
-            setSerials={setSerials}
-            modelosDB={modelosDB}
-            globalSearch={globalSearch}
-            setGlobalSearch={setGlobalSearch}
-            dateFrom={dateFrom}
-            setDateFrom={setDateFrom}
-            dateTo={dateTo}
-            setDateTo={setDateTo}
-            includeCasillero={includeCasillero}
-            setIncludeCasillero={setIncludeCasillero}
-            onShowHistory={showHistory}
-            onHideHistory={hideHistory}
-            onUserClick={(remitente: string) => setViewingProfile(remitente)}
-            usersProfiles={usersProfiles}
-          />
-        )}
+              <button
+                onClick={handleExportJSON}
+                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                title="Exportar JSON"
+              >
+                <Terminal size={15} />
+              </button>
 
-        {currentTab === 'casillero' && (
-          <Casillero
-            serials={serials}
-            setSerials={setSerials}
-            modelosDB={modelosDB}
-            globalSearch={globalSearch}
-            dateFrom={dateFrom}
-            dateTo={dateTo}
-            statusFilter="TODOS"
-            onUserClick={(remitente: string) => setViewingProfile(remitente)}
-            usersProfiles={usersProfiles}
-          />
-        )}
+              <button
+                onClick={handleExportFullCSVBackup}
+                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                title="Respaldar Base de Datos (Full CSV)"
+              >
+                <Database size={15} />
+              </button>
+            </div>
 
-        {currentTab === 'hacerEnvio' && (
-          <HacerEnvio
-            enviosExternos={enviosExternos}
-            setEnviosExternos={setEnviosExternos}
-          />
-        )}
+            <div className="h-6 w-px bg-slate-200"></div>
 
-        {currentTab === 'cruce' && (
-          <CruceSeriales
-            serials={serials}
-            setSerials={setSerials}
-            modelosDB={modelosDB}
-            onUserClick={(remitente: string) => setViewingProfile(remitente)}
-            usersProfiles={usersProfiles}
-          />
-        )}
+            {/* NOTIFICATION BELL */}
+            <div className="relative notification-container">
+              <div 
+                onClick={() => {
+                  setShowNotificationsMenu(!showNotificationsMenu);
+                  setShowNotificationBadge(false);
+                }}
+                className="cursor-pointer hover:bg-slate-50 p-2 rounded-full border border-slate-200 flex items-center justify-center text-slate-600"
+              >
+                <Bell size={16} />
+                {notificationCount > 0 && showNotificationBadge && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] font-black font-sans leading-none border border-white">
+                    {notificationCount}
+                  </span>
+                )}
+              </div>
 
-        {currentTab === 'envios' && (
-          <EquiposEnviados
-            serials={serials}
-            enviosExternos={enviosExternos}
-            modelosDB={modelosDB}
-            globalSearch={globalSearch}
-            dateFrom={dateFrom}
-            dateTo={dateTo}
-          />
-        )}
+              {/* Dropdown Menu for Notifications */}
+              {showNotificationsMenu && (
+                <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl w-72 z-50 animate-fade-in overflow-hidden font-arial text-left">
+                  <div className="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                    <div className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">Alertas de Duplicados</div>
+                    <span className="text-[9px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">{notificationCount}</span>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                    {duplicateSerialsList.length === 0 && duplicateSimsList.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-400 font-semibold uppercase">Ninguna Alerta</div>
+                    ) : (
+                      <>
+                        {duplicateSerialsList.map(item => (
+                          <div 
+                            key={`serial-${item.serial}`} 
+                            className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
+                            onClick={() => {
+                              setGlobalSearch(item.serial);
+                              setCurrentTab('general');
+                              setShowNotificationsMenu(false);
+                            }}
+                          >
+                            <div className="text-xs font-bold text-slate-800 tracking-wider font-mono flex items-center justify-between">
+                              <span>{item.serial} (POS)</span>
+                              <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">Ver</span>
+                            </div>
+                            <div className="text-[9px] text-slate-500 font-mono mt-1 uppercase">
+                              Fechas: {item.dates.map(d => d.split('-').reverse().join('/')).join(' / ')}
+                            </div>
+                          </div>
+                        ))}
+                        {duplicateSimsList.map(item => (
+                          <div 
+                            key={`sim-${item.sim}`} 
+                            className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
+                            onClick={() => {
+                              setGlobalSearch(item.sim);
+                              setCurrentTab('simcards');
+                              setShowNotificationsMenu(false);
+                            }}
+                          >
+                            <div className="text-xs font-bold text-slate-800 tracking-wider font-mono flex items-center justify-between">
+                              <span className="text-red-750 font-extrabold">{item.sim} (SIM)</span>
+                              <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">Ver</span>
+                            </div>
+                            <div className="text-[9px] text-slate-500 font-mono mt-1 uppercase">
+                              Lotes: {item.occurrences.map(o => `${o.batchTitle} (${o.date.split('-').reverse().join('/')})`).join(' / ')}
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
-        {currentTab === 'modelos' && (
-          <Modelos
-            modelosDB={modelosDB}
-            setModelosDB={setModelosDB}
-          />
-        )}
+            <div className="h-6 w-px bg-slate-200"></div>
 
-        {currentTab === 'estadisticas' && (
-          <Estadisticas
-            serials={serials}
-            modelosDB={modelosDB}
-            onUserClick={(remitente: string) => setViewingProfile(remitente)}
-            usersProfiles={usersProfiles}
-          />
-        )}
+            {/* USER PROFILE INFO + LOGOUT */}
+            <div className="relative">
+              <div 
+                className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => setShowUserMenu(!showUserMenu)}
+              >
+                <div className="text-right hidden sm:block">
+                  <div className="text-[14px] font-bold text-slate-800 uppercase font-arial leading-none">PEDRO</div>
+                  <div className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wider font-arial leading-none">ESPECIALISTA EN NEXGO</div>
+                </div>
+                
+                {/* Profile Image Circle representation */}
+                <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-300 shadow-sm select-none">
+                  P
+                </div>
+              </div>
 
-        {currentTab === 'usuarios' && (
-          <Usuarios
-            serials={serials}
-            modelosDB={modelosDB}
-            globalSearch={globalSearch}
-            usersProfiles={usersProfiles}
-            setUsersProfiles={setUsersProfiles}
-          />
-        )}
+              {/* Dropdown Menu */}
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl w-48 z-50 animate-fade-in overflow-hidden">
+                  <div className="p-3 border-b border-slate-100">
+                    <div className="text-[14px] font-bold text-slate-800 uppercase font-arial">PEDRO</div>
+                    <div className="text-[11px] font-bold text-slate-400 mt-1 uppercase font-arial">ESPECIALISTA EN NEXGO</div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer text-left uppercase tracking-wider"
+                  >
+                    <LogOut size={14} />
+                    Cerrar Sesión
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </header>
 
-      </main>
+        {/* SUBHEADER: FILTROS REACTIVOS UNIFICADOS */}
+        <section className="bg-[#f8fafc] border-b border-slate-200 p-4 px-8 shrink-0">
+          <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3">
 
-      {/* FOOTER BAR */}
-      <footer className="border-t border-[#2a2f42] bg-[#151925]/80 p-5 text-center mt-10 text-[11px] text-slate-600 font-mono tracking-wider flex-shrink-0">
-        <div className="w-full px-4 md:px-8 lg:px-12 flex flex-col md:flex-row justify-between items-center gap-3">
-          <span>© {new Date().getFullYear()} DISGLOBAL INC. Todos los Derechos Reservados.</span>
-          <span className="flex items-center gap-1.5">
-            <Database size={10} className="text-blue-500/60" />
-            Almacenamiento: IndexedDB
-          </span>
-        </div>
-      </footer>
+            {/* BUSCADOR */}
+            <div className="relative">
+              <input
+                type="text"
+                value={globalSearch}
+                onChange={e => setGlobalSearch(e.target.value)}
+                placeholder="BUSCAR SERIAL, RIF, GUIA O REMITENTE"
+                className="w-full text-[11px] p-2.5 pl-8 bg-white border border-black rounded-lg text-black uppercase placeholder-slate-400 font-semibold focus:outline-none focus:border-black transition-all font-mono search-input"
+              />
+              <Search size={13} className="absolute left-2.5 top-3.5 text-black font-bold" />
+              {globalSearch && (
+                <button
+                  onClick={() => setGlobalSearch('')}
+                  className="absolute right-3 top-2.5 text-[9px] font-bold text-black hover:text-red-600 cursor-pointer"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* RANGO DE FECHAS */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="relative">
+                <input
+                  type="date"
+                  value={dateFrom}
+                  onChange={e => setDateFrom(e.target.value)}
+                  className="w-full text-[11px] p-2 bg-white border border-slate-250 rounded-lg text-slate-700 font-mono uppercase"
+                />
+                <span className="absolute -top-1.5 left-2 px-1 text-[7px] bg-[#f8fafc] text-slate-400 font-black tracking-widest uppercase">Desde</span>
+              </div>
+
+              <div className="relative">
+                <input
+                  type="date"
+                  value={dateTo}
+                  onChange={e => setDateTo(e.target.value)}
+                  className="w-full text-[11px] p-2 bg-white border border-slate-250 rounded-lg text-slate-700 font-mono uppercase"
+                />
+                <span className="absolute -top-1.5 left-2 px-1 text-[7px] bg-[#f8fafc] text-slate-400 font-black tracking-widest uppercase">Hasta</span>
+              </div>
+            </div>
+
+            {/* CHECKBOX DE CASILLERO */}
+            <div className="flex items-center justify-end md:justify-center lg:justify-end gap-3 px-2">
+              <label className="flex items-center gap-2 text-[10px] font-bold text-slate-500 select-none cursor-pointer tracking-wider">
+                <input
+                  type="checkbox"
+                  checked={includeCasillero}
+                  onChange={e => setIncludeCasillero(e.target.checked)}
+                  className="rounded text-slate-800 bg-white border-slate-350 focus:ring-0 focus:ring-offset-0"
+                />
+                <span>INCLUIR CASILLEROS</span>
+              </label>
+            </div>
+
+          </div>
+        </section>
+
+        {/* AREA DE TRABAJO SCROLLABLE */}
+        <main className="flex-1 overflow-y-auto p-8 dashboard-bg">
+
+          {currentTab === 'general' && (
+            <GestionGeneral
+              serials={serials}
+              setSerials={setSerials}
+              modelosDB={modelosDB}
+              globalSearch={globalSearch}
+              setGlobalSearch={setGlobalSearch}
+              dateFrom={dateFrom}
+              setDateFrom={setDateFrom}
+              dateTo={dateTo}
+              setDateTo={setDateTo}
+              includeCasillero={includeCasillero}
+              setIncludeCasillero={setIncludeCasillero}
+              onShowHistory={showHistory}
+              onHideHistory={hideHistory}
+              onUserClick={(remitente: string) => setViewingProfile(remitente)}
+              usersProfiles={usersProfiles}
+              setUsersProfiles={setUsersProfiles}
+              activeCruceBatchId={activeCruceBatchId}
+            />
+          )}
+
+          {currentTab === 'casillero' && (
+            <Casillero
+              serials={serials}
+              setSerials={setSerials}
+              modelosDB={modelosDB}
+              globalSearch={globalSearch}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              statusFilter="TODOS"
+              onUserClick={(remitente: string) => setViewingProfile(remitente)}
+              usersProfiles={usersProfiles}
+              setUsersProfiles={setUsersProfiles}
+              activeCruceBatchId={activeCruceBatchId}
+            />
+          )}
+
+          {currentTab === 'hacerEnvio' && (
+            <HacerEnvio
+              enviosExternos={enviosExternos}
+              setEnviosExternos={setEnviosExternos}
+              serials={serials}
+              setSerials={setSerials}
+              activeCruceBatchId={activeCruceBatchId}
+            />
+          )}
+
+          {currentTab === 'cruce' && (
+            <CruceSeriales
+              serials={serials}
+              setSerials={setSerials}
+              modelosDB={modelosDB}
+              onUserClick={(remitente: string) => setViewingProfile(remitente)}
+              usersProfiles={usersProfiles}
+              activeCruceBatchId={activeCruceBatchId}
+              setActiveCruceBatchId={setActiveCruceBatchId}
+            />
+          )}
+
+          {currentTab === 'standby' && (
+            <StandBy
+              standbyList={standbyList}
+              setStandbyList={setStandbyList}
+            />
+          )}
+
+          {currentTab === 'envios' && (
+            <EquiposEnviados
+              serials={serials}
+              enviosExternos={enviosExternos}
+              modelosDB={modelosDB}
+              globalSearch={globalSearch}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+              activeCruceBatchId={activeCruceBatchId}
+            />
+          )}
+
+          {currentTab === 'simcards' && (
+            <GestionSimCards
+              simCardBatches={simCardBatches}
+              setSimCardBatches={setSimCardBatches}
+            />
+          )}
+
+          {currentTab === 'modelos' && (
+            <Modelos
+              modelosDB={modelosDB}
+              setModelosDB={setModelosDB}
+            />
+          )}
+
+          {currentTab === 'estadisticas' && (
+            <Estadisticas
+              serials={serials}
+              modelosDB={modelosDB}
+              onUserClick={(remitente: string) => setViewingProfile(remitente)}
+              usersProfiles={usersProfiles}
+              simCardBatches={simCardBatches}
+            />
+          )}
+
+          {currentTab === 'usuarios' && (
+            <Usuarios
+              serials={serials}
+              modelosDB={modelosDB}
+              globalSearch={globalSearch}
+              usersProfiles={usersProfiles}
+              setUsersProfiles={setUsersProfiles}
+            />
+          )}
+
+        </main>
+      </div>
 
       {/* FLOATING RETRACED HISTORY OVERLAY POPUP */}
       {historyTooltip && (
         <div
-          className="absolute z-50 bg-slate-950/95 border border-blue-500/40 rounded-xl p-3 shadow-2xl min-w-[270px] max-w-[340px] pointer-events-none mt-2 font-mono text-[11px] animate-fade-in text-slate-100 backdrop-blur-md"
+          className="absolute z-50 bg-[#0f0f11] border border-[#3f3f46] rounded-lg p-3.5 shadow-2xl min-w-[270px] max-w-[340px] pointer-events-none mt-2 font-mono text-[11px] animate-fade-in text-white-force uppercase font-bold"
           style={{
             left: historyTooltip.clientX,
             top: historyTooltip.clientY
           }}
         >
-          <div className="font-bold text-[12px] text-blue-400 border-b border-slate-800 pb-1.5 mb-1.5 uppercase font-sans">
-            Recibo de Historial
+          <div className="font-bold text-[11px] text-white-force border-b border-[#3f3f46] pb-1.5 mb-1.5 uppercase font-sans tracking-wider">
+            RECIBO DE HISTORIAL
           </div>
-          <div className="text-slate-400 font-sans tracking-wide">
-            Serial: <span className="font-mono text-white text-xs font-black">{historyTooltip.serial}</span>
+          <div className="text-white-force font-sans tracking-wide uppercase">
+            SERIAL: <span className="font-mono text-white-force text-xs font-black uppercase">{historyTooltip.serial}</span>
           </div>
 
-          <div className="mt-2 text-[10px] space-y-1.5">
+          <div className="mt-2 text-[10px] space-y-1.5 uppercase text-white-force">
             {getSerialHistoryLogs(historyTooltip.serial).length === 0 ? (
-              <div className="text-slate-600">No hay logs previos en la base general.</div>
+              <div className="text-white-force uppercase">NO HAY LOGS PREVIOS EN LA BASE GENERAL.</div>
             ) : (
               getSerialHistoryLogs(historyTooltip.serial).map((log, i) => (
-                <div key={i} className="flex justify-between items-center border-b border-slate-900/60 pb-1">
-                  <div>
-                    <div className="font-bold text-slate-300">{log.displayDate}</div>
-                    <div className="text-[9px] text-slate-500 uppercase">{log.remitente}</div>
+                <div key={i} className="flex justify-between items-center border-b border-[#27272a] pb-1 text-white-force uppercase">
+                  <div className="text-white-force uppercase">
+                    <div className="font-bold text-white-force uppercase">{log.displayDate}</div>
+                    <div className="text-[9px] text-white-force uppercase">{log.remitente}</div>
                   </div>
-                  <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${['CANCELADO', 'N#A'].includes(log.status)
-                    ? 'bg-emerald-600 text-white'
-                    : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(log.status)
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-slate-800 text-slate-300'
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                    ['CANCELADO', 'N#A', 'RECUPERADO'].includes(log.status)
+                      ? 'bg-green-600 text-white-force'
+                      : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(log.status)
+                        ? 'bg-orange-500 text-white-force'
+                        : log.status === 'SIN ESTATUS'
+                          ? 'bg-black text-white-force border border-zinc-700'
+                          : 'bg-zinc-800 text-white-force'
                     }`}>
                     {log.status}
                   </span>
@@ -667,49 +1105,125 @@ export default function App() {
       )}
 
       {/* GLOBAL USER PROFILE MODAL */}
-      {viewingProfile && (
-        <div 
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-fade-in"
-          onClick={() => setViewingProfile(null)}
-        >
+      {viewingProfile && (() => {
+        const profile = getProfileWithFallback(viewingProfile);
+        return createPortal(
           <div 
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-6 shadow-2xl flex flex-col gap-4"
-            onClick={e => e.stopPropagation()}
+            className="fixed inset-0 bg-slate-900/30 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in-overlay"
+            onClick={() => setViewingProfile(null)}
           >
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
-                <Users size={20} className="text-blue-400" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider">{viewingProfile}</h3>
-                <p className="text-[10px] text-slate-500 font-mono">Ficha de Remitente Logístico</p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col gap-3 font-sans text-xs">
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                <span className="block text-[9px] text-slate-500 uppercase font-bold mb-1">Nombre Completo</span>
-                <span className="text-slate-300 font-semibold">{usersProfiles[viewingProfile]?.nombreCompleto || 'No especificado'}</span>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                <span className="block text-[9px] text-slate-500 uppercase font-bold mb-1">Área / Departamento</span>
-                <span className="text-slate-300 font-semibold">{usersProfiles[viewingProfile]?.area || 'No especificada'}</span>
-              </div>
-              <div className="bg-slate-950 p-3 rounded-lg border border-slate-800">
-                <span className="block text-[9px] text-slate-500 uppercase font-bold mb-1">Cargo</span>
-                <span className="text-slate-300 font-semibold">{usersProfiles[viewingProfile]?.cargo || 'No especificado'}</span>
-              </div>
-            </div>
-
-            <button 
-              onClick={() => setViewingProfile(null)}
-              className="mt-2 w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider rounded-lg transition-colors cursor-pointer"
+            <div 
+              className="bg-white border border-slate-100 rounded-2xl w-full max-w-sm max-h-[85vh] p-6 shadow-xl flex flex-col gap-4 overflow-y-auto animate-fade-in"
+              onClick={e => e.stopPropagation()}
             >
-              Cerrar
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center">
+                  <Users size={16} className="text-slate-600" />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">{viewingProfile}</h3>
+                  <p className="text-[9px] text-slate-450 font-mono">Ficha de Remitente Logístico</p>
+                </div>
+              </div>
+              
+              <div className="flex flex-col gap-3 font-sans text-xs">
+                <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                  <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">Nombre Completo</span>
+                  <span className="text-slate-800 font-semibold uppercase">{profile.nombreCompleto || 'No especificado'}</span>
+                </div>
+
+                {/* Categorías */}
+                <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                  <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">Categorías</span>
+                  <div className="flex gap-2 mt-1">
+                    {(profile.isUsuario || (!profile.isUsuario && !profile.isCliente)) && (
+                      <span className="bg-slate-200 text-slate-800 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider">USUARIO</span>
+                    )}
+                    {profile.isCliente && (
+                      <span className="bg-blue-100 text-blue-850 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider">CLIENTE</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Datos de Usuario (Trabajador) */}
+                {(profile.isUsuario || (!profile.isUsuario && !profile.isCliente)) && (
+                  <>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                      <span className="block text-[8px] text-slate-555 uppercase font-bold mb-1">Departamento</span>
+                      <span className="text-slate-800 font-semibold uppercase">{profile.area || 'No especificada'}</span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                      <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">Cargo</span>
+                      <span className="text-slate-800 font-semibold uppercase">{profile.cargo || 'No especificado'}</span>
+                    </div>
+                  </>
+                )}
+
+                {/* Datos de Cliente */}
+                {profile.isCliente && (
+                  <>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                      <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">RIF</span>
+                      <span className="text-slate-800 font-semibold uppercase">{profile.rif || 'No especificado'}</span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                      <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">Razón Social</span>
+                      <span className="text-slate-800 font-semibold uppercase">{profile.razonSocial || 'No especificada'}</span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                      <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">Ubicación</span>
+                      <span className="text-slate-800 font-semibold uppercase">{profile.ubicacion || 'No especificada'}</span>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
+                      <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">Número Telefónico</span>
+                      <span className="text-slate-800 font-semibold uppercase">{profile.telefono || 'No especificado'}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <button 
+                onClick={() => setViewingProfile(null)}
+                className="mt-2 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer shadow-sm"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
+
+      {/* STANDBY TOAST ALERTS */}
+      <div className="fixed bottom-6 right-6 z-[150] flex flex-col gap-3 max-w-sm w-full pointer-events-none font-sans">
+        {standbyAlerts.map(alert => (
+          <div
+            key={alert.id}
+            className="pointer-events-auto bg-emerald-600 border border-emerald-500 text-white rounded-2xl p-4 shadow-2xl flex items-start gap-3.5 animate-slide-in-right relative"
+            style={{
+              boxShadow: '0 10px 25px -5px rgba(16, 185, 129, 0.4), 0 8px 10px -6px rgba(16, 185, 129, 0.4)'
+            }}
+          >
+            <div className="bg-white/20 p-2 rounded-xl shrink-0">
+              <Bell className="w-4 h-4 text-white animate-bounce" />
+            </div>
+            <div className="flex-1 text-left">
+              <h4 className="text-[10px] font-black uppercase tracking-wider text-emerald-100 font-mono">
+                ¡EQUIPO EN STAND-BY RECIBIDO!
+              </h4>
+              <p className="text-xs font-bold mt-1 text-white leading-normal uppercase">
+                {alert.mensaje}
+              </p>
+            </div>
+            <button
+              onClick={() => setStandbyAlerts(prev => prev.filter(a => a.id !== alert.id))}
+              className="text-white/60 hover:text-white cursor-pointer absolute top-3 right-3 text-xs bg-transparent border-none font-bold"
+            >
+              ✕
             </button>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { POSItem, POSStatus, ModelConfig, CruceItem, CMSItem } from '../types';
+import { getDBItem, setDBItem } from '../db';
 import { 
   FileCheck, ArrowRightLeft, Check, Import, Send, Trash2, Edit2, Play, Search, Database, Layers, X, Clipboard
 } from 'lucide-react';
@@ -10,6 +12,8 @@ interface CruceSerialesProps {
   modelosDB: Record<string, ModelConfig>;
   onUserClick: (remitente: string) => void;
   usersProfiles: Record<string, import('../types').UserProfile>;
+  activeCruceBatchId: string;
+  setActiveCruceBatchId: (id: string) => void;
 }
 
 export const CruceSeriales: React.FC<CruceSerialesProps> = ({
@@ -17,32 +21,47 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   setSerials,
   modelosDB,
   onUserClick,
-  usersProfiles
+  usersProfiles,
+  activeCruceBatchId,
+  setActiveCruceBatchId
 }) => {
   // Real-time text streams state
-  const [emailText, setEmailText] = useState(() => localStorage.getItem('cruce_emailText') || '');
-  const [fisicoText, setFisicoText] = useState(() => localStorage.getItem('cruce_fisicoText') || '');
+  const [emailText, setEmailText] = useState('');
+  const [fisicoText, setFisicoText] = useState('');
   
   // View states for the 2 columns ('visual' or 'edit')
-  const [emailViewMode, setEmailViewMode] = useState<'visual' | 'edit'>(() => {
-    return (localStorage.getItem('cruce_emailText') || '') !== '' ? 'visual' : 'edit';
-  });
-  const [fisicoViewMode, setFisicoViewMode] = useState<'visual' | 'edit'>(() => {
-    return (localStorage.getItem('cruce_fisicoText') || '') !== '' ? 'visual' : 'edit';
-  });
+  const [emailViewMode, setEmailViewMode] = useState<'visual' | 'edit'>('edit');
+  const [fisicoViewMode, setFisicoViewMode] = useState<'visual' | 'edit'>('edit');
 
   // Dedicated barcode scanner live input value
   const [scanInput, setScanInput] = useState('');
   const scanInputRef = useRef<HTMLInputElement>(null);
 
-  const [datosMaestro, setDatosMaestro] = useState<CruceItem[]>(() => {
-    return JSON.parse(localStorage.getItem('datosMaestro') || '[]');
-  });
+  const [datosMaestro, setDatosMaestro] = useState<CruceItem[]>([]);
 
   // CMS state
-  const [datosCMS, setDatosCMS] = useState<CMSItem[]>(() => {
-    return JSON.parse(localStorage.getItem('datosCMS') || '[]');
-  });
+  const [datosCMS, setDatosCMS] = useState<CMSItem[]>([]);
+
+  const isLoadedRef = useRef(false);
+
+  // Load persisted CruceSeriales data from Supabase/IndexedDB on mount
+  useEffect(() => {
+    (async () => {
+      const [savedEmail, savedFisico, savedMaestro, savedCMS] = await Promise.all([
+        getDBItem<string>('cruce_emailText', ''),
+        getDBItem<string>('cruce_fisicoText', ''),
+        getDBItem<CruceItem[]>('datosMaestro', []),
+        getDBItem<CMSItem[]>('datosCMS', []),
+      ]);
+      setEmailText(savedEmail);
+      setFisicoText(savedFisico);
+      if (savedEmail) setEmailViewMode('visual');
+      if (savedFisico) setFisicoViewMode('visual');
+      setDatosMaestro(Array.isArray(savedMaestro) ? savedMaestro : []);
+      setDatosCMS(Array.isArray(savedCMS) ? savedCMS : []);
+      isLoadedRef.current = true;
+    })();
+  }, []);
 
   const [remitenteCorreo, setRemitenteCorreo] = useState('VALIDADOR');
 
@@ -69,35 +88,31 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   const imsCargado = datosMaestro.length > 0;
   const CMSCargado = datosCMS.length > 0;
 
-  // Persist values in localStorage
+  // Persist values via db.ts (Supabase + local fallback)
   useEffect(() => {
-    localStorage.setItem('cruce_emailText', emailText);
+    if (!isLoadedRef.current) return;
+    setDBItem('cruce_emailText', emailText);
     if (emailText === '' && emailViewMode === 'visual') {
       setEmailViewMode('edit');
     }
   }, [emailText]);
 
   useEffect(() => {
-    localStorage.setItem('cruce_fisicoText', fisicoText);
+    if (!isLoadedRef.current) return;
+    setDBItem('cruce_fisicoText', fisicoText);
     if (fisicoText === '' && fisicoViewMode === 'visual') {
       setFisicoViewMode('edit');
     }
   }, [fisicoText]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('datosMaestro', JSON.stringify(datosMaestro));
-    } catch (e) {
-      console.warn("Límite de almacenamiento local superado. Datos persistidos únicamente en memoria activa.");
-    }
+    if (!isLoadedRef.current) return;
+    setDBItem('datosMaestro', datosMaestro);
   }, [datosMaestro]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('datosCMS', JSON.stringify(datosCMS));
-    } catch (e) {
-      console.warn("Límite de almacenamiento local superado. Datos persistidos únicamente en memoria activa.");
-    }
+    if (!isLoadedRef.current) return;
+    setDBItem('datosCMS', datosCMS);
   }, [datosCMS]);
 
   // Focus barcode scan field when list mode is visual
@@ -413,12 +428,18 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     }
 
     const d = new Date();
+    const formatTimeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+    const formatDayStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+    const newBatchId = `LOTE - ${formatDayStr} ${formatTimeStr}`;
+
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const displayToday = today.split('-').reverse().join('/');
     const cleanRemitente = remitenteCorreo.trim().toUpperCase() || 'VALIDADOR';
 
     let nuevos = 0;
     let actualizados = 0;
+
+    setActiveCruceBatchId(newBatchId);
 
     setSerials(prev => {
       const copy = [...prev];
@@ -435,6 +456,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
         const idx = copy.findIndex(item => item.serial === serial);
         if (idx !== -1) {
           // Mantener el status original según requerimiento (historial de ingreso)
+          copy[idx].cruceBatchId = newBatchId; // Asignar al lote actual para visibilidad
           if ('isCMS' in match && match.isCMS) {
             if (match.remitente) copy[idx].remitente = match.remitente;
             if (match.date) {
@@ -498,7 +520,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
             destinoSalida: '',
             fechaConfirmada: false,
             ticket: (!isCMS && match?.ticket) || '',
-            addedFromCruce: true
+            addedFromCruce: true,
+            cruceBatchId: newBatchId
           });
           nuevos++;
         }
@@ -535,62 +558,82 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   // Aesthetic light pastel style badges with pure WHITE text inside
   const getStatusBadgeStyle = (st: POSStatus) => {
     if (['CANCELADO', 'N#A'].includes(st)) {
-      return 'bg-emerald-500/20 text-white border border-emerald-400/30 font-bold px-2 py-0.5 rounded shadow-sm';
+      return 'bg-emerald-600 text-white border border-emerald-700 font-bold px-2 py-0.5 rounded shadow-sm';
     }
     if (['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'RECUPERADO'].includes(st)) {
       return 'bg-orange-600 text-white border border-orange-550 font-extrabold px-2 py-0.5 rounded shadow-sm';
     }
-    return 'bg-slate-800 text-white border border-slate-700 font-semibold px-2 py-0.5 rounded shadow-sm';
+    return 'bg-slate-500 text-white border border-slate-600 font-semibold px-2 py-0.5 rounded shadow-xs';
   };
 
   return (
-    <div className="flex flex-col gap-5 animate-fade-in text-slate-100 pb-16">
+    <div className="flex flex-col gap-5 animate-fade-in text-slate-800 pb-16 font-arial">
       
       {/* SECCIÓN VALIDADOR / HOJA DE CONTROL: ENVIADO HACIA LOGICA IMS / CMS */}
-      <div className="bg-[#1e2336] p-5 rounded-xl border border-[#2a2f42] flex flex-col md:flex-row justify-between items-center gap-4">
+      <div className="dark-panel p-5 flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-          <h3 className="text-base font-black text-white flex items-center gap-2">
-            <Database className="text-white w-5 h-5 animate-pulse" />
+          <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
+            <Database className="w-5 h-5 animate-pulse" style={{ color: '#0d9488' }} />
             BASES DE DATOS (IMS / CMS)
           </h3>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {imsCargado && (
-            <span className="text-[10px] font-black px-3 py-1.5 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-500/25">
-              IMS: {datosMaestro.length} REGISTROS
-            </span>
-          )}
-          <button 
-            onClick={() => {
-              setImsSerialsRaw('');
-              setImsStatusRaw('');
-              setIsIMSModalOpen(true);
-            }}
-            className="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white font-extrabold rounded-lg text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer select-none border-none"
-          >
-            <Database size={13} className="text-white" />
-            <span>IMS</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button 
+              onClick={() => {
+                setImsSerialsRaw('');
+                setImsStatusRaw('');
+                setIsIMSModalOpen(true);
+              }}
+              className="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer select-none border-none btn-green"
+            >
+              <Database size={13} className="text-white" />
+              <span>IMS</span>
+            </button>
+            {imsCargado && (
+              <button 
+                onClick={() => {
+                  if (window.confirm("¿Está seguro de que desea limpiar la base de datos IMS cargada?")) {
+                    setDatosMaestro([]);
+                  }
+                }}
+                className="p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer select-none border-none btn-red"
+                title="Limpiar Base IMS"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
 
-          {CMSCargado && (
-            <span className="text-[10px] font-black px-3 py-1.5 rounded-full bg-emerald-950/70 text-emerald-300 border border-emerald-500/25">
-              CMS: {datosCMS.length} REGISTROS
-            </span>
-          )}
-          <button 
-            onClick={() => {
-              setCMSSerialsRaw('');
-              setCMSStatusRaw('');
-              setCMSRemitenteRaw('');
-              setCMSFechaRaw('');
-              setIsCMSModalOpen(true);
-            }}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-lg text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer select-none border-none"
-          >
-            <Database size={13} className="text-white" />
-            <span>CMS</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button 
+              onClick={() => {
+                setCMSSerialsRaw('');
+                setCMSStatusRaw('');
+                setCMSRemitenteRaw('');
+                setCMSFechaRaw('');
+                setIsCMSModalOpen(true);
+              }}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer select-none border-none btn-blue"
+            >
+              <Database size={13} className="text-white" />
+              <span>CMS</span>
+            </button>
+            {CMSCargado && (
+              <button 
+                onClick={() => {
+                  if (window.confirm("¿Está seguro de que desea limpiar la base de datos CMS cargada?")) {
+                    setDatosCMS([]);
+                  }
+                }}
+                className="p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer select-none border-none btn-red"
+                title="Limpiar Base CMS"
+              >
+                <Trash2 size={15} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -598,15 +641,15 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* PANEL 1: SERIALES DESDE CORREO */}
-        <div className="bg-[#1e2336] p-5 rounded-xl border border-[#2a2f42] flex flex-col gap-3 min-h-[380px]">
-          <div className="flex justify-between items-center border-b border-slate-850 pb-2.5">
+        <div className="dark-panel p-5 flex flex-col gap-3 min-h-[380px]">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-              <h4 className="font-extrabold text-xs text-blue-400 uppercase tracking-wider">Seriales desde Correo (Digital)</h4>
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-550 animate-pulse"></span>
+              <h4 className="font-extrabold text-xs text-blue-600 uppercase tracking-wider">Seriales desde Correo (Digital)</h4>
             </div>
             
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold bg-[#151925] border border-[#2a2f42] px-2.5 py-0.5 rounded-md text-slate-400 uppercase font-mono">
+              <span className="text-[10px] font-bold bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md text-slate-700 uppercase font-mono">
                 Únicos: {emailUniques.length}
               </span>
               
@@ -615,8 +658,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 disabled={emailText === ''}
                 className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
                   emailViewMode === 'visual' 
-                    ? 'bg-blue-600/30 border border-blue-500 text-white font-extrabold' 
-                    : 'bg-[#151925] border border-[#2a2f42] text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed'
+                    ? 'bg-blue-50 border border-blue-200 text-blue-700 font-extrabold shadow-sm' 
+                    : 'bg-slate-100 border border-slate-200 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs'
                 }`}
               >
                 {emailViewMode === 'visual' ? <Edit2 size={10} /> : <Play size={10} />}
@@ -629,7 +672,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setEmailViewMode('edit');
                 }}
                 disabled={emailText === ''}
-                className="px-2 py-1 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 text-slate-300 rounded text-[10px] font-extrabold uppercase cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-[10px] font-extrabold uppercase cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm"
                 title="Limpiar campo correo"
               >
                 <Trash2 size={10} />
@@ -644,14 +687,14 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 value={emailText}
                 onChange={e => setEmailText(e.target.value)}
                 placeholder="Pegue aquí el listado de seriales que le han llegado al correo (separados por líneas, comas o puntos)..."
-                className="w-full flex-1 min-h-[220px] text-xs font-normal p-3.5 bg-[#151925] border border-[#2a2f42] rounded-lg text-white focus:outline-none focus:border-[#3b82f6]/50 focus:ring-1 focus:ring-[#3b82f6]/50 placeholder-slate-600 transition-all font-sans"
+                className="w-full flex-1 min-h-[220px] text-xs font-semibold p-3.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 placeholder-slate-400 transition-all font-sans"
               />
               <button
                 onClick={() => {
                   if (emailText.trim()) setEmailViewMode('visual');
                 }}
                 disabled={!emailText.trim()}
-                className="w-full py-1.5 bg-blue-600/30 hover:bg-blue-600/50 disabled:opacity-50 disabled:cursor-not-allowed text-blue-300 font-bold text-xs uppercase rounded-lg border border-blue-500/10 cursor-pointer"
+                className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase rounded-lg border border-transparent cursor-pointer transition-all shadow-sm active:scale-98"
               >
                 Procesar y Hacer Match
               </button>
@@ -667,22 +710,21 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     key={idx}
                     className={`flex items-center justify-between p-2 rounded-lg border text-xs font-semibold transition-all ${
                       isMatch 
-                        ? 'bg-blue-600/10 border-blue-500/30 text-blue-300' 
-                        : 'bg-slate-950/40 text-slate-500/70 border-slate-900 opacity-60'
+                        ? 'bg-blue-50 border-blue-200 text-blue-800 shadow-sm' 
+                        : 'bg-slate-50 text-slate-450 border-slate-150 opacity-70'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 font-sans">
                       <span className="text-[10px] text-slate-500 font-bold font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
-                      {/* Font size and colors designed for extreme visual precision: pure solid text-white */}
-                      <span className="text-white font-mono tracking-wider font-light text-[14px] select-all">{serial}</span>
+                      <span className="text-slate-800 font-mono tracking-wider font-semibold text-[13px] select-all">{serial}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 font-sans text-[11px]">
-                      <span className={`px-2 py-1.5 rounded text-[12px] font-extrabold uppercase font-sans ${getStatusBadgeStyle(dbMatch.status)}`}>
+                      <span className={`px-2 py-1 rounded text-[10px] font-extrabold uppercase font-sans ${getStatusBadgeStyle(dbMatch.status)}`}>
                         {dbMatch.status}
                       </span>
-                      <span className={`px-2 py-1.5 rounded-md text-[12px] font-extrabold uppercase tracking-wider font-sans ${
-                        isMatch ? 'bg-green-500 text-white border border-green-400 shadow-sm' : 'bg-slate-900 text-slate-400'
+                      <span className={`px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider font-sans ${
+                        isMatch ? 'bg-green-600 text-white border border-green-500 shadow-xs' : 'bg-slate-500 text-white border border-slate-600 shadow-xs'
                       }`}>
                         {isMatch ? '✓ MATCH' : 'SIN MATCH'}
                       </span>
@@ -695,15 +737,15 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
         </div>
 
         {/* PANEL 2: SERIALES FÍSICOS */}
-        <div className="bg-[#1e2336] p-5 rounded-xl border border-[#2a2f42] flex flex-col gap-3 min-h-[380px]">
-          <div className="flex justify-between items-center border-b border-slate-850 pb-2.5">
+        <div className="dark-panel p-5 flex flex-col gap-3 min-h-[380px]">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
-              <h4 className="font-extrabold text-xs text-orange-500 uppercase tracking-wider">Seriales Físicos (Físico)</h4>
+              <h4 className="font-extrabold text-xs text-orange-600 uppercase tracking-wider">Seriales Físicos (Físico)</h4>
             </div>
             
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold bg-[#151925] border border-[#2a2f42] px-2.5 py-0.5 rounded-md text-slate-400 uppercase font-mono">
+              <span className="text-[10px] font-bold bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-md text-slate-700 uppercase font-mono">
                 Únicos: {fisicoUniques.length}
               </span>
               
@@ -712,8 +754,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 disabled={fisicoText === ''}
                 className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
                   fisicoViewMode === 'visual' 
-                    ? 'bg-orange-600 border border-orange-500 text-white font-extrabold' 
-                    : 'bg-[#151925] border border-[#2a2f42] text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed'
+                    ? 'bg-orange-50 border border-orange-200 text-orange-700 font-extrabold shadow-sm' 
+                    : 'bg-slate-100 border border-slate-200 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs'
                 }`}
               >
                 {fisicoViewMode === 'visual' ? <Edit2 size={10} /> : <Play size={10} />}
@@ -726,7 +768,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setFisicoViewMode('edit');
                 }}
                 disabled={fisicoText === ''}
-                className="px-2 py-1 bg-slate-800 hover:bg-slate-700 hover:text-white border border-slate-700 text-slate-300 rounded text-[10px] font-extrabold uppercase cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-[10px] font-extrabold uppercase cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm"
                 title="Limpiar campo físico"
               >
                 <Trash2 size={10} />
@@ -741,14 +783,14 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 value={fisicoText}
                 onChange={e => setFisicoText(e.target.value)}
                 placeholder="Lea con la pistola de códigos de barra directamente o pegue la lectura física masiva..."
-                className="w-full flex-1 min-h-[220px] text-xs font-normal p-3.5 bg-[#151925] border border-[#2a2f42] rounded-lg text-white focus:outline-none focus:border-[#3b82f6]/50 focus:ring-1 focus:ring-[#3b82f6]/50 placeholder-slate-600 transition-all font-sans"
+                className="w-full flex-1 min-h-[220px] text-xs font-semibold p-3.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 placeholder-slate-400 transition-all font-sans"
               />
               <button
                 onClick={() => {
                   if (fisicoText.trim()) setFisicoViewMode('visual');
                 }}
                 disabled={!fisicoText.trim()}
-                className="w-full py-1.5 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-extrabold text-xs uppercase rounded-lg border border-orange-500 hover:border-orange-400 cursor-pointer"
+                className="w-full py-1.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase rounded-lg border border-transparent cursor-pointer transition-all shadow-sm active:scale-98"
               >
                 Procesar y Hacer Match
               </button>
@@ -756,7 +798,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           ) : (
             <div className="flex-1 flex flex-col gap-2.5">
               
-              {/* Barcode scanner live dedicated box inside the visual field */}
+              {/* Barcode scanner live box */}
               <div className="relative">
                 <input
                   ref={scanInputRef}
@@ -765,13 +807,13 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   onChange={e => setScanInput(e.target.value)}
                   onKeyDown={handleScanKeyDown}
                   placeholder="Pistolee serial físico aquí..."
-                  className="w-full text-xs font-bold p-2.5 pl-8 bg-slate-950 border border-orange-500 rounded-lg text-white focus:outline-none focus:ring-1 focus:ring-orange-500 placeholder-slate-600"
+                  className="w-full text-xs font-bold p-2.5 pl-8 bg-slate-100 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-white focus:border-orange-500 placeholder-slate-400"
                 />
-                <Search size={13} className="absolute left-2.5 top-3.5 text-slate-500" />
-                <span className="absolute right-2 px-1 rounded text-[8px] bg-slate-900 border border-slate-800 text-slate-500 select-none top-3 uppercase font-mono">Pistola Conectada</span>
+                <Search size={13} className="absolute left-2.5 top-3.5 text-slate-400" />
+                <span className="absolute right-2 px-1.5 py-0.5 rounded text-[8px] bg-white border border-slate-200 text-slate-500 select-none top-2.5 uppercase font-mono shadow-xs">Pistola Conectada</span>
               </div>
 
-              <div className="flex-1 overflow-y-auto max-h-[220px] pr-1.5 space-y-1.5 border border-slate-850/60 p-2 rounded-lg bg-slate-950/30">
+              <div className="flex-1 overflow-y-auto max-h-[220px] pr-1.5 space-y-1.5 border border-slate-150 p-2 rounded-xl bg-slate-50">
                 {fisicoUniques.map((serial, idx) => {
                   const isMatch = emailSet.has(serial);
                   const dbMatch = lookupValidador(serial);
@@ -781,38 +823,37 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       key={idx}
                       className={`flex items-center justify-between p-2 rounded-lg border text-xs font-semibold scale-98 transition-all ${
                         isMatch 
-                          ? 'bg-orange-400/10 border-orange-300/30 text-slate-100' 
-                          : 'bg-slate-950/45 text-slate-300/80 border-slate-900'
+                          ? 'bg-orange-50 border-orange-200 text-slate-800 shadow-sm' 
+                          : 'bg-slate-100 border-slate-200 text-slate-400'
                       }`}
                     >
                       <div className="flex items-center gap-2.5 font-sans">
-                        <span className="text-[10px] text-slate-500 font-bold font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
-                        {/* Font size and colors designed for extreme visual precision: pure solid text-white */}
-                        <span className="text-white font-mono tracking-wider font-light text-[14px] select-all">{serial}</span>
+                        <span className="text-[10px] text-slate-550 font-bold font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
+                        <span className="text-slate-850 font-mono tracking-wider font-semibold text-[13px] select-all">{serial}</span>
                       </div>
 
                       <div className="flex items-center gap-2 font-sans text-[11px]">
-                        {/* Inline custom singular select status dropdown */}
+                        {/* Inline custom select */}
                         <select
                           value={dbMatch?.status || 'N#A'}
                           onChange={(e) => updateSerialStatus(serial, e.target.value as POSStatus)}
-                          className={`text-[12px] font-extrabold px-2 py-1.5 rounded border uppercase outline-none cursor-pointer tracking-wider font-sans ${
+                          className={`text-[10px] font-extrabold px-1.5 py-1 rounded border uppercase outline-none cursor-pointer tracking-wider font-sans bg-white text-slate-800 ${
                             dbMatch 
                               ? getStatusBadgeStyle(dbMatch.status) 
-                              : 'bg-slate-900 text-white border-slate-800'
+                              : 'bg-slate-100 border-slate-200 text-slate-700'
                           }`}
                         >
-                          <option value="SIN ESTATUS" className="bg-slate-950 text-slate-400">SIN ESTATUS</option>
-                          <option value="ACTIVO" className="bg-slate-950 text-slate-100">ACTIVO</option>
-                          <option value="PENDIENTE" className="bg-slate-950 text-slate-100">PENDIENTE</option>
-                          <option value="RECUPERADO" className="bg-slate-950 text-slate-100">RECUPERADO</option>
-                          <option value="CANCELADO" className="bg-slate-950 text-slate-100">CANCELADO</option>
-                          <option value="SUSPENDIDO" className="bg-slate-950 text-slate-100">SUSPENDIDO</option>
-                          <option value="N#A" className="bg-slate-950 text-slate-100">N#A</option>
+                          <option value="SIN ESTATUS">SIN ESTATUS</option>
+                          <option value="ACTIVO">ACTIVO</option>
+                          <option value="PENDIENTE">PENDIENTE</option>
+                          <option value="RECUPERADO">RECUPERADO</option>
+                          <option value="CANCELADO">CANCELADO</option>
+                          <option value="SUSPENDIDO">SUSPENDIDO</option>
+                          <option value="N#A">N#A</option>
                         </select>
 
-                        <span className={`px-2 py-1.5 rounded-md text-[12px] font-extrabold uppercase tracking-wider font-sans ${
-                          isMatch ? 'bg-green-500 text-white border border-green-400 shadow-sm animate-pulse' : 'bg-slate-900 text-slate-400'
+                        <span className={`px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider font-sans ${
+                          isMatch ? 'bg-green-600 text-white border border-green-500 shadow-xs' : 'bg-slate-500 text-white border border-slate-600 shadow-xs'
                         }`}>
                           {isMatch ? '✓ MATCH' : 'SIN MATCH'}
                         </span>
@@ -829,7 +870,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setIsBulkModalOpen(true);
                 }}
                 disabled={fisicoUniques.length === 0}
-                className="w-full text-xs font-extrabold uppercase py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-none"
+                className="w-full text-xs font-extrabold uppercase py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-none active:scale-98"
               >
                 <Layers size={13} className="text-white" />
                 <span>ASIGNACION DE STATUS GRUPAL</span>
@@ -837,7 +878,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button
                 onClick={handleAddMatchesToGeneral}
                 disabled={coincidencias.length === 0}
-                className="w-full text-xs font-extrabold uppercase py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-900 disabled:text-slate-600 disabled:border-slate-850 disabled:cursor-not-allowed text-white rounded-lg transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 border-none mt-2"
+                className="w-full text-xs font-extrabold uppercase py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-white rounded-xl transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 border-none mt-2 active:scale-98 btn-green"
               >
                 <Send size={13} className="text-white" />
                 <span>Añadir Coincidencias a Gestión</span>
@@ -848,66 +889,66 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
       </div>
 
-      {/* PARAMETROS DE RECONCILIACIÓN DE DATOS (Buttons PENDIENTE/ACTIVO removed based on user request) */}
-      <div className="bg-slate-900/60 p-5 rounded-xl border border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-5 shadow-sm">
+      {/* PARAMETROS DE RECONCILIACIÓN DE DATOS */}
+      <div className="dark-panel p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label className="text-xs font-extrabold text-blue-400 block mb-1.5 uppercase">REMITENTE:</label>
+          <label className="text-xs font-extrabold text-blue-600 block mb-1.5 uppercase">REMITENTE:</label>
           <input
             type="text"
             value={remitenteCorreo}
             onChange={e => setRemitenteCorreo(e.target.value.toUpperCase())}
             placeholder="Introduce remitente asignado (ej. VALIDADOR, DISGLOBAL)..."
-            className="w-full text-xs font-semibold p-2.5 bg-slate-950 border border-slate-800 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            className="w-full text-xs font-semibold p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-800 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
           />
         </div>
 
         <div className="flex flex-col justify-center">
-          <label className="text-xs font-extrabold text-slate-400 block mb-1 uppercase">ESTADO DE TRANSFERENCIA</label>
-          <p className="text-[11px] text-slate-400 font-semibold normal-case">
-            Los seriales cruzados heredarán directamente sus estados configurados de forma individual u obtenidos desde la Base IMS.
+          <label className="text-xs font-extrabold text-slate-500 block mb-1 uppercase">ESTADO DE TRANSFERENCIA</label>
+          <p className="text-[11px] text-slate-650 font-semibold normal-case">
+            Los seriales cruzados heredarán directamente sus estados configurados de forma individual u obtenidos desde la Base IMS o CMS.
           </p>
         </div>
       </div>
 
       {/* METRICAS DE INTERSECCIÓN Y BOTONES ACCIÓN */}
-      <div className="bg-slate-900/50 p-6 rounded-xl border border-slate-800 shadow-lg">
-        <h4 className="font-extrabold text-xs tracking-wider text-slate-300 uppercase mb-4 flex items-center gap-2">
-          <ArrowRightLeft className="text-blue-500 w-4.5 h-4.5" />
+      <div className="dark-panel p-6">
+        <h4 className="font-extrabold text-xs tracking-wider text-slate-800 uppercase mb-4 flex items-center gap-2">
+          <ArrowRightLeft className="text-blue-600 w-4.5 h-4.5" />
           MÉTRICAS DEL CRUCE Y SALIDA DE CONTROL
         </h4>
 
         {emailUniques.length === 0 && fisicoUniques.length === 0 ? (
-          <div className="text-center text-xs text-slate-500 py-6 font-mono uppercase">
+          <div className="text-center text-xs text-slate-450 py-6 font-mono uppercase">
             Esperando ingresos en los campos de correo o pistola física...
           </div>
         ) : (
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              {/* Coinciden - VERDE VIVO style */}
-              <div className="bg-green-600 p-4 border border-green-400 rounded-xl space-y-1 shadow-lg">
-                <div className="text-3xl font-black text-white select-all font-sans">{coincidencias.length}</div>
-                <div className="text-[10px] text-white font-extrabold uppercase tracking-widest font-sans">Coinciden (Match)</div>
+              {/* Coinciden */}
+              <div className="bg-white p-4 border border-slate-150 rounded-xl space-y-1 shadow-md">
+                <div className="text-3xl font-black text-emerald-600 select-all font-sans">{coincidencias.length}</div>
+                <div className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest font-sans">Coinciden (Match)</div>
               </div>
-              {/* Solo Correo - AZUL ELECTRICO style */}
-              <div className="bg-blue-600 p-4 border border-blue-400 rounded-xl space-y-1 shadow-lg">
-                <div className="text-3xl font-black text-white select-all font-sans">{soloCorreo.length}</div>
-                <div className="text-[10px] text-white font-extrabold uppercase tracking-widest font-sans">Solo en Correo</div>
+              {/* Solo Correo */}
+              <div className="bg-white p-4 border border-slate-150 rounded-xl space-y-1 shadow-md">
+                <div className="text-3xl font-black text-blue-600 select-all font-sans">{soloCorreo.length}</div>
+                <div className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest font-sans">Solo en Correo</div>
               </div>
-              {/* Solo Físico - NARANJA VIVO style */}
-              <div className="bg-orange-600 p-4 border border-orange-400 rounded-xl space-y-1 shadow-lg">
-                <div className="text-3xl font-black text-white select-all font-sans">{soloFisico.length}</div>
-                <div className="text-[10px] text-white font-extrabold uppercase tracking-widest font-sans">Solo en Físico</div>
+              {/* Solo Físico */}
+              <div className="bg-white p-4 border border-slate-150 rounded-xl space-y-1 shadow-md">
+                <div className="text-3xl font-black text-orange-500 select-all font-sans">{soloFisico.length}</div>
+                <div className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest font-sans">Solo en Físico</div>
               </div>
               {/* Total Seriales Unicos */}
-              <div className="bg-slate-900 p-4 border border-slate-700 rounded-xl space-y-1 shadow-lg">
-                <div className="text-3xl font-black text-white select-all font-sans">{totalUnicos}</div>
-                <div className="text-[10px] text-white font-extrabold uppercase tracking-widest font-sans">Total Seriales Únicos</div>
+              <div className="bg-white p-4 border border-slate-150 rounded-xl space-y-1 shadow-md">
+                <div className="text-3xl font-black text-slate-800 select-all font-sans">{totalUnicos}</div>
+                <div className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest font-sans">Total Seriales Únicos</div>
               </div>
             </div>
 
-            <div className="text-center text-xs text-slate-300 font-bold bg-slate-950 p-3 rounded-xl border border-slate-850 flex flex-col sm:flex-row items-center justify-center gap-1.5 uppercase font-mono">
+            <div className="text-center text-xs text-slate-750 font-bold bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col sm:flex-row items-center justify-center gap-1.5 uppercase font-mono shadow-xs">
               <span>Efectividad del Emparejamiento:</span> 
-              <span className={`text-sm font-black font-sans ${parseFloat(matchRatio) >= 80 ? 'text-emerald-400' : parseFloat(matchRatio) >= 50 ? 'text-orange-500' : 'text-red-400'}`}>
+              <span className={`text-sm font-black font-sans ${parseFloat(matchRatio) >= 80 ? 'text-emerald-600' : parseFloat(matchRatio) >= 50 ? 'text-orange-500' : 'text-red-500'}`}>
                 {matchRatio}%
               </span>
               <span className="text-[10px] font-normal text-slate-500 lowercase normal-case">
@@ -917,12 +958,12 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2.5 justify-center mt-5 border-t border-slate-850 pt-5">
+        <div className="flex flex-wrap gap-2.5 justify-center mt-5 border-t border-slate-100 pt-5">
 
           <button
             onClick={handleExportCruceReport}
             disabled={totalUnicos === 0}
-            className="px-4 py-2 bg-blue-600 disabled:bg-slate-900 disabled:text-slate-600 disabled:border-slate-850 disabled:cursor-not-allowed hover:bg-blue-500 text-white rounded-lg text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+            className="px-4 py-2 bg-blue-600 disabled:opacity-50 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md btn-blue active:scale-98"
           >
             <Import size={13} />
             <span>Descargar Reporte Cruzado</span>
@@ -930,7 +971,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
           <button
             onClick={limpiarTodo}
-            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-705 rounded-lg text-xs font-bold text-slate-300 hover:text-white uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 justify-center"
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-transparent rounded-xl text-xs font-bold text-slate-750 hover:text-slate-900 uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 justify-center shadow-sm active:scale-98"
           >
             <Trash2 size={13} />
             <span>Limpiar Campos</span>
@@ -938,64 +979,63 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
         </div>
       </div>
 
-      {/* VENTANA EMERGENTE: ALIMENTADOR BASE "IMS" (HIGH PERFORMANCE MODAL) */}
-      {isIMSModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      {isIMSModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay font-arial">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
             
             {/* Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
+            <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <Database className="text-orange-400 w-6 h-6 animate-pulse" />
+                <Database className="w-6 h-6 animate-pulse" style={{ color: '#0d9488' }} />
                 <div>
-                  <h3 className="text-base font-black uppercase text-slate-100 tracking-wider">Cargador de Datos Base IMS</h3>
-                  <p className="text-[10px] text-slate-400 uppercase font-mono mt-0.5 tracking-wider"></p>
+                  <h3 className="text-base font-black uppercase text-slate-800 tracking-wider">Cargador de Datos Base IMS</h3>
+                  <p className="text-[10px] text-slate-450 uppercase font-mono mt-0.5 tracking-wider">Configure seriales base para la reconciliación.</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsIMSModalOpen(false)}
-                className="p-1 px-2.5 rounded bg-slate-950 border border-slate-800 hover:bg-slate-850 text-slate-400 hover:text-slate-200 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
+                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
               >
                 Cerrar
               </button>
             </div>
 
             {/* Form Fields */}
-            <div className="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 gap-5 overflow-y-auto">
+            <div className="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 gap-5 overflow-y-auto bg-slate-50/50">
               
               {/* Columna 1: Seriales */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-black uppercase text-orange-200 tracking-wider flex items-center justify-between">
+                <label className="text-[10px] text-slate-550 uppercase font-mono font-bold tracking-wider flex items-center justify-between">
                   <span>SERIAL TERMINAL (Columna)</span>
-                  <span className="text-[9px] text-slate-500 font-mono tracking-widest lowercase normal-case">una celda por línea</span>
+                  <span className="text-[9px] text-slate-400 font-mono tracking-widest lowercase normal-case">una celda por línea</span>
                 </label>
                 <div className="relative flex-1 flex flex-col">
                   <textarea
                     value={imsSerialsRaw}
                     onChange={e => setImsSerialsRaw(e.target.value)}
                     placeholder="Pegue aquí únicamente la columna de Serials o Equipos de su excel (ejemplo:&#10;80320498&#10;80320499&#10;80320500...)"
-                    className="w-full flex-1 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-semibold text-white focus:outline-none focus:border-orange-500 font-mono tracking-wider placeholder-slate-700 min-h-[300px] leading-relaxed select-text"
+                    className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
-                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-orange-300">
-                    Serales: {imsSerialsRaw.split(/\r?\n/).filter(Boolean).length}
+                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
+                    Seriales: {imsSerialsRaw.split(/\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
               </div>
 
               {/* Columna 2: Estados */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-black uppercase text-orange-200 tracking-wider flex items-center justify-between">
+                <label className="text-[10px] text-slate-550 uppercase font-mono font-bold tracking-wider flex items-center justify-between">
                   <span>STATUS SERVICIO (Columna)</span>
-                  <span className="text-[9px] text-slate-500 font-mono tracking-widest lowercase normal-case">una celda por línea</span>
+                  <span className="text-[9px] text-slate-400 font-mono tracking-widest lowercase normal-case">una celda por línea</span>
                 </label>
                 <div className="relative flex-1 flex flex-col">
                   <textarea
                     value={imsStatusRaw}
                     onChange={e => setImsStatusRaw(e.target.value)}
                     placeholder="Pegue aquí únicamente la columna de Estados o Status de su excel (ejemplo:&#10;ACTIVO&#10;PENDIENTE&#10;CANCELADO...)"
-                    className="w-full flex-1 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-semibold text-white focus:outline-none focus:border-orange-500 font-mono tracking-wider placeholder-slate-700 min-h-[300px] leading-relaxed select-text"
+                    className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
-                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-orange-300">
+                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
                     Estados: {imsStatusRaw.split(/\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
@@ -1004,11 +1044,11 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
             </div>
 
             {/* Bottom Actions */}
-            <div className="p-5 bg-slate-950/60 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-5 bg-slate-50 border-t border-slate-150 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-left">
-                <span className="text-[10px] font-bold text-slate-400 block uppercase">REGLA IMPORTANTE:</span>
-                <span className="text-[10px] text-slate-500 block">
-                  La línea 1 del campo izquierdo se emparejará con la línea 1 del derecho. Si no hay correspondencia, se asigna <span className="font-bold text-orange-300">N#A / DISPONIBLE</span>.
+                <span className="text-[10px] font-bold text-slate-500 block uppercase">REGLA IMPORTANTE:</span>
+                <span className="text-[10px] text-slate-650 block">
+                  La línea 1 del campo izquierdo se emparejará con la línea 1 del derecho. Si no hay correspondencia, se asigna <span className="font-bold text-orange-600">N#A / DISPONIBLE</span>.
                 </span>
               </div>
 
@@ -1019,62 +1059,62 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     setImsSerialsRaw('');
                     setImsStatusRaw('');
                   }}
-                  className="px-4 py-2 border border-slate-700 hover:border-slate-600 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-transparent rounded-lg text-slate-750 hover:text-slate-900 text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm"
                 >
                   Limpiar Ventana
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmIMS}
-                  className="px-5 py-2.5 bg-orange-500 hover:bg-orange-400 border border-orange-400 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 border border-transparent text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-98"
                 >
-                  <Check size={14} />
+                  <Check size={14} className="text-white" />
                   <span>Procesar y Confirmar Datos IMS</span>
                 </button>
               </div>
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* VENTANA EMERGENTE: ASIGNACION DE STATUS GRUPAL (HIGH-PRECISION EDIT POPUP) */}
-      {isBulkModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in select-none">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl h-[75vh] flex flex-col shadow-2xl overflow-hidden">
+      {isBulkModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay select-none font-arial">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-4xl h-[75vh] flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
             
             {/* Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
+            <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
               <div className="flex items-center gap-2.5">
-                <Layers className="text-orange-400 w-5.5 h-5.5 animate-bounce" />
+                <Layers className="text-slate-850 w-5.5 h-5.5 animate-bounce" />
                 <div>
-                  <h3 className="text-base font-black uppercase text-slate-100 tracking-wider">Asignación de Estado Grupal (Físico)</h3>
-                  <p className="text-[10px] text-slate-400 uppercase font-mono mt-0.5 tracking-wider">
+                  <h3 className="text-base font-black uppercase text-slate-800 tracking-wider">Asignación de Estado Grupal (Físico)</h3>
+                  <p className="text-[10px] text-slate-450 uppercase font-mono mt-0.5 tracking-wider">
                     Arrastre el mouse o use los clics para seleccionar seriales y aplicarles un estado de manera masiva.
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsBulkModalOpen(false)}
-                className="p-1 px-2.5 rounded bg-slate-950 border border-slate-800 hover:bg-slate-850 text-slate-400 hover:text-slate-200 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
+                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 hover:text-slate-900 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
               >
                 Cerrar
               </button>
             </div>
 
             {/* Selection Engine */}
-            <div className="flex-1 p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-3 gap-5 bg-slate-950/30">
+            <div className="flex-1 p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-3 gap-5 bg-slate-50/50">
               
               {/* Left Selector List */}
               <div className="md:col-span-2 flex flex-col gap-2 h-full">
-                <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-lg border border-slate-850">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase font-mono">
+                <div className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-150 shadow-xs">
+                  <span className="text-[10px] font-bold text-slate-600 uppercase font-mono">
                     Seleccionados: {selectedSerialsBulk.size} de {fisicoUniques.length}
                   </span>
                   
                   <button
                     onClick={handleSelectAllBulk}
-                    className="text-[9.5px] font-black text-orange-300 hover:text-orange-200 uppercase bg-orange-950/40 border border-orange-500/10 px-2 py-0.5 rounded cursor-pointer transition-all"
+                    className="text-[9.5px] font-black text-slate-700 hover:text-slate-900 uppercase bg-slate-100 hover:bg-slate-200 border border-slate-250 px-2 py-0.5 rounded cursor-pointer transition-all shadow-xs"
                   >
                     {selectedSerialsBulk.size === fisicoUniques.length ? 'Desmarcar Todos' : 'Seleccionar Todos'}
                   </button>
@@ -1082,7 +1122,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
                 {/* Vertical drag list */}
                 <div 
-                  className="flex-1 overflow-y-auto space-y-1.5 p-1 bg-slate-950/60 border border-slate-850 rounded-xl max-h-[340px]"
+                  className="flex-1 overflow-y-auto space-y-1.5 p-1 bg-white border border-slate-150 rounded-xl max-h-[340px] shadow-sm"
                   style={{ cursor: isDragging ? 'grabbing' : 'auto' }}
                 >
                   {fisicoUniques.map((serial, idx) => {
@@ -1096,8 +1136,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                         onMouseEnter={() => handleBulkItemMouseEnter(serial)}
                         className={`flex items-center justify-between p-2.5 rounded-lg border text-xs transition-all cursor-crosshair select-none ${
                           isSelected
-                            ? 'bg-orange-500/20 border-orange-400 text-slate-100 shadow-md'
-                            : 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-850'
+                            ? 'bg-orange-50 border-orange-350 text-orange-850 shadow-xs'
+                            : 'bg-slate-50 border-slate-150 text-slate-700 hover:bg-slate-100'
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -1105,15 +1145,15 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                             type="checkbox"
                             checked={isSelected}
                             readOnly
-                            className="accent-orange-500 cursor-pointer pointer-events-none"
+                            className="accent-slate-900 cursor-pointer pointer-events-none"
                           />
-                          <span className="text-[10px] text-slate-500 font-bold font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
+                          <span className="text-[10px] text-slate-400 font-bold font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
                           {/* Pure solid white text for extreme precise viewing of serials */}
-                          <span className="text-white font-mono tracking-wider font-normal text-[12.5px]">{serial}</span>
+                          <span className="text-slate-800 font-mono tracking-wider font-semibold text-[12.5px]">{serial}</span>
                         </div>
 
                         <div className="font-sans text-[11px] flex items-center gap-1.5">
-                          <span className={`px-2 py-1 rounded text-[11px] font-extrabold uppercase font-sans ${getStatusBadgeStyle(dbMatch.status)}`}>
+                          <span className={`px-2 py-1 rounded text-[10px] font-extrabold uppercase font-sans ${getStatusBadgeStyle(dbMatch.status)}`}>
                             {dbMatch.status}
                           </span>
                         </div>
@@ -1124,26 +1164,26 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               </div>
 
               {/* Right Side Control Bar */}
-              <div className="flex flex-col gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800 h-full justify-between">
+              <div className="flex flex-col gap-4 bg-white p-4 rounded-xl border border-slate-150 h-full justify-between shadow-sm">
                 
                 <div className="space-y-3.5">
-                  <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                    <span className="text-[10px] font-black uppercase text-orange-200 tracking-wider block mb-1">INSTRUCCIONES DE SELECCIÓN:</span>
-                    <span className="text-[10.5px] text-slate-400 block leading-relaxed">
+                  <div className="p-3 bg-slate-55 rounded-xl border border-slate-200">
+                    <span className="text-[10px] font-black uppercase text-slate-750 tracking-wider block mb-1">INSTRUCCIONES DE SELECCIÓN:</span>
+                    <span className="text-[10.5px] text-slate-650 block leading-relaxed">
                       1. Haga clic sobre un serial y <strong>arrastre el mouse</strong> sin soltarlo por los demás seriales que desee seleccionar o deseleccionar de forma masiva.<br />
                       2. También puede usar el botón superior para alternar la selección de todos los seriales a la vez.
                     </span>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[11px] font-extrabold text-orange-200 block uppercase">ASIGNAR UN STATUS GRUPAL:</label>
+                    <label className="text-[11px] font-extrabold text-slate-700 block uppercase">ASIGNAR UN STATUS GRUPAL:</label>
                     <div className="grid grid-cols-2 gap-1.5">
                       {(['ACTIVO', 'PENDIENTE', 'RECUPERADO', 'CANCELADO', 'SUSPENDIDO', 'N#A'] as POSStatus[]).map(statusValue => (
                         <button
                           key={statusValue}
                           onClick={() => handleAssignBulkStatus(statusValue)}
                           disabled={selectedSerialsBulk.size === 0}
-                          className="py-2 px-1 text-[9.5px] font-black border uppercase tracking-wider rounded bg-slate-950 hover:bg-slate-900 border-slate-800 hover:border-orange-500 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 text-center flex items-center justify-center"
+                          className="py-2 px-1 text-[9.5px] font-black border uppercase tracking-wider rounded bg-slate-50 hover:bg-slate-100 border-slate-250 hover:border-slate-400 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 text-center flex items-center justify-center shadow-xs"
                         >
                           {statusValue}
                         </button>
@@ -1153,13 +1193,13 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 </div>
 
                 {/* Modal footer action */}
-                <div className="pt-4 border-t border-slate-800 mt-auto">
+                <div className="pt-4 border-t border-slate-150 mt-auto">
                   <button
                     onClick={() => {
                       handleAddMatchesToGeneral();
                       setIsBulkModalOpen(false);
                     }}
-                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-98"
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-98 border-none btn-green text-white-force"
                   >
                     <Send size={13} />
                     <span>AÑADIR A GESTIÓN GENERAL</span>
@@ -1171,39 +1211,41 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
             </div>
 
           </div>
-        </div>
+
+        </div>,
+        document.body
       )}
 
       {/* VENTANA EMERGENTE: ALIMENTADOR BASE "CMS" (HIGH PERFORMANCE MODAL) */}
-      {isCMSModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+      {isCMSModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay font-arial">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-2xl h-[80vh] flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
             
             {/* Header */}
-            <div className="p-5 border-b border-slate-800 bg-slate-950/50 flex justify-between items-center">
+            <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <Database className="text-blue-400 w-6 h-6 animate-pulse" />
+                <Database className="text-blue-600 w-6 h-6 animate-pulse" />
                 <div>
-                  <h3 className="text-base font-black uppercase text-slate-100 tracking-wider">Cargador de Datos Base CMS</h3>
-                  <p className="text-[10px] text-slate-400 uppercase font-mono mt-0.5 tracking-wider">Configure seriales masivos asignándoles un estatus, remitente y fecha de lote.</p>
+                  <h3 className="text-base font-black uppercase text-slate-800 tracking-wider">Cargador de Datos Base CMS</h3>
+                  <p className="text-[10px] text-slate-450 uppercase font-mono mt-0.5 tracking-wider">Configure seriales masivos asignándoles un estatus, remitente y fecha de lote.</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsCMSModalOpen(false)}
-                className="p-1 px-2.5 rounded bg-slate-950 border border-slate-800 hover:bg-slate-850 text-slate-400 hover:text-slate-200 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
+                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 hover:text-slate-900 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
               >
                 Cerrar
               </button>
             </div>
 
             {/* Form Fields */}
-            <div className="flex-1 p-6 flex flex-col gap-4 overflow-y-auto bg-slate-950/20">
+            <div className="flex-1 p-6 flex flex-col gap-4 overflow-y-auto bg-slate-50/50">
               
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
                 
                 {/* Field 1: Serials */}
                 <div className="flex flex-col gap-1.5 flex-1 min-h-[220px]">
-                  <label className="text-xs font-black uppercase text-blue-200 tracking-wider flex items-center justify-between">
+                  <label className="text-xs font-black uppercase text-blue-600 tracking-wider flex items-center justify-between">
                     <span>SERIALES</span>
                   </label>
                   <div className="relative flex-1 flex flex-col">
@@ -1211,9 +1253,9 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       value={CMSSerialsRaw}
                       onChange={e => setCMSSerialsRaw(e.target.value)}
                       placeholder="Pegue aquí los seriales&#10;(ej: 80320498...)"
-                      className="w-full flex-1 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-normal text-white focus:outline-none focus:border-blue-500 font-mono tracking-wider placeholder-slate-700 min-h-[200px] leading-relaxed select-text"
+                      className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text shadow-sm"
                     />
-                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-blue-300">
+                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
                       {CMSSerialsRaw.split(/\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
@@ -1221,15 +1263,15 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
                 {/* Field 2: Status */}
                 <div className="flex flex-col gap-1.5 flex-1 min-h-[220px]">
-                  <label className="text-xs font-black uppercase text-blue-200 tracking-wider">ESTATUS</label>
+                  <label className="text-xs font-black uppercase text-blue-600 tracking-wider">ESTATUS</label>
                   <div className="relative flex-1 flex flex-col">
                     <textarea
                       value={CMSStatusRaw}
                       onChange={e => setCMSStatusRaw(e.target.value)}
                       placeholder="Pegue aquí el estatus&#10;(ej: ACTIVO...)"
-                      className="w-full flex-1 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-normal text-white focus:outline-none focus:border-blue-500 font-mono tracking-wider placeholder-slate-700 min-h-[200px] leading-relaxed select-text"
+                      className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text shadow-sm"
                     />
-                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-blue-300">
+                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
                       {CMSStatusRaw.split(/\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
@@ -1237,15 +1279,15 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
                 {/* Field 3: Remitente */}
                 <div className="flex flex-col gap-1.5 flex-1 min-h-[220px]">
-                  <label className="text-xs font-black uppercase text-blue-200 tracking-wider">REMITENTE</label>
+                  <label className="text-xs font-black uppercase text-blue-600 tracking-wider">REMITENTE</label>
                   <div className="relative flex-1 flex flex-col">
                     <textarea
                       value={CMSRemitenteRaw}
                       onChange={e => setCMSRemitenteRaw(e.target.value)}
                       placeholder="Pegue aquí el remitente&#10;(ej: DISGLOBAL...)"
-                      className="w-full flex-1 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-normal text-white focus:outline-none focus:border-blue-500 font-mono tracking-wider placeholder-slate-700 min-h-[200px] leading-relaxed select-text uppercase"
+                      className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text uppercase shadow-sm"
                     />
-                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-blue-300">
+                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
                       {CMSRemitenteRaw.split(/\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
@@ -1253,15 +1295,15 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
                 {/* Field 4: Fecha */}
                 <div className="flex flex-col gap-1.5 flex-1 min-h-[220px]">
-                  <label className="text-xs font-black uppercase text-blue-200 tracking-wider">FECHA LOTE</label>
+                  <label className="text-xs font-black uppercase text-blue-600 tracking-wider">FECHA LOTE</label>
                   <div className="relative flex-1 flex flex-col">
                     <textarea
                       value={CMSFechaRaw}
                       onChange={e => setCMSFechaRaw(e.target.value)}
                       placeholder="Pegue aquí la fecha&#10;(ej: 2024-05-25...)"
-                      className="w-full flex-1 p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-normal text-white focus:outline-none focus:border-blue-500 font-mono tracking-wider placeholder-slate-700 min-h-[200px] leading-relaxed select-text"
+                      className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text shadow-sm"
                     />
-                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-900 border border-slate-850 px-2 py-0.5 rounded text-blue-300">
+                    <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
                       {CMSFechaRaw.split(/\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
@@ -1272,8 +1314,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
             </div>
 
             {/* Bottom Actions */}
-            <div className="p-5 bg-slate-950/60 border-t border-slate-800 flex items-center justify-between gap-4">
-              <span className="text-[10px] text-slate-500 block">
+            <div className="p-5 bg-slate-50 border-t border-slate-150 flex items-center justify-between gap-4">
+              <span className="text-[10px] text-slate-450 block uppercase font-bold">
                 Los datos cargados se asociarán automáticamente en el cruce de seriales.
               </span>
               <div className="flex items-center gap-2.5 justify-end">
@@ -1285,23 +1327,24 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     setCMSRemitenteRaw('');
                     setCMSFechaRaw('');
                   }}
-                  className="px-4 py-2 border border-slate-700 hover:border-slate-600 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 hover:text-white text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-transparent rounded-lg text-slate-750 hover:text-slate-900 text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm"
                 >
                   Limpiar Ventana
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmCMS}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 border border-blue-550 text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 border border-transparent text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg btn-blue active:scale-98"
                 >
-                  <Check size={14} />
+                  <Check size={14} className="text-white" />
                   <span>Confirmar Datos CMS</span>
                 </button>
               </div>
             </div>
 
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>

@@ -97,7 +97,7 @@ export const INITIAL_SERIALS: POSItem[] = [
     rif: 'J-123456',
     razonSocial: 'EMPRESA X',
     destino: 'MARACAY',
-    observaciones: 'Listo para revisión física',
+    observaciones: '',
     forro: false,
     bateria: false,
     cargador: false,
@@ -115,7 +115,7 @@ export const INITIAL_SERIALS: POSItem[] = [
     guiaSalidaCliente: 'GUIACLIE001',
     destinoSalida: 'VALENCIA',
     fechaConfirmada: false,
-    ticket: 'TICKET-001'
+    ticket: ''
   }
 ];
 

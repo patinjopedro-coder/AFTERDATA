@@ -41,6 +41,10 @@ export interface POSItem {
   fechaConfirmada?: boolean;
   ticket?: string;
   addedFromCruce?: boolean;
+  banco?: string;
+  bsf?: string;
+  usdt?: string;
+  cruceBatchId?: string;
 }
 
 export interface EnvioExterno {
@@ -62,8 +66,14 @@ export interface ModelConfig {
 export interface UserProfile {
   remitenteId: string;
   nombreCompleto: string;
-  area: string;
-  cargo: string;
+  isUsuario?: boolean;
+  isCliente?: boolean;
+  area?: string;
+  cargo?: string;
+  rif?: string;
+  razonSocial?: string;
+  ubicacion?: string;
+  telefono?: string;
 }
 
 export interface CruceItem {
@@ -79,5 +89,15 @@ export interface CMSItem {
   status: POSStatus;
   remitente: string;
   date: string;
+}
+
+export interface StandbyItem {
+  id: string;
+  serial?: string;
+  guia?: string;
+  date: string;
+  comentario?: string;
+  status: 'PENDIENTE' | 'PROCESADO';
+  processedDate?: string;
 }
 
