@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, POSStatus, ModelConfig, CruceItem, CMSItem } from '../types';
-import { getDBItem, setDBItem } from '../db';
+import { getDBItem, setDBItem, getLocalItem, setLocalItem } from '../db';
 import { 
   FileCheck, ArrowRightLeft, Check, Import, Send, Trash2, Edit2, Play, Search, Database, Layers, X, Clipboard
 } from 'lucide-react';
@@ -50,8 +50,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       const [savedEmail, savedFisico, savedMaestro, savedCMS] = await Promise.all([
         getDBItem<string>('cruce_emailText', ''),
         getDBItem<string>('cruce_fisicoText', ''),
-        getDBItem<CruceItem[]>('datosMaestro', []),
-        getDBItem<CMSItem[]>('datosCMS', []),
+        getLocalItem<CruceItem[]>('datosMaestro', []),
+        getLocalItem<CMSItem[]>('datosCMS', []),
       ]);
       setEmailText(savedEmail);
       setFisicoText(savedFisico);
@@ -107,12 +107,12 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
   useEffect(() => {
     if (!isLoadedRef.current) return;
-    setDBItem('datosMaestro', datosMaestro);
+    setLocalItem('datosMaestro', datosMaestro);
   }, [datosMaestro]);
 
   useEffect(() => {
     if (!isLoadedRef.current) return;
-    setDBItem('datosCMS', datosCMS);
+    setLocalItem('datosCMS', datosCMS);
   }, [datosCMS]);
 
   // Focus barcode scan field when list mode is visual
