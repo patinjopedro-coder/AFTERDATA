@@ -2,10 +2,34 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
   if (!isSupabaseConfigured) {
+    try {
+      const response = await fetch(`/api/db?key=${encodeURIComponent(key)}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.value !== undefined && data.value !== null) {
+          return data.value as T;
+        }
+      }
+    } catch (e) {
+      console.warn(`Error al leer de la base de datos compartida local para [${key}], cayendo a localStorage:`, e);
+    }
+
+    // Respaldo y migración desde localStorage
     const localRaw = localStorage.getItem(key);
     if (localRaw !== null) {
       try {
-        return JSON.parse(localRaw) as T;
+        const parsed = JSON.parse(localRaw) as T;
+        // Intentar migrar al archivo compartido local_db.json
+        try {
+          await fetch('/api/db', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key, value: parsed })
+          });
+        } catch (err) {
+          console.warn("No se pudo migrar el dato a la base de datos compartida:", err);
+        }
+        return parsed;
       } catch (e) {
         return defaultValue;
       }
@@ -55,6 +79,22 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
 
 export async function setDBItem<T>(key: string, value: T): Promise<void> {
   if (!isSupabaseConfigured) {
+    // Intentar escribir en la base de datos compartida local
+    try {
+      const response = await fetch('/api/db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      });
+      if (response.ok) {
+        // También guardar en localStorage local del navegador como respaldo
+        localStorage.setItem(key, JSON.stringify(value));
+        return;
+      }
+    } catch (e) {
+      console.warn("Error al guardar en la base de datos compartida local, respaldando solo en localStorage:", e);
+    }
+
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (e) {
