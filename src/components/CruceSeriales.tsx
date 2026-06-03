@@ -69,6 +69,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   const [isIMSModalOpen, setIsIMSModalOpen] = useState(false);
   const [isCMSModalOpen, setIsCMSModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [isFlatModalOpen, setIsFlatModalOpen] = useState(false);
 
   // IMS raw inputs state (supporting >100.000 vertical spreadsheet rows)
   const [imsSerialsRaw, setImsSerialsRaw] = useState('');
@@ -580,6 +581,14 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5">
+            {imsCargado && (
+              <div className="flex items-center justify-center mr-1" title="Base IMS cargada y activa">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
+                </span>
+              </div>
+            )}
             <button 
               onClick={() => {
                 setImsSerialsRaw('');
@@ -863,6 +872,17 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 })}
               </div>
 
+              {/* LISTA DE SERIALES PLANA BUTTON */}
+              <button
+                onClick={() => setIsFlatModalOpen(true)}
+                disabled={fisicoUniques.length === 0}
+                className="w-full text-xs font-extrabold uppercase py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-none mb-2 active:scale-98 text-white-force"
+                style={{ color: '#ffffff' }}
+              >
+                <Clipboard size={13} className="text-white" />
+                <span>LISTA DE SERIALES PLANA</span>
+              </button>
+
               {/* ASIGNACION DE STATUS GRUPAL BUTTON */}
               <button
                 onClick={() => {
@@ -1070,6 +1090,69 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 >
                   <Check size={14} className="text-white" />
                   <span>Procesar y Confirmar Datos IMS</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {isFlatModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay select-none font-arial">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-lg flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
+            
+            {/* Header */}
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Clipboard className="text-slate-850 w-5 h-5" />
+                <div>
+                  <h3 className="text-sm font-black uppercase text-slate-800 tracking-wider">Lista de Seriales Plana</h3>
+                  <p className="text-[9px] text-slate-400 uppercase font-mono tracking-wider">
+                    {fisicoUniques.length} seriales únicos escaneados
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsFlatModalOpen(false)}
+                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 hover:text-slate-900 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
+              >
+                Cerrar ✕
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 flex flex-col gap-3.5 select-text">
+              <p className="text-xs text-slate-500 font-sans">
+                Puede arrastrar el ratón para seleccionar una parte de la lista o hacer clic dentro del cuadro para seleccionarlos todos y copiarlos directamente a su correo:
+              </p>
+              
+              <textarea
+                readOnly
+                value={fisicoUniques.join('\n')}
+                onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                className="w-full h-64 font-mono text-xs p-3.5 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none select-text cursor-text"
+                title="Haga clic para seleccionar todo"
+              />
+
+              <div className="flex gap-2 justify-end mt-1">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(fisicoUniques.join('\n'));
+                    alert('⚡ Todos los seriales han sido copiados al portapapeles.');
+                  }}
+                  className="bg-[#22c55e] hover:bg-[#16a34a] text-white font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 rounded-lg border border-[#22c55e] cursor-pointer transition-all shadow-xs flex items-center gap-1.5 text-white-force"
+                  style={{ color: '#ffffff' }}
+                >
+                  <Clipboard size={12} />
+                  Copiar Todo
+                </button>
+                <button
+                  onClick={() => setIsFlatModalOpen(false)}
+                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 rounded-lg border border-slate-300 cursor-pointer transition-all shadow-xs"
+                >
+                  Cerrar
                 </button>
               </div>
             </div>
