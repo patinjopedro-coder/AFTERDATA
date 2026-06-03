@@ -1,6 +1,18 @@
-import { supabase } from './supabaseClient';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
+  if (!isSupabaseConfigured) {
+    const localRaw = localStorage.getItem(key);
+    if (localRaw !== null) {
+      try {
+        return JSON.parse(localRaw) as T;
+      } catch (e) {
+        return defaultValue;
+      }
+    }
+    return defaultValue;
+  }
+
   try {
     const { data, error } = await supabase
       .from('app_data')
@@ -42,6 +54,15 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
 }
 
 export async function setDBItem<T>(key: string, value: T): Promise<void> {
+  if (!isSupabaseConfigured) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.error("Error crítico: No se pudo respaldar en localStorage", e);
+    }
+    return;
+  }
+
   try {
     const { error } = await supabase
       .from('app_data')
