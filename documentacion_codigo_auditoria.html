@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentación Técnica y Auditoría - Disglobal Tracking</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;700&display=swap');
+    
+    @page {
+      size: A4;
+      margin: 25mm 20mm 25mm 20mm;
+      @bottom-right {
+        content: counter(page);
+        font-family: 'Inter', sans-serif;
+        font-size: 9px;
+        color: #64748b;
+      }
+      @bottom-left {
+        content: "DISGLOBAL TRACKING - CONFIDENCIAL";
+        font-family: 'Inter', sans-serif;
+        font-size: 9px;
+        color: #64748b;
+        font-weight: 600;
+      }
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+      line-height: 1.6;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 11pt;
+    }
+
+    /* Portada */
+    .cover-page {
+      page-break-after: always;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 30mm 10mm 15mm 10mm;
+      box-sizing: border-box;
+    }
+
+    .cover-top {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .cover-badge {
+      display: inline-block;
+      align-self: flex-start;
+      background-color: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+      color: #1e40af;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .cover-title {
+      font-size: 34pt;
+      font-weight: 800;
+      line-height: 1.15;
+      color: #0f172a;
+      margin-top: 10px;
+    }
+
+    .cover-title span {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      color: #2563eb;
+    }
+
+    .cover-subtitle {
+      font-size: 14pt;
+      color: #475569;
+      margin-top: 20px;
+      font-weight: 400;
+      max-width: 90%;
+      line-height: 1.5;
+    }
+
+    .cover-middle {
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 40px 0;
+    }
+
+    .cover-logo-svg {
+      width: 150px;
+      height: 150px;
+    }
+
+    .cover-bottom {
+      border-top: 2px solid #e2e8f0;
+      padding-top: 25px;
+    }
+
+    .metadata-grid {
+      display: grid;
+      grid-template-cols: repeat(2, 1fr);
+      gap: 20px;
+      font-size: 9.5pt;
+    }
+
+    .metadata-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metadata-label {
+      color: #64748b;
+      font-weight: 650;
+      text-transform: uppercase;
+      font-size: 8pt;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .metadata-value {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Estilos Generales de Contenido */
+    h1 {
+      font-size: 19pt;
+      color: #0f172a;
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 8px;
+      margin-top: 35px;
+      margin-bottom: 20px;
+      page-break-before: always;
+      page-break-after: avoid;
+    }
+
+    /* Evitar salto de línea en el primer H1 */
+    .first-h1 {
+      page-break-before: avoid !important;
+    }
+
+    h2 {
+      font-size: 14pt;
+      color: #1e3b8b;
+      margin-top: 25px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 6px;
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      color: #2563eb;
+      margin-top: 18px;
+      margin-bottom: 8px;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin-top: 0;
+      margin-bottom: 14px;
+      text-align: justify;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-top: 0;
+      margin-bottom: 16px;
+      padding-left: 20px;
+      color: #334155;
+    }
+
+    li {
+      margin-bottom: 6px;
+    }
+
+    /* Tablas */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 9.5pt;
+      page-break-inside: avoid;
+    }
+
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 8.5pt;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    /* Código */
+    code {
+      font-family: 'Fira Code', monospace;
+      background-color: #f1f5f9;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 9pt;
+      color: #0f172a;
+      font-weight: 500;
+    }
+
+    pre {
+      background-color: #0f172a;
+      color: #f8fafc;
+      padding: 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 8.5pt;
+      margin: 18px 0;
+      border-left: 4px solid #3b82f6;
+      page-break-inside: avoid;
+    }
+
+    pre code {
+      background-color: transparent;
+      color: inherit;
+      padding: 0;
+      font-weight: 400;
+    }
+
+    /* Diagramas y Figuras */
+    .diagram-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 25px 0;
+      page-break-inside: avoid;
+    }
+
+    .diagram-title {
+      font-size: 9pt;
+      color: #64748b;
+      font-weight: 600;
+      margin-top: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Cuadros de Alerta */
+    .alert {
+      border-left: 4px solid;
+      padding: 12px 16px;
+      border-radius: 4px 8px 8px 4px;
+      margin: 18px 0;
+      page-break-inside: avoid;
+    }
+
+    .alert-info {
+      background-color: #eff6ff;
+      border-color: #3b82f6;
+      color: #1e40af;
+    }
+
+    .alert-warning {
+      background-color: #fffbeb;
+      border-color: #f59e0b;
+      color: #78350f;
+    }
+    
+    .alert-success {
+      background-color: #f0fdf4;
+      border-color: #22c55e;
+      color: #15803d;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .badge-blue { background-color: #dbeafe; color: #1e40af; }
+    .badge-green { background-color: #d1fae5; color: #065f46; }
+    .badge-orange { background-color: #ffedd5; color: #9a3412; }
+    .badge-gray { background-color: #f1f5f9; color: #334155; }
+
+    /* Estilos del Índice */
+    .toc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 10px;
+      font-size: 10.5pt;
+    }
+
+    .toc-name {
+      font-weight: 600;
+      color: #1e293b;
+      text-decoration: none;
+    }
+
+    .toc-dots {
+      flex-grow: 1;
+      border-bottom: 1.5px dotted #cbd5e1;
+      margin: 0 10px;
+    }
+
+    .toc-page {
+      font-weight: 700;
+      color: #1e3a8a;
+      font-family: 'Fira Code', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PORTADA -->
+  <div class="cover-page">
+    <div class="cover-top">
+      <div class="cover-badge">Reporte Oficial de Auditoría y Desarrollo</div>
+      <div class="cover-title">DISGLOBAL<br><span>TRACKING</span></div>
+      <div class="cover-subtitle">
+        Manual Completo de Arquitectura de Software, Diccionario de Datos y Guía Metodológica de Exposición para la Auditoría de Control de Seriales de Puntos de Venta (POS).
+      </div>
+    </div>
+
+    <div class="cover-middle">
+      <!-- Logo Vectorial Embebido -->
+      <svg class="cover-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="20" fill="#0f172a"/>
+        <path d="M25 75L50 25L75 75" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M37.5 50H62.5" stroke="#3b82f6" stroke-width="8" stroke-linecap="round"/>
+        <circle cx="50" cy="25" r="7" fill="#f59e0b"/>
+        <circle cx="25" cy="75" r="7" fill="#22c55e"/>
+        <circle cx="75" cy="75" r="7" fill="#3b82f6"/>
+        <path d="M35 65C40 60 60 60 65 65" stroke="#f8fafc" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="metadata-grid">
+        <div class="metadata-item">
+          <span class="metadata-label">Preparado para</span>
+          <span class="metadata-value">Auditoría de Sistemas & Mesa Técnica</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Plataforma</span>
+          <span class="metadata-value">React 19 + TypeScript + IndexedDB</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Fecha de Emisión</span>
+          <span class="metadata-value">26 de Mayo, 2026</span>
+        </div>
+        <div class="metadata-item">
+          <span class="metadata-label">Estado de Clasificación</span>
+          <span class="metadata-value">Confidencial / Uso Interno</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INDICE DE CONTENIDOS -->
+  <div class="page-break">
+    <h1 class="first-h1" style="border-bottom: 2px solid #0f172a;">Índice de Contenidos</h1>
+    <div style="margin-top: 30px;">
+      <div class="toc-item">
+        <span class="toc-name">1. Resumen Ejecutivo e Introducción Operativa</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Pág. 3</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-name">2. Arquitectura del Software y Pila Tecnológica</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Pág. 4</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-name">3. Capa de Datos y Persistencia Local (IndexedDB)</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Pág. 5</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-name">4. El Motor de Conciliación: Cruce de Seriales</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Pág. 6</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-name">5. Diccionario de Datos Completo (types.ts)</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Pág. 8</span>
+      </div>
+      <div class="toc-item">
+        <span class="toc-name">6. Guía Práctica de Exposición para Auditorías</span>
+        <span class="toc-dots"></span>
+        <span class="toc-page">Pág. 9</span>
+      </div>
+    </div>
+    
+    <div class="alert alert-info" style="margin-top: 40px;">
+      <strong>Nota para el Auditor:</strong> Este documento está redactado con un enfoque técnico-logístico estructurado para verificar la integridad del almacenamiento, la resiliencia offline ante fallos de conectividad, y la complejidad algorítmica de los cruces masivos de inventario.
+    </div>
+  </div>
+
+  <!-- SECCIÓN 1 -->
+  <div>
+    <h1>1. Resumen Ejecutivo e Introducción Operativa</h1>
+    <p>
+      El sistema <strong>Disglobal Tracking</strong> es una aplicación web de nivel corporativo diseñada con el propósito de resolver una de las ineficiencias más comunes en la cadena de suministro y soporte técnico de dispositivos de cobro móvil: la discrepancia de seriales entre la información transmitida digitalmente (vía correo o bases de datos como IMS/CMS) y los equipos físicos recibidos en los talleres o almacenes.
+    </p>
+    <p>
+      El principal problema que este software mitiga es el "extravío administrativo", donde un serial se registra como despachado pero el operador de almacén recibe físicamente un serial diferente o deteriorado. A través de un motor de cruce en tiempo real compatible con lectores ópticos de códigos de barra (pistolas de escaneo), el sistema permite a los auditores consolidar el inventario de manera instantánea, registrando las discrepancias y actualizando la base de datos local de forma inmediata.
+    </p>
+    
+    <h2>Objetivos Clave de Auditoría Logística</h2>
+    <ul>
+      <li><strong>Integridad de Entrada:</strong> Garantizar que cada serial ingresado cumpla con la estructura requerida y posea un historial único dentro del sistema.</li>
+      <li><strong>Detección de Discrepancias:</strong> Visualizar en tiempo real qué dispositivos están "Solo en Correo" (en tránsito administrativo pero ausentes físicamente) o "Solo en Físico" (equipos recibidos que no figuran en las órdenes de despacho).</li>
+      <li><strong>Trazabilidad y Resiliencia:</strong> Ofrecer un registro histórico persistente a nivel de dispositivo que sea inmune a pérdidas de conexión a red gracias a su arquitectura offline-first.</li>
+    </ul>
+
+    <div class="diagram-container">
+      <!-- Flujo Operativo Simple SVG -->
+      <svg width="550" height="120" viewBox="0 0 550 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="130" height="50" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" x="10" y="35"/>
+        <text x="75" y="65" font-family="Inter" font-size="10" font-weight="700" fill="#1e40af" text-anchor="middle">RECEPCIÓN DIGITAL</text>
+        
+        <path d="M150 60H190" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+        <path d="M185 55L190 60L185 65" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        
+        <rect width="130" height="50" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="2" x="200" y="35"/>
+        <text x="265" y="65" font-family="Inter" font-size="10" font-weight="700" fill="#78350f" text-anchor="middle">ESCANEO FÍSICO</text>
+        
+        <path d="M340 60H380" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+        <path d="M375 55L380 60L375 65" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        
+        <rect width="140" height="50" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="2" x="390" y="35"/>
+        <text x="460" y="60" font-family="Inter" font-size="10" font-weight="700" fill="#15803d" text-anchor="middle">MOTOR DE CONCILIACIÓN</text>
+        <text x="460" y="72" font-family="Inter" font-size="8" font-weight="500" fill="#15803d" text-anchor="middle">(Cruce O(1) & Auditoría)</text>
+      </svg>
+      <div class="diagram-title">Figura 1.1: Flujo logístico de procesamiento y auditoría de seriales.</div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 2 -->
+  <div class="page-break">
+    <h1>2. Arquitectura del Software y Pila Tecnológica</h1>
+    <p>
+      La aplicación está construida sobre una arquitectura moderna basada en componentes React. Se prescinde de dependencias de servidor complejas para el funcionamiento operativo ordinario, consolidando una aplicación estática de alto rendimiento capaz de ejecutarse en navegadores web de manera aislada (Edge, Chrome, Firefox).
+    </p>
+
+    <h2>Componentes Tecnológicos del Ecosistema</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 25%;">Tecnología</th>
+          <th style="width: 15%;">Versión</th>
+          <th>Propósito en la Aplicación</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>React</strong></td>
+          <td>19.0.1</td>
+          <td>Manejo del ciclo de vida de la UI, estados reactivos locales y rendering eficiente mediante Reconciliation de componentes.</td>
+        </tr>
+        <tr>
+          <td><strong>TypeScript</strong></td>
+          <td>~5.8.2</td>
+          <td>Tipado estático estricto. Define contratos para objetos como seriales, perfiles de usuario y cruces, previniendo errores en tiempo de ejecución.</td>
+        </tr>
+        <tr>
+          <td><strong>Vite</strong></td>
+          <td>6.2.3</td>
+          <td>Herramienta de compilación ultra rápida. Agiliza el desarrollo y genera bundles minificados de alta eficiencia de carga.</td>
+        </tr>
+        <tr>
+          <td><strong>Tailwind CSS</strong></td>
+          <td>4.1.14</td>
+          <td>Estilización modular y responsiva del panel. Aporta la estética premium con esquemas oscuros (Slate-950/Slate-900) y acentos en azul neón.</td>
+        </tr>
+        <tr>
+          <td><strong>IndexedDB</strong></td>
+          <td>Estándar W3C</td>
+          <td>Base de datos transaccional no relacional en el cliente para persistencia de más de 100,000 registros de manera local y veloz.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Estructura de Módulos y Flujo de Control</h2>
+    <p>
+      El código fuente está estructurado de manera modular para garantizar la escalabilidad y mantenibilidad por parte del personal de TI:
+    </p>
+    <ul>
+      <li><strong><code>src/main.tsx</code>:</strong> Punto de entrada del bundle React. Monta el componente raíz en el DOM HTML5.</li>
+      <li><strong><code>src/App.tsx</code>:</strong> Coordinador central. Gestiona el estado maestro de los seriales, los filtros unificados de fecha/búsqueda, los menús de navegación, los eventos de importación/exportación de archivos y la hidratación inicial de datos.</li>
+      <li><strong><code>src/types.ts</code>:</strong> Archivo central de tipado donde se declaran los enums y las interfaces del dominio logístico.</li>
+      <li><strong><code>src/db.ts</code>:</strong> Módulo encapsulado encargado de la persistencia física a nivel del navegador utilizando la API nativa de IndexedDB.</li>
+      <li><strong><code>src/data.ts</code>:</strong> Archivo de datos semilla. Contiene el catálogo predefinido de marcas de POS (Sunmi, Verifone, PAX, Zebra, Ingenico) y los algoritmos de resolución y detección automática de marcas según el prefijo del serial.</li>
+    </ul>
+
+    <div class="diagram-container">
+      <!-- Arquitectura de Capas SVG -->
+      <svg width="500" height="150" viewBox="0 0 500 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="10" width="480" height="30" rx="5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+        <text x="250" y="30" font-family="Inter" font-size="10" font-weight="700" fill="#0f172a" text-anchor="middle">CAPA DE PRESENTACIÓN (React Component View - App.tsx)</text>
+
+        <rect x="10" y="60" width="230" height="30" rx="5" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+        <text x="125" y="80" font-family="Inter" font-size="9" font-weight="700" fill="#1e40af" text-anchor="middle">LÓGICA DE AUDITORÍA (CruceSeriales.tsx)</text>
+
+        <rect x="260" y="60" width="230" height="30" rx="5" fill="#f0fdf4" stroke="#22c55e" stroke-width="2"/>
+        <text x="375" y="80" font-family="Inter" font-size="9" font-weight="700" fill="#15803d" text-anchor="middle">RESOLUCIÓN DE MODELOS (data.ts)</text>
+
+        <rect x="10" y="110" width="480" height="30" rx="5" fill="#0f172a" stroke="#334155" stroke-width="2"/>
+        <text x="250" y="130" font-family="Inter" font-size="10" font-weight="700" fill="#f8fafc" text-anchor="middle">PERSISTENCIA LOCAL (db.ts -> IndexedDB / LocalStorage)</text>
+      </svg>
+      <div class="diagram-title">Figura 2.1: Diagrama de capas del sistema Disglobal Tracking.</div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN 3 -->
+  <div class="page-break">
+    <h1>3. Capa de Datos y Persistencia Local (IndexedDB)</h1>
+    <p>
+      Una de las directrices más importantes de la auditoría técnica es verificar cómo y dónde se almacenan los datos ingresados por el usuario. En Disglobal Tracking, los datos de inventario no se envían a servidores de terceros de manera predeterminada, mitigando brechas de seguridad de información confidencial.
+    </p>
+    <p>
+      El archivo <code>src/db.ts</code> implementa una base de datos local usando <strong>IndexedDB</strong>. Esto otorga al sistema la capacidad de almacenar de manera confiable millones de caracteres, superando el límite convencional de 5MB que impone la especificación clásica de <code>localStorage</code>.
+    </p>
+
+    <h2>Estrategia de Migración y Resiliencia</h2>
+    <p>
+      Para asegurar una transición suave si el cliente poseía datos guardados en versiones anteriores de la plataforma, el sistema incluye un mecanismo automático de migración de datos. Al iniciar la aplicación:
+    </p>
+    <ol>
+      <li>Se abre una conexión a IndexedDB con el nombre <code>disglobal_tracking_db</code>.</li>
+      <li>Si no existe el almacenador de datos (Object Store) denominado <code>keyvalue_store</code>, se crea en el evento <code>onupgradeneeded</code>.</li>
+      <li>Al leer una clave mediante <code>getDBItem</code>, si IndexedDB no posee registros, el script verifica si existen remanentes en el antiguo <code>localStorage</code>.</li>
+      <li>Si los encuentra, los deserializa, los guarda en IndexedDB, y los elimina de <code>localStorage</code> para liberar cuota de espacio del navegador.</li>
+    </ol>
+
+    <h2>Implementación del Motor de Almacenamiento</h2>
+    <pre><code>// Fragmento clave de src/db.ts para la migración transparente
+export async function getDBItem&lt;T&gt;(key: string, defaultValue: T): Promise&lt;T&gt; {
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(key);
+
+      request.onsuccess = async () => {
+        const result = request.result;
+        if (result !== undefined) {
+          resolve(result as T);
+        } else {
+          // Intento de migración desde localStorage heredado
+          const localRaw = localStorage.getItem(key);
+          if (localRaw !== null) {
+            try {
+              const parsed = JSON.parse(localRaw) as T;
+              await setDBItem(key, parsed); // Migra a IndexedDB
+              localStorage.removeItem(key); // Limpia localStorage antiguo
+              resolve(parsed);
+            } catch (e) {
+              resolve(defaultValue);
+            }
+          } else {
+            resolve(defaultValue);
+          }
+        }
+      };
+      // ... manejo de errores y fallback
+    });
+  } catch (error) {
+    // Si IndexedDB falla (ej. navegación privada estricta), cae a localStorage
+    const localRaw = localStorage.getItem(key);
+    // ...
+  }
+}</code></pre>
+
+    <div class="alert alert-success">
+      <strong>Garantía de Auditoría:</strong> El sistema cuenta con resiliencia de doble capa. Si IndexedDB llega a fallar debido a restricciones severas de seguridad del navegador, la capa de datos automáticamente conmuta hacia <code>localStorage</code> de forma transparente para el usuario final.
+    </div>
+  </div>
+
+  <!-- SECCIÓN 4 -->
+  <div class="page-break">
+    <h1>4. El Motor de Conciliación: Cruce de Seriales</h1>
+    <p>
+      El núcleo algorítmico y operativo del sistema reside en el componente <code>src/components/CruceSeriales.tsx</code>. Este componente permite realizar la conciliación entre la lista digital de despacho (correo) y los seriales leídos físicamente en el taller.
+    </p>
+
+    <h2>Complejidad Algorítmica y Rendimiento O(1)</h2>
+    <p>
+      En inventarios a gran escala, realizar búsquedas dentro de arreglos mediante funciones nativas como <code>Array.find()</code> o <code>Array.includes()</code> resulta en una complejidad algorítmica de <strong>O(N)</strong>. Si se realiza esta búsqueda en un bucle sobre otra lista de tamaño M, la complejidad combinada asciende a <strong>O(N &times; M)</strong>. Para listas de 100,000 seriales, esto representaría hasta 10 mil millones de operaciones, lo cual bloquea el navegador y causa un desbordamiento de pila o cuelgue de la UI.
+    </p>
+    <p>
+      Para evitar esto, <strong>Disglobal Tracking</strong> implementa un indexado de búsqueda en tiempo constante <strong>O(1)</strong> utilizando mapas asociativos generados reactivamente a través de <code>useMemo</code> de React. Esto reduce el costo computacional total a <strong>O(N + M)</strong> operaciones, permitiendo procesar conjuntos masivos en milisegundos.
+    </p>
+
+    <pre><code>// Creación de índice Hash O(1) en src/components/CruceSeriales.tsx
+const maestroMap = useMemo(() => {
+  const map: Record&lt;string, CruceItem&gt; = {};
+  for (let i = 0; i < datosMaestro.length; i++) {
+    const item = datosMaestro[i];
+    if (item && item.serial) {
+      map[item.serial.trim().toUpperCase()] = item;
+    }
+  }
+  return map;
+}, [datosMaestro]);
+
+// La búsqueda del estado del serial se realiza de forma directa en el mapa hash:
+const lookupValidador = (serial: string) => {
+  const cleanSerial = serial.trim().toUpperCase();
+  
+  // Búsqueda instantánea O(1)
+  const hit = maestroMap[cleanSerial];
+  if (hit) return hit;
+  
+  // Si no está registrado en el maestro, retorna estado no aplicable
+  return { serial: cleanSerial, status: 'N#A' };
+};</code></pre>
+
+    <h2>Lógica de Conjuntos Matemáticos en el Cruce</h2>
+    <p>
+      El componente realiza una intersección y diferencia de conjuntos (Álgebra de Boole) para clasificar dinámicamente los seriales ingresados:
+    </p>
+    <ul>
+      <li><strong>Coincidencias (Intersección):</strong> Elementos presentes tanto en la lista de correo como en la física. <code>A &cap; B</code>.</li>
+      <li><strong>Solo Correo (Diferencia A - B):</strong> Elementos que figuran en el correo electrónico pero que no han sido escaneados físicamente. Representa equipos faltantes.</li>
+      <li><strong>Solo Físico (Diferencia B - A):</strong> Equipos que fueron escaneados físicamente pero no estaban registrados en el correo digital de despacho. Representa excedentes o errores de asignación.</li>
+    </ul>
+
+    <div class="diagram-container">
+      <!-- Diagrama de Venn de Conciliación SVG -->
+      <svg width="450" height="150" viewBox="0 0 450 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Círculo Correo (A) -->
+        <circle cx="170" cy="75" r="60" fill="#3b82f6" fill-opacity="0.15" stroke="#3b82f6" stroke-width="2.5"/>
+        <text x="135" y="45" font-family="Inter" font-size="10" font-weight="700" fill="#1d4ed8">A: Correo</text>
+        <text x="130" y="78" font-family="Inter" font-size="8.5" fill="#334155">Solo Correo</text>
+        <text x="130" y="90" font-family="Inter" font-size="7.5" fill="#64748b">(Faltantes)</text>
+
+        <!-- Círculo Físico (B) -->
+        <circle cx="280" cy="75" r="60" fill="#f59e0b" fill-opacity="0.15" stroke="#f59e0b" stroke-width="2.5"/>
+        <text x="315" y="45" font-family="Inter" font-size="10" font-weight="700" fill="#b45309">B: Físico</text>
+        <text x="290" y="78" font-family="Inter" font-size="8.5" fill="#334155">Solo Físico</text>
+        <text x="290" y="90" font-family="Inter" font-size="7.5" fill="#64748b">(Excedentes)</text>
+
+        <!-- Intersección (A & B) -->
+        <text x="225" y="70" font-family="Inter" font-size="9" font-weight="800" fill="#15803d" text-anchor="middle">A &cap; B</text>
+        <text x="225" y="82" font-family="Inter" font-size="8" font-weight="700" fill="#166534" text-anchor="middle">MATCH</text>
+        <text x="225" y="92" font-family="Inter" font-size="7" fill="#166534" text-anchor="middle">(Conciliados)</text>
+      </svg>
+      <div class="diagram-title">Figura 4.1: Diagrama de Venn de la lógica de conciliación.</div>
+    </div>
+
+    <h2>Integración Nativa con Pistolas de Códigos de Barra</h2>
+    <p>
+      El sistema cuenta con un campo de escaneo especializado que aprovecha la naturaleza del emulador de teclado de los lectores de códigos de barra. Al escanear un serial, el hardware envía la cadena de caracteres seguida de la tecla <code>Enter</code>. El sistema intercepta el evento <code>KeyDown</code>, evita el envío del formulario, agrega el serial inmediatamente al listado físico si no estaba ya presente, y limpia el campo enfocando el cursor nuevamente de forma automática en 30 milisegundos para permitir escaneos continuos ultra rápidos.
+    </p>
+  </div>
+
+  <!-- SECCIÓN 5 -->
+  <div class="page-break">
+    <h1>5. Diccionario de Datos Completo (types.ts)</h1>
+    <p>
+      La solidez estructural de los datos en el sistema está respaldada por la tipificación de TypeScript en el archivo <code>src/types.ts</code>. A continuación, se presenta la especificación detallada de los objetos de datos utilizados en la aplicación, de vital importancia para auditorías de sistemas relacionales.
+    </p>
+
+    <h2>Estructura de la Entidad Principal: POSItem</h2>
+    <p>
+      Representa el estado logístico, comercial y físico de cada terminal que entra al almacén de Disglobal.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 25%;">Campo</th>
+          <th style="width: 20%;">Tipo de Dato</th>
+          <th>Descripción y Restricción Logística</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>id</code></td>
+          <td><code>number</code></td>
+          <td>Identificador único autoincrementable generado al registrar.</td>
+        </tr>
+        <tr>
+          <td><code>serial</code></td>
+          <td><code>string</code></td>
+          <td>Número de serie único del fabricante de la terminal (Clave primaria lógica).</td>
+        </tr>
+        <tr>
+          <td><code>date</code></td>
+          <td><code>string</code> (ISO)</td>
+          <td>Fecha de recepción original del equipo (Formato: AAAA-MM-DD).</td>
+        </tr>
+        <tr>
+          <td><code>displayDate</code></td>
+          <td><code>string</code></td>
+          <td>Fecha formateada para la UI (Formato: DD/MM/AAAA).</td>
+        </tr>
+        <tr>
+          <td><code>status</code></td>
+          <td><code>POSStatus</code></td>
+          <td>Estado operativo en el inventario. Puede tomar uno de los valores definidos abajo.</td>
+        </tr>
+        <tr>
+          <td><code>remitente</code></td>
+          <td><code>string</code></td>
+          <td>Identificador del remitente, cliente o entidad logística emisora.</td>
+        </tr>
+        <tr>
+          <td><code>rif</code></td>
+          <td><code>string</code> (Opcional)</td>
+          <td>Registro de Información Fiscal del cliente asignado al terminal.</td>
+        </tr>
+        <tr>
+          <td><code>razonSocial</code></td>
+          <td><code>string</code> (Opcional)</td>
+          <td>Nombre legal o comercial de la empresa cliente.</td>
+        </tr>
+        <tr>
+          <td><code>destino</code></td>
+          <td><code>string</code> (Opcional)</td>
+          <td>Destino físico asignado para despacho (ej. Maracay, Caracas).</td>
+        </tr>
+        <tr>
+          <td><code>simNumber</code></td>
+          <td><code>string</code> (Opcional)</td>
+          <td>Número identificador del chip celular (SIM Card) asociado si aplica.</td>
+        </tr>
+        <tr>
+          <td><code>operadora</code></td>
+          <td><code>'MOVISTAR' | 'MOVILNET' | 'DIGITEL' | ''</code></td>
+          <td>Empresa de telecomunicaciones asignada al canal celular del dispositivo.</td>
+        </tr>
+        <tr>
+          <td><code>modeloNegocio</code></td>
+          <td><code>'BASICO' | 'COMODATO' | ''</code></td>
+          <td>Modalidad contractual comercial de la entrega del dispositivo.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>El Dominio POSStatus</h2>
+    <p>
+      El tipo <code>POSStatus</code> restringe los estados que un terminal puede adquirir en el sistema para garantizar la coherencia semántica:
+    </p>
+    <ul>
+      <li><span class="badge badge-orange">PENDIENTE</span>: Equipo ingresado que está a la espera de asignación técnica o revisión.</li>
+      <li><span class="badge badge-orange">ACTIVO</span>: Dispositivo en pleno funcionamiento y asignado formalmente.</li>
+      <li><span class="badge badge-orange">SUSPENDIDO</span>: Retenido administrativamente por falta de pago o investigación.</li>
+      <li><span class="badge badge-green">CANCELADO</span>: Devuelto o descartado administrativamente.</li>
+      <li><span class="badge badge-green">N#A</span>: Estado especial de descarte ("No Aplica") asignado automáticamente al no coincidir con el IMS maestro.</li>
+      <li><span class="badge badge-gray">SIN ESTATUS</span>: Estado neutral transitorio asignado al importar de fuentes no homologadas.</li>
+      <li><span class="badge badge-gray">RECUPERADO</span>: Equipos rescatados de campo por retiro comercial.</li>
+    </ul>
+  </div>
+
+  <!-- SECCIÓN 6 -->
+  <div class="page-break">
+    <h1>6. Guía Práctica de Exposición para Auditorías</h1>
+    <p>
+      Al presentar este software ante un comité técnico, junta directiva o auditor externo de sistemas, es fundamental estructurar la demostración en base a las capacidades clave del sistema. Esta guía provee un guión estructurado de exposición y responde preventivamente a preguntas críticas de auditoría.
+    </p>
+
+    <h2>Guión de Demostración Operativa en Vivo</h2>
+    <ol>
+      <li>
+        <strong>Demostración de Carga Masiva (Bases Maestras):</strong>
+        <p style="margin-top: 5px; font-size: 10pt;">
+          Ingrese a la pestaña <em>Cruce de Seriales</em> y abra el modal <strong>IMS</strong> o <strong>CMS</strong>. Pegue un listado de ejemplo de 5,000 registros simulando una planilla Excel. Presione confirmar para demostrar cómo la UI indexa instantáneamente sin colgar el navegador, gracias al mapa hash O(1).
+        </p>
+      </li>
+      <li>
+        <strong>Simulación de Escaneo Físico y Conciliación:</strong>
+        <p style="margin-top: 5px; font-size: 10pt;">
+          Pegue una lista de seriales en la columna <em>Seriales desde Correo</em>. Luego pase a la columna <em>Seriales Físicos</em> y simule lecturas activando el modo visual y escribiendo seriales (o usando una pistola de códigos de barra). Muestre la clasificación inmediata en badges de color verde (<span class="badge badge-green" style="font-size: 7.5pt;">✓ MATCH</span>) o gris (<span class="badge badge-gray" style="font-size: 7.5pt;">SIN MATCH</span>).
+        </p>
+      </li>
+      <li>
+        <strong>Prueba de Resiliencia (Simulación de Caída de Red):</strong>
+        <p style="margin-top: 5px; font-size: 10pt;">
+          Abra las herramientas de desarrollo del navegador (F12), configure la red en modo <em>Offline</em> (Desconectado) y recargue la página. Muestre cómo la aplicación sigue cargando con total normalidad, permitiendo buscar, auditar y guardar cambios gracias a la persistencia local en IndexedDB.
+        </p>
+      </li>
+    </ol>
+
+    <h2>Preguntas Frecuentes y Respuestas Técnicas de Auditoría</h2>
+    
+    <div style="margin-bottom: 15px;">
+      <h3 style="margin-bottom: 4px; color: #0f172a;">Q1: ¿Qué medidas de seguridad protegen la base de datos local contra accesos de otras webs?</h3>
+      <p style="font-size: 10pt;">
+        <strong>Respuesta:</strong> IndexedDB está regido estrictamente por la política de seguridad del mismo origen (<em>Same-Origin Policy</em>) implementada por los navegadores modernos. Ninguna otra página web o dominio puede acceder a la base de datos <code>disglobal_tracking_db</code> creada por esta aplicación, garantizando aislamiento total.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <h3 style="margin-bottom: 4px; color: #0f172a;">Q2: ¿Cómo maneja el sistema la colisión de identificadores (IDs) al importar archivos CSV?</h3>
+      <p style="font-size: 10pt;">
+        <strong>Respuesta:</strong> El sistema posee una función desinfectadora (<code>sanitizeSerials</code>) y lógica interna en la función de importación. Si el archivo CSV importado contiene IDs duplicados o vacíos, la aplicación recalcula dinámicamente un correlativo secuencial basándose en el ID máximo actual de la base de datos activa más uno. Esto garantiza la integridad y previene la sobrescritura accidental de registros históricos.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+      <h3 style="margin-bottom: 4px; color: #0f172a;">Q3: ¿Cuál es el límite máximo de almacenamiento soportado localmente?</h3>
+      <p style="font-size: 10pt;">
+        <strong>Respuesta:</strong> El límite depende del almacenamiento disponible en el disco duro del usuario y la cuota asignada por el navegador para el origen. En sistemas modernos con Windows, Chrome o Edge permiten que un origen utilice hasta el 60% del espacio libre del disco para IndexedDB. Esto equivale a decenas de millones de registros de seriales sin degradación de rendimiento.
+      </p>
+    </div>
+  </div>
+
+</body>
+</html>
