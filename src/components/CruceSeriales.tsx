@@ -709,7 +709,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               </button>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col gap-1 overflow-y-auto max-h-[350px] pr-1.5 space-y-1.5">
+            <div className="flex-1 flex flex-col gap-1 pr-1.5 space-y-1.5">
               {emailUniques.map((serial, idx) => {
                 const isMatch = fisicoSet.has(serial);
                 const dbMatch = lookupValidador(serial);
@@ -822,7 +822,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 <span className="absolute right-2 px-1.5 py-0.5 rounded text-[8px] bg-white border border-slate-200 text-slate-500 select-none top-2.5 uppercase font-mono shadow-xs">Pistola Conectada</span>
               </div>
 
-              <div className="flex-1 overflow-y-auto max-h-[220px] pr-1.5 space-y-1.5 border border-slate-150 p-2 rounded-xl bg-slate-50">
+              <div className="flex-1 pr-1.5 space-y-1.5 border border-slate-150 p-2 rounded-xl bg-slate-50">
                 {fisicoUniques.map((serial, idx) => {
                   const isMatch = emailSet.has(serial);
                   const dbMatch = lookupValidador(serial);
