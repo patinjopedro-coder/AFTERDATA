@@ -1,0 +1,38 @@
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Letra 'D' de fondo -->
+  <path 
+    d="M 25 25 H 46 M 74 25 H 75 A 40 40 0 0 1 75 105 H 35 A 10 10 0 0 1 25 95 V 35" 
+    stroke="#1e293b" 
+    stroke-width="5.5" 
+    stroke-linecap="round" 
+    stroke-linejoin="round"
+  />
+  
+  <!-- Dispositivo POS (Punto de Venta) -->
+  <g stroke="#1e293b" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Cuerpo del POS -->
+    <rect x="42" y="38" width="36" height="58" rx="6" fill="none" />
+    <!-- Rollo de papel superior -->
+    <path d="M 48 38 V 34 C 48 32 50 30 52 30 H 68 C 70 30 72 32 72 34 V 38" fill="none" />
+    <!-- Líneas del papel -->
+    <path d="M 52 30 V 15 M 60 30 V 15 M 68 30 V 15" />
+    <!-- Pantalla -->
+    <rect x="48" y="46" width="24" height="22" rx="3" fill="none" />
+  </g>
+  
+  <!-- Botones del teclado -->
+  <g fill="#1e293b">
+    <!-- Fila 1 -->
+    <rect x="48" y="73" width="4" height="4" rx="1" />
+    <rect x="58" y="73" width="4" height="4" rx="1" />
+    <rect x="68" y="73" width="4" height="4" rx="1" />
+    <!-- Fila 2 -->
+    <rect x="48" y="80" width="4" height="4" rx="1" />
+    <rect x="58" y="80" width="4" height="4" rx="1" />
+    <rect x="68" y="80" width="4" height="4" rx="1" />
+    <!-- Fila 3 -->
+    <rect x="48" y="87" width="4" height="4" rx="1" />
+    <rect x="58" y="87" width="4" height="4" rx="1" />
+    <rect x="68" y="87" width="4" height="4" rx="1" />
+  </g>
+</svg>
