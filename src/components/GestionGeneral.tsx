@@ -927,19 +927,20 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                       )}
                     </button>
                   </th>
-                  <th className="py-3 px-4">Serial / Modelo</th>
-                  <th className="py-3 px-4 w-36">Estado</th>
-                  <th className="py-3 px-4 w-36">Disponibilidad</th>
-                  <th className="py-3 px-4">Remitente</th>
-                  <th className="py-3 px-4">Guía</th>
-                  <th className="py-3 px-4 w-36">Fecha Ingreso</th>
+                  <th className="py-3 px-4">SERIAL</th>
+                  <th className="py-3 px-4">MODELO</th>
+                  <th className="py-3 px-4 w-36">STATUS</th>
+                  <th className="py-3 px-4 w-36">DISPONIBILIDAD</th>
+                  <th className="py-3 px-4">GUIA</th>
+                  <th className="py-3 px-4">REMITENTE</th>
+                  <th className="py-3 px-4 w-36">FECHA DE INGRESO</th>
                   <th className="py-3 px-4 w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {paginatedSerials.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-10 text-slate-400 text-xs font-mono">
+                    <td colSpan={9} className="text-center py-10 text-slate-400 text-xs font-mono">
                       No se encontraron registros de terminales para los filtros establecidos.
                     </td>
                   </tr>
@@ -953,112 +954,72 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                     const isDisponible = s.status === 'CANCELADO' || s.status === 'N#A' || s.status === 'RECUPERADO';
                     const isEntregado = s.status === 'PENDIENTE' || s.status === 'ACTIVO' || s.status === 'SUSPENDIDO';
 
-                    const serialColorClass = 'text-slate-800 font-bold';
-
                     return (
                       <tr 
                         key={s.id} 
-                        className={`hover:bg-slate-50 border-b border-slate-100 transition-colors align-top ${s.selected ? 'bg-blue-50/50' : ''}`}
+                        className={`hover:bg-slate-50 border-b border-slate-100 transition-colors ${s.selected ? 'bg-blue-50/50' : ''}`}
                       >
-                        <td className="py-4 px-4 text-center">
+                        <td className="py-3 px-4 text-center">
                           <input
                             type="checkbox"
                             checked={!!s.selected}
                             onChange={() => handleSelectRow(s.id)}
-                            className="rounded text-blue-600 bg-slate-100 border-slate-200 focus:ring-0 mt-2"
+                            className="rounded text-blue-600 bg-slate-100 border-slate-200 focus:ring-0"
                           />
                         </td>
-                        <td className="py-4 px-4 object-contain">
-                          <div className={`flex flex-col divide-y divide-slate-100 border border-slate-200 w-64 bg-white ${
-                            ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(s.status)
-                              ? 'border-l-[4px] border-l-orange-500'
-                              : ['CANCELADO', 'N#A', 'RECUPERADO'].includes(s.status)
-                                ? 'border-l-[4px] border-l-green-600'
-                                : 'border-l-[4px] border-l-slate-400'
-                          }`} style={{ borderRadius: '0px' }}>
-                            {/* 1. SERIAL */}
-                            <div className="p-2 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Serial:</span>
-                              <div className="flex items-center gap-1">
-                                <span 
-                                  data-serial={s.serial}
-                                  className="text-[11px] font-arial cursor-help hover:text-slate-900 select-all font-bold text-slate-800 tracking-wider transition-colors"
-                                  onMouseEnter={(e) => onShowHistory(s.serial, e.currentTarget)}
-                                  onMouseLeave={onHideHistory}
-                                  onClick={async (e) => {
-                                      e.stopPropagation();
-                                      handleCopyText(s.serial, `serial-${s.id}`);
-                                  }}
-                                  title="Click para copiar serial"
-                                >
-                                  {s.serial}
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col gap-0.5">
+                            <span 
+                              data-serial={s.serial}
+                              className="text-sm cursor-help hover:text-slate-900 select-all font-bold tracking-wider transition-colors flex items-center gap-1.5 text-slate-800 font-arial"
+                              onMouseEnter={(e) => onShowHistory(s.serial, e.currentTarget)}
+                              onMouseLeave={onHideHistory}
+                              onClick={async (e) => {
+                                  e.stopPropagation();
+                                  handleCopyText(s.serial, `serial-${s.id}`);
+                              }}
+                              title="Click para copiar serial"
+                            >
+                              <span className={`w-2 h-2 shrink-0 ${
+                                ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(s.status)
+                                  ? 'bg-orange-500'
+                                  : ['CANCELADO', 'N#A', 'RECUPERADO'].includes(s.status)
+                                    ? 'bg-green-600'
+                                    : 'bg-slate-400'
+                              }`} style={{ borderRadius: '0px' }}></span>
+                              <span style={{ letterSpacing: '0.08em' }}>{s.serial}</span>
+                              {copiedKey === `serial-${s.id}` && (
+                                <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-none p-0.5 ml-1 transition-all animate-fade-in shrink-0">
+                                  <Check className="w-2 h-2 text-white" />
                                 </span>
-                                {copiedKey === `serial-${s.id}` && (
-                                  <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded-none p-0.5 ml-1 transition-all animate-fade-in shrink-0">
-                                    <Check className="w-2 h-2 text-white" />
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* 2. EQUIPO / MODELO */}
-                            <div className="p-2 flex items-center justify-between gap-2">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Equipo:</span>
-                              <span className="text-[11px] font-bold font-arial text-slate-800 uppercase text-right truncate max-w-[150px]">
-                                {(modelInfo.so || 'UNK')} - {modelInfo.modelo}
-                              </span>
-                            </div>
-
-                            {/* 3. TICKET */}
-                            {s.ticket && (
-                              <div className="p-2 flex items-center justify-between">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ticket:</span>
-                                <span className="text-[11px] font-bold font-arial text-slate-800 uppercase">{s.ticket}</span>
+                              )}
+                            </span>
+                            {(s.ticket || s.isCasillero) && (
+                              <div className="text-[9px] text-slate-500 font-semibold font-arial uppercase pl-3.5">
+                                {s.ticket && `TKT: ${s.ticket}`}
+                                {s.ticket && s.isCasillero && ' | '}
+                                {s.isCasillero && 'CASILLERO'}
                               </div>
                             )}
-
-                            {/* 4. ORIGEN */}
-                            {s.destino && (
-                              <div className="p-2 flex items-center justify-between">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Origen:</span>
-                                <span className="text-[11px] font-bold font-arial text-slate-800 uppercase">{s.destino}</span>
-                              </div>
-                            )}
-
-                            {/* 5. BANCO */}
-                            {s.banco && (
-                              <div className="p-2 flex items-center justify-between">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Banco:</span>
-                                <span className="text-[11px] font-bold font-arial text-blue-800 uppercase">{s.banco}</span>
-                              </div>
-                            )}
-
-                            {/* 6. MONTO */}
-                            {(s.bsf || s.usdt) && (
-                              <div className="p-2 flex items-center justify-between">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Monto:</span>
-                                <span className="text-[11px] font-bold font-arial text-emerald-800 uppercase">
-                                  {s.bsf ? `${s.bsf} BsF` : ''}
-                                  {s.bsf && s.usdt ? ' / ' : ''}
-                                  {s.usdt ? `${s.usdt} USDT` : ''}
-                                </span>
-                              </div>
-                            )}
-
-                            {/* 7. ORIGEN MÓDULO */}
-                            <div className="p-2 flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Módulo:</span>
-                              <span className={`text-[9px] font-black font-arial px-1.5 py-0.5 uppercase ${
-                                s.isCasillero 
-                                  ? 'bg-amber-100 text-amber-800 border border-amber-200' 
-                                  : 'bg-slate-100 text-slate-700 border border-slate-200'
-                              }`}>
-                                {s.isCasillero ? 'CASILLERO' : 'GESTION'}
-                              </span>
-                            </div>
                           </div>
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-3 px-4">
+                          <div className="flex flex-col gap-0.5 font-arial">
+                            <span className="text-xs font-bold text-slate-800 uppercase">
+                              {modelInfo.so === 'ANDROID' ? 'ANDROID' : modelInfo.so === 'LINUX' ? 'LINUX' : 'UNK'} - {modelInfo.modelo}
+                            </span>
+                            {(s.banco || s.bsf || s.usdt) && (
+                              <div className="text-[9px] text-slate-500 font-semibold uppercase">
+                                {s.banco && `${s.banco}`}
+                                {s.banco && (s.bsf || s.usdt) && ' - '}
+                                {s.bsf && `${s.bsf} BSF`}
+                                {s.bsf && s.usdt && ' / '}
+                                {s.usdt && `${s.usdt} USDT`}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
                           <select
                             value={s.status}
                             onChange={e => handleUpdateStatus(s.id, e.target.value as POSStatus)}
@@ -1068,7 +1029,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                                 : ['CANCELADO', 'N#A', 'RECUPERADO'].includes(s.status)
                                   ? 'status-select-green'
                                   : 'bg-slate-100 text-slate-800'
-                            } focus:ring-1 focus:ring-zinc-400 outline-none mt-1`}
+                            } focus:ring-1 focus:ring-zinc-400 outline-none`}
                           >
                             <option value="PENDIENTE">PENDIENTE</option>
                             <option value="ACTIVO">ACTIVO</option>
@@ -1079,48 +1040,28 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                             <option value="SIN ESTATUS">SIN ESTATUS</option>
                           </select>
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-3 px-4">
                           {isDisponible ? (
-                            <span 
-                              className="inline-flex items-center gap-1.5 bg-white text-slate-800 text-[10px] font-black px-2 py-1 rounded-none border border-slate-200 mt-1"
-                              style={{ boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.1)' }}
-                            >
+                            <span className="inline-flex items-center gap-1.5 text-slate-700 text-[10px] font-black uppercase">
                               <span className="w-1.5 h-1.5 bg-green-500 animate-pulse" style={{ borderRadius: '0px' }}></span>
                               DISPONIBLE
                             </span>
                           ) : isEntregado ? (
-                            <span 
-                              className="inline-flex items-center gap-1.5 bg-white text-slate-800 text-[10px] font-black px-2 py-1 rounded-none border border-slate-200 mt-1"
-                              style={{ boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.1)' }}
-                            >
+                            <span className="inline-flex items-center gap-1.5 text-slate-700 text-[10px] font-black uppercase">
                               <span className="w-1.5 h-1.5 bg-orange-500 animate-pulse" style={{ borderRadius: '0px' }}></span>
                               ENTREGADO
                             </span>
                           ) : (
-                            <span 
-                              className="inline-flex items-center gap-1.5 bg-white text-slate-800 text-[10px] font-black px-2 py-1 rounded-none border border-slate-200 mt-1"
-                              style={{ boxShadow: '0 2px 4px -1px rgba(0, 0, 0, 0.1)' }}
-                            >
-                              <span className="w-1.5 h-1.5 bg-slate-600" style={{ borderRadius: '0px' }}></span>
+                            <span className="inline-flex items-center gap-1.5 text-slate-700 text-[10px] font-black uppercase">
+                              <span className="w-1.5 h-1.5 bg-slate-500" style={{ borderRadius: '0px' }}></span>
                               SIN ESTATUS
                             </span>
                           )}
                         </td>
-                        <td className="py-4 px-4 text-xs">
-                          <span 
-                            className="font-bold text-slate-850 cursor-pointer hover:text-slate-950 hover:underline flex items-center gap-1 font-arial uppercase mt-1.5"
-                            onClick={() => onUserClick(s.remitente)}
-                          >
-                            {s.remitente}
-                            {usersProfiles[s.remitente] && (
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-900" title="Perfil asociado"></span>
-                            )}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-xs font-semibold">
+                        <td className="py-3 px-4 text-xs font-semibold">
                           {s.source ? (
                             <span 
-                              className="text-xs font-bold text-slate-850 select-all font-arial cursor-pointer hover:text-slate-950 hover:underline inline-flex items-center gap-1 mt-1.5"
+                              className="text-xs font-bold text-slate-800 select-all font-arial cursor-pointer hover:text-slate-950 hover:underline inline-flex items-center gap-1"
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 handleCopyText(s.source, `guia-${s.id}`);
@@ -1135,23 +1076,34 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                               )}
                             </span>
                           ) : (
-                            <span className="text-slate-400 font-mono mt-1.5 inline-block">-</span>
+                            <span className="text-slate-400 font-mono">-</span>
                           )}
                         </td>
-                        <td className="py-4 px-4">
+                        <td className="py-3 px-4 text-xs">
+                          <span 
+                            className="font-bold text-slate-800 cursor-pointer hover:text-slate-950 hover:underline flex items-center gap-1 font-arial uppercase"
+                            onClick={() => onUserClick(s.remitente)}
+                          >
+                            {s.remitente}
+                            {usersProfiles[s.remitente] && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-900" title="Perfil asociado"></span>
+                            )}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
                           <input
                             type="text"
                             value={s.displayDate || s.date.split('-').reverse().join('/')}
                             onChange={e => handleUpdateDateText(s.id, e.target.value)}
                             placeholder="DD/MM/YYYY"
-                            className="bg-slate-100 border border-transparent rounded-none font-mono text-[11px] p-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 w-24 text-center mt-1"
+                            className="bg-slate-100 border border-transparent rounded-none font-mono text-[11px] p-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 w-24 text-center"
                           />
                         </td>
-                        <td className="py-4 px-2 text-center">
+                        <td className="py-3 px-2 text-center">
                           <button
                             onClick={() => openEdit(s)}
                             title="Editar registro"
-                            className="p-1.5 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-500 cursor-pointer transition-colors mt-1"
+                            className="p-1.5 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-500 cursor-pointer transition-colors"
                             style={{ borderRadius: '0px' }}
                           >
                             <Pencil size={13} />
