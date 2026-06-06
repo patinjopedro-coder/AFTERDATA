@@ -177,7 +177,7 @@ export const EquiposEnviados: React.FC<EquiposEnviadosProps> = ({
   }, [sorted, activeBatch]);
 
   return (
-    <div className="flex flex-col gap-4 animate-fade-in text-slate-700 pb-16 font-arial">
+    <div className="flex flex-col gap-4 text-slate-700 pb-16 font-arial">
       
       <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center flex-wrap gap-4 text-slate-800">
         <div>

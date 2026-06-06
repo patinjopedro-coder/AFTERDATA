@@ -211,7 +211,7 @@ export const Usuarios: React.FC<UsuariosProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 animate-fade-in text-slate-700 pb-16 font-arial">
+    <div className="flex flex-col gap-4 text-slate-700 pb-16 font-arial">
       
       <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center text-slate-800 gap-4">
         <div>

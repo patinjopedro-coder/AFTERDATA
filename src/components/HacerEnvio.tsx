@@ -130,7 +130,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
   }, [enviosExternos, search]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 animate-fade-in text-slate-800">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 text-slate-800">
       
       {/* FORMULARIO DE CREACIÓN */}
       <div className="lg:col-span-1 dark-panel p-5 flex flex-col gap-4">

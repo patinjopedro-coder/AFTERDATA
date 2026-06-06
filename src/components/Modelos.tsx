@@ -108,7 +108,7 @@ export const Modelos: React.FC<ModelosProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-fade-in text-slate-700 pb-16 font-arial modelos-tab-container">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-slate-700 pb-16 font-arial modelos-tab-container">
       
       {/* FORMULARIO DE EDICIÓN O AGREGADO */}
       <div className="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex flex-col gap-4">

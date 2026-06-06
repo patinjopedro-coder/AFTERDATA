@@ -93,7 +93,7 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
     : [];
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-in text-slate-800 font-arial pb-16">
+    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 text-slate-800 font-arial pb-16">
       
       {/* Columna Izquierda: Cargar Nuevas y Listado de Lotes */}
       <div className="xl:col-span-1 flex flex-col gap-6">

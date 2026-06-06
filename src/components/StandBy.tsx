@@ -116,7 +116,7 @@ export const StandBy: React.FC<StandByProps> = ({
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 animate-fade-in text-slate-800">
+    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 text-slate-800">
       
       {/* PANEL IZQUIERDO: AGREGAR REGISTROS */}
       <div className="xl:col-span-1 dark-panel p-5 flex flex-col gap-4 h-fit">

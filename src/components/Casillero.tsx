@@ -377,7 +377,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 animate-fade-in text-slate-800 pb-10 font-arial">
+    <div className="flex flex-col gap-4 text-slate-800 pb-10 font-arial">
       
       <div className="flex justify-between items-center dark-panel p-4 flex-wrap gap-4">
         <div>

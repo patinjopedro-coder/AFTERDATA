@@ -596,13 +596,13 @@ export default function App() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#08080a] flex flex-col items-center justify-center gap-6 font-sans">
-        <LogoIcon className="w-24 h-24 animate-pulse shrink-0" color="#ffffff" />
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center gap-6 font-sans">
+        <LogoIcon className="w-24 h-24 animate-pulse shrink-0" color="#2c3e50" />
         <div className="flex flex-col items-center gap-2">
-          <p className="text-zinc-400 font-mono text-xs uppercase tracking-[0.2em]">
+          <p className="text-slate-800 font-mono text-xs uppercase tracking-[0.2em]">
             Cargando base de datos...
           </p>
-          <p className="text-zinc-650 font-mono text-[10px] tracking-wider">
+          <p className="text-slate-500 font-mono text-[10px] tracking-wider">
             TRACKING · IndexedDB
           </p>
         </div>
@@ -610,7 +610,7 @@ export default function App() {
           {[0, 1, 2].map(i => (
             <span
               key={i}
-              className="w-2 h-2 rounded-full bg-zinc-500 animate-bounce"
+              className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"
               style={{ animationDelay: `${i * 0.15}s` }}
             />
           ))}
@@ -944,7 +944,7 @@ export default function App() {
         {/* AREA DE TRABAJO SCROLLABLE */}
         <main className="flex-1 overflow-y-auto p-8 dashboard-bg">
 
-          {currentTab === 'general' && (
+          <div className={currentTab === 'general' ? '' : 'hidden'}>
             <GestionGeneral
               serials={serials}
               setSerials={setSerials}
@@ -964,9 +964,9 @@ export default function App() {
               setUsersProfiles={setUsersProfiles}
               activeCruceBatchId={activeCruceBatchId}
             />
-          )}
+          </div>
 
-          {currentTab === 'casillero' && (
+          <div className={currentTab === 'casillero' ? '' : 'hidden'}>
             <Casillero
               serials={serials}
               setSerials={setSerials}
@@ -980,9 +980,9 @@ export default function App() {
               setUsersProfiles={setUsersProfiles}
               activeCruceBatchId={activeCruceBatchId}
             />
-          )}
+          </div>
 
-          {currentTab === 'hacerEnvio' && (
+          <div className={currentTab === 'hacerEnvio' ? '' : 'hidden'}>
             <HacerEnvio
               enviosExternos={enviosExternos}
               setEnviosExternos={setEnviosExternos}
@@ -990,9 +990,9 @@ export default function App() {
               setSerials={setSerials}
               activeCruceBatchId={activeCruceBatchId}
             />
-          )}
+          </div>
 
-          {currentTab === 'cruce' && (
+          <div className={currentTab === 'cruce' ? '' : 'hidden'}>
             <CruceSeriales
               serials={serials}
               setSerials={setSerials}
@@ -1002,16 +1002,16 @@ export default function App() {
               activeCruceBatchId={activeCruceBatchId}
               setActiveCruceBatchId={setActiveCruceBatchId}
             />
-          )}
+          </div>
 
-          {currentTab === 'standby' && (
+          <div className={currentTab === 'standby' ? '' : 'hidden'}>
             <StandBy
               standbyList={standbyList}
               setStandbyList={setStandbyList}
             />
-          )}
+          </div>
 
-          {currentTab === 'envios' && (
+          <div className={currentTab === 'envios' ? '' : 'hidden'}>
             <EquiposEnviados
               serials={serials}
               enviosExternos={enviosExternos}
@@ -1021,23 +1021,23 @@ export default function App() {
               dateTo={dateTo}
               activeCruceBatchId={activeCruceBatchId}
             />
-          )}
+          </div>
 
-          {currentTab === 'simcards' && (
+          <div className={currentTab === 'simcards' ? '' : 'hidden'}>
             <GestionSimCards
               simCardBatches={simCardBatches}
               setSimCardBatches={setSimCardBatches}
             />
-          )}
+          </div>
 
-          {currentTab === 'modelos' && (
+          <div className={currentTab === 'modelos' ? '' : 'hidden'}>
             <Modelos
               modelosDB={modelosDB}
               setModelosDB={setModelosDB}
             />
-          )}
+          </div>
 
-          {currentTab === 'estadisticas' && (
+          <div className={currentTab === 'estadisticas' ? '' : 'hidden'}>
             <Estadisticas
               serials={serials}
               modelosDB={modelosDB}
@@ -1045,9 +1045,9 @@ export default function App() {
               usersProfiles={usersProfiles}
               simCardBatches={simCardBatches}
             />
-          )}
+          </div>
 
-          {currentTab === 'usuarios' && (
+          <div className={currentTab === 'usuarios' ? '' : 'hidden'}>
             <Usuarios
               serials={serials}
               modelosDB={modelosDB}
@@ -1055,7 +1055,7 @@ export default function App() {
               usersProfiles={usersProfiles}
               setUsersProfiles={setUsersProfiles}
             />
-          )}
+          </div>
 
         </main>
       </div>

@@ -568,7 +568,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-5 animate-fade-in text-slate-800 pb-16 font-arial">
+    <div className="flex flex-col gap-5 text-slate-800 pb-16 font-arial">
       
       {/* SECCIÓN VALIDADOR / HOJA DE CONTROL: ENVIADO HACIA LOGICA IMS / CMS */}
       <div className="dark-panel p-5 flex flex-col md:flex-row justify-between items-center gap-4">

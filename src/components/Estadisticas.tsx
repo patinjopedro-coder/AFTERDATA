@@ -923,7 +923,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
   const offsetOther = -(strokeAndroid + strokeLinux);
 
   return (
-    <div className="flex flex-col gap-6 animate-fade-in text-black pb-16 estadisticas-tab-container font-arial">
+    <div className="flex flex-col gap-6 text-black pb-16 estadisticas-tab-container font-arial">
       
       {/* SECCIÓN 1: CONTADORES TÉCNICOS (TOP KPI CARDS IN MOCKUP) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
