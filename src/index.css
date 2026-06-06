@@ -271,13 +271,13 @@ section.bg-\[\#f8fafc\] {
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.03) !important;
 }
 
-.dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.custom-entregado-btn):not(.status-filter-btn) {
+.dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.btn-red):not(.btn-orange):not(.custom-entregado-btn):not(.status-filter-btn) {
   background-color: #3f3f46 !important;
   border: 1px solid #3f3f46 !important;
   color: #ffffff !important;
 }
 
-.dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.custom-entregado-btn):not(.status-filter-btn):hover {
+.dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.btn-red):not(.btn-orange):not(.custom-entregado-btn):not(.status-filter-btn):hover {
   background-color: #27272a !important;
   border-color: #27272a !important;
 }
@@ -397,7 +397,7 @@ select:focus {
 
 /* 5. Buttons and Actions */
 /* Default Zinc/Secondary Button and all general buttons: Opaque gray background, white text */
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) {
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) {
   background-color: #3f3f46 !important;
   border: 1px solid #3f3f46 !important;
   color: #ffffff !important;
@@ -406,14 +406,14 @@ button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.st
   transition: all 0.2s ease !important;
 }
 
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):hover {
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):hover {
   background-color: #27272a !important;
   border-color: #27272a !important;
   color: #ffffff !important;
 }
 
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg,
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg * {
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg,
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg * {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
@@ -443,6 +443,7 @@ button.bg-black,
   background-color: #2563eb !important;
   color: #ffffff !important;
   border: 1px solid #2563eb !important;
+  border-radius: 0px !important;
 }
 .btn-blue *,
 .btn-blue svg,
@@ -459,6 +460,7 @@ button.bg-black,
   background-color: #16a34a !important;
   color: #ffffff !important;
   border: 1px solid #16a34a !important;
+  border-radius: 0px !important;
 }
 .btn-green *,
 .btn-green svg,
@@ -475,6 +477,7 @@ button.bg-black,
   background-color: #ea580c !important;
   color: #ffffff !important;
   border: 1px solid #ea580c !important;
+  border-radius: 0px !important;
 }
 .btn-orange *,
 .btn-orange svg,
@@ -491,6 +494,7 @@ button.bg-black,
   background-color: #ef4444 !important;
   color: #ffffff !important;
   border: 1px solid #ef4444 !important;
+  border-radius: 0px !important;
 }
 .btn-red *,
 .btn-red svg,

@@ -800,7 +800,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               
               <button
                 onClick={applyBulkStatusToPage}
-                className="bg-[#22c55e] hover:bg-[#16a34a] text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-lg border border-[#22c55e] cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force"
+                className="btn-blue bg-blue-600 hover:bg-blue-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-blue-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force"
                 style={{ color: '#ffffff' }}
               >
                 APLICAR A PÁGINA
@@ -808,7 +808,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               
               <button
                 onClick={applyBulkStatusToSelected}
-                className="bg-[#22c55e] hover:bg-[#16a34a] text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-lg border border-[#22c55e] cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force"
+                className="btn-blue bg-blue-600 hover:bg-blue-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-blue-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force"
                 style={{ color: '#ffffff' }}
               >
                 APLICAR A SELECCIONADOS
@@ -816,7 +816,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               
               <button
                 onClick={deleteSelectedSerials}
-                className="bg-red-500 hover:bg-red-600 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-lg border border-red-500 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
+                className="btn-red bg-red-500 hover:bg-red-600 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-red-500 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
                 style={{ color: '#ffffff' }}
                 title="Eliminar seleccionados"
               >
@@ -826,7 +826,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
               <button
                 onClick={handleExportFilteredOrSelected}
-                className="bg-blue-650 hover:bg-blue-550 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-lg border border-blue-650 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
+                className="btn-green bg-green-600 hover:bg-green-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-green-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
                 style={{ color: '#ffffff' }}
                 title="Exportar seleccionados o reflejados a CSV"
               >
