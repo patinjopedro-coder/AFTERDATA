@@ -347,7 +347,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       return;
     }
 
-    let csv = "SERIAL,MODELO,SO,ESTADO,REMITENTE,RIF,RAZON_SOCIAL,TICKET,FECHA\n";
+    let csv = "sep=,\nSERIAL,MODELO,SO,ESTADO,REMITENTE,RIF,RAZON_SOCIAL,TICKET,FECHA\n";
     items.forEach(s => {
       const m = getTerminalModel(s.serial, modelosDB);
       csv += `"${s.serial}","${m.modelo}","${m.so}","${s.status}","${s.remitente}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.date}"\n`;
@@ -782,7 +782,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       alert("No hay datos para exportar.");
       return;
     }
-    const header = ["Serial", "Modelo", "SO", "Estatus", "Cliente / Razon Social", "Remitente", "Ingreso"];
+    const header = "sep=,\nSERIAL,MODELO,SO,ESTATUS,REMITENTE,CLIENTE_RAZON_SOCIAL,TICKET,GUIA_ENTRADA,DESTINO,FECHA_INGRESO";
     const rows = modalList.map(s => {
       const m = getTerminalModel(s.serial, modelosDB);
       return [
@@ -790,19 +790,16 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         m.modelo,
         m.so,
         s.status || 'SIN ESTATUS',
-        s.razonSocial || '',
         s.remitente || '',
-        s.displayDate || ''
-      ].map(v => `"${v}"`).join(",");
+        s.razonSocial || '',
+        s.ticket || '',
+        s.source || '',
+        s.destino || '',
+        s.displayDate || s.date || ''
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
     });
-    const csvContent = "data:text/csv;charset=utf-8," + [header.join(","), ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Exportacion_${modalType}_${new Date().getTime()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const csvContent = [header, ...rows].join("\n");
+    downloadCSV(csvContent, `Exportacion_${modalType}_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   // Unified General list at the bottom

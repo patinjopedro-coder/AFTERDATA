@@ -14,6 +14,7 @@ interface CruceSerialesProps {
   usersProfiles: Record<string, import('../types').UserProfile>;
   activeCruceBatchId: string;
   setActiveCruceBatchId: (id: string) => void;
+  setCurrentTab: (tab: string) => void;
 }
 
 export const CruceSeriales: React.FC<CruceSerialesProps> = ({
@@ -23,7 +24,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   onUserClick,
   usersProfiles,
   activeCruceBatchId,
-  setActiveCruceBatchId
+  setActiveCruceBatchId,
+  setCurrentTab
 }) => {
   // Real-time text streams state
   const [emailText, setEmailText] = useState('');
@@ -456,28 +458,33 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
         const idx = copy.findIndex(item => item.serial === serial);
         if (idx !== -1) {
-          // Mantener el status original según requerimiento (historial de ingreso)
-          copy[idx].cruceBatchId = newBatchId; // Asignar al lote actual para visibilidad
+          // Inmutablemente actualizar el elemento existente
+          const existing = copy[idx];
+          let updatedItem = { ...existing, cruceBatchId: newBatchId };
+
           if ('isCMS' in match && match.isCMS) {
-            if (match.remitente) copy[idx].remitente = match.remitente;
+            if (match.remitente) updatedItem = { ...updatedItem, remitente: match.remitente };
             if (match.date) {
-              copy[idx].date = match.date;
-              copy[idx].displayDate = match.date.split('-').reverse().join('/');
+              updatedItem = {
+                ...updatedItem,
+                date: match.date,
+                displayDate: match.date.split('-').reverse().join('/')
+              };
             }
           } else {
             if (match?.operadora) {
-              copy[idx].operadora = match.operadora as any;
+              updatedItem = { ...updatedItem, operadora: match.operadora as any };
             } else {
-              copy[idx].operadora = 'DISPONIBLE' as any;
+              updatedItem = { ...updatedItem, operadora: 'DISPONIBLE' as any };
             }
             if (match?.simNumber) {
-              copy[idx].sim = true;
-              copy[idx].simNumber = match.simNumber;
+              updatedItem = { ...updatedItem, sim: true, simNumber: match.simNumber };
             }
-            if (match?.ticket && !copy[idx].ticket) {
-              copy[idx].ticket = match.ticket;
+            if (match?.ticket && !existing.ticket) {
+              updatedItem = { ...updatedItem, ticket: match.ticket };
             }
           }
+          copy[idx] = updatedItem;
           actualizados++;
         } else {
           const isCMS = 'isCMS' in match && match.isCMS;
@@ -532,10 +539,11 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     });
 
     alert(`✅ ¡Cruce inteligente completado!\n• ${nuevos} nuevos registros agregados.\n• ${actualizados} terminales existentes actualizados.`);
+    setCurrentTab('general');
   };
 
   const handleExportCruceReport = () => {
-    let csv = "SERIAL,CORREO_CONTIENE,FISICO_CONTIENE,MATCH,ESTADO_IMS,OPERADORA,SIM_CARD,TICKET_CASO\n";
+    let csv = "sep=,\nSERIAL,CORREO_CONTIENE,FISICO_CONTIENE,MATCH,ESTADO_IMS,OPERADORA,SIM_CARD,TICKET_CASO\n";
     const allSetKeys = Array.from(new Set([...emailUniques, ...fisicoUniques]));
 
     for (const s of allSetKeys) {
@@ -558,10 +566,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
   // Aesthetic light pastel style badges with pure WHITE text inside
   const getStatusBadgeStyle = (st: POSStatus) => {
-    if (['CANCELADO', 'N#A'].includes(st)) {
-      return 'bg-emerald-600 text-white border border-emerald-700 font-bold px-2 py-0.5 rounded shadow-sm';
+    if (['CANCELADO', 'N#A', 'RECUPERADO'].includes(st)) {
+      return 'bg-green-600 text-white border border-green-700 font-bold px-2 py-0.5 rounded shadow-sm';
     }
-    if (['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'RECUPERADO'].includes(st)) {
+    if (['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(st)) {
       return 'bg-orange-600 text-white border border-orange-550 font-extrabold px-2 py-0.5 rounded shadow-sm';
     }
     return 'bg-slate-500 text-white border border-slate-600 font-semibold px-2 py-0.5 rounded shadow-xs';
@@ -832,7 +840,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       key={idx}
                       className={`flex items-center justify-between p-2 rounded-lg border text-xs font-semibold scale-98 transition-all ${
                         isMatch 
-                          ? 'bg-orange-50 border-orange-200 text-slate-800 shadow-sm' 
+                          ? 'bg-white border-orange-500 text-slate-800 shadow-sm' 
                           : 'bg-slate-100 border-slate-200 text-slate-400'
                       }`}
                     >
@@ -846,9 +854,9 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                         <select
                           value={dbMatch?.status || 'N#A'}
                           onChange={(e) => updateSerialStatus(serial, e.target.value as POSStatus)}
-                          className={`text-[10px] font-extrabold px-1.5 py-1 rounded border uppercase outline-none cursor-pointer tracking-wider font-sans bg-white text-slate-800 ${
+                          className={`text-[10px] font-extrabold px-1.5 py-1 rounded border uppercase outline-none cursor-pointer tracking-wider font-sans ${
                             dbMatch 
-                              ? getStatusBadgeStyle(dbMatch.status) 
+                              ? (['CANCELADO', 'N#A', 'RECUPERADO'].includes(dbMatch.status) ? 'status-select-green' : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(dbMatch.status) ? 'status-select-orange' : 'bg-slate-500 text-white')
                               : 'bg-slate-100 border-slate-200 text-slate-700'
                           }`}
                         >

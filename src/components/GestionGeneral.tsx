@@ -69,6 +69,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [accBateria, setAccBateria] = useState(false);
   const [costoBsf, setCostoBsf] = useState('');
   const [costoUsdt, setCostoUsdt] = useState('');
+  const [banco, setBanco] = useState('');
 
   const handleRemitenteChange = (val: string) => {
     setRemitente(val);
@@ -114,7 +115,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
     const today = currentDateStr();
     const displayToday = today.split('-').reverse().join('/');
-    const isCas = !!(guia || rif || razonSocial || destino || simNumber || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || ticket || costoBsf || costoUsdt);
+    const isCas = !!(guia || rif || razonSocial || destino || simNumber || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || ticket || costoBsf || costoUsdt || banco);
 
     let maxId = serials.reduce((max, s) => (s && s.id && typeof s.id === 'number') ? Math.max(max, s.id) : max, 0);
 
@@ -155,6 +156,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         ticket: ticket.toUpperCase().trim(),
         bsf: costoBsf.toUpperCase().trim(),
         usdt: costoUsdt.toUpperCase().trim(),
+        banco: banco.toUpperCase().trim(),
         cruceBatchId: activeCruceBatchId || undefined
       };
     });
@@ -201,6 +203,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     setAccBateria(false);
     setCostoBsf('');
     setCostoUsdt('');
+    setBanco('');
 
     alert(`Se registraron ${newItems.length} seriales correctamente.`);
   };
@@ -213,6 +216,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       const inSearch = !globalSearch || 
         s.serial.toLowerCase().includes(searchLow) ||
         s.remitente.toLowerCase().includes(searchLow) ||
+        (s.banco && s.banco.toLowerCase().includes(searchLow)) ||
         (s.rif && s.rif.toLowerCase().includes(searchLow)) ||
         (s.razonSocial && s.razonSocial.toLowerCase().includes(searchLow)) ||
         (s.source && s.source.toLowerCase().includes(searchLow)) ||
@@ -588,24 +592,36 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
           </div>
         </div>
 
-        {/* COSTO FIELDS */}
-        <div className="grid grid-cols-2 gap-3.5 mt-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo (BsF)</label>
-            <input
-              type="text"
-              value={costoBsf}
-              onChange={e => setCostoBsf(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
+        {/* COSTO & BANCO FIELDS */}
+        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mt-1 flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3.5">
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo (BsF)</label>
+              <input
+                type="text"
+                value={costoBsf}
+                onChange={e => setCostoBsf(e.target.value)}
+                placeholder=""
+                className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo (USDT)</label>
+              <input
+                type="text"
+                value={costoUsdt}
+                onChange={e => setCostoUsdt(e.target.value)}
+                placeholder=""
+                className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo (USDT)</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Banco</label>
             <input
               type="text"
-              value={costoUsdt}
-              onChange={e => setCostoUsdt(e.target.value)}
+              value={banco}
+              onChange={e => setBanco(e.target.value)}
               placeholder=""
               className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
             />
@@ -837,6 +853,21 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                                   ORIGEN: {s.destino}
                                 </span>
                               )}
+                              {s.banco && (
+                                <span className="text-[9px] bg-blue-100 text-blue-800 font-extrabold px-1.5 py-0.5 rounded border border-transparent shadow-xs font-arial">
+                                  BANCO: {s.banco}
+                                </span>
+                              )}
+                              {s.bsf && (
+                                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-transparent shadow-xs font-arial">
+                                  {s.bsf} BsF
+                                </span>
+                              )}
+                              {s.usdt && (
+                                <span className="text-[9px] bg-emerald-100 text-emerald-800 font-extrabold px-1.5 py-0.5 rounded border border-transparent shadow-xs font-arial">
+                                  {s.usdt} USDT
+                                </span>
+                              )}
                               {s.isCasillero && (
                                 <span className="text-[9px] bg-amber-100 text-amber-800 font-extrabold px-1.5 py-0.5 rounded border border-transparent shadow-xs font-arial">
                                   CASILLERO
@@ -850,7 +881,13 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                           <select
                             value={s.status}
                             onChange={e => handleUpdateStatus(s.id, e.target.value as POSStatus)}
-                            className={`text-xs px-2 py-1 rounded font-bold uppercase ${getStatusColor(s.status)} focus:ring-1 focus:ring-zinc-400 outline-none`}
+                            className={`text-xs px-2 py-1 rounded font-bold uppercase ${
+                              ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(s.status)
+                                ? 'status-select-orange'
+                                : ['CANCELADO', 'N#A', 'RECUPERADO'].includes(s.status)
+                                  ? 'status-select-green'
+                                  : 'bg-slate-100 text-slate-800'
+                            } focus:ring-1 focus:ring-zinc-400 outline-none`}
                           >
                             <option value="PENDIENTE">PENDIENTE</option>
                             <option value="ACTIVO">ACTIVO</option>

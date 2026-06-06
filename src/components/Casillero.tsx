@@ -775,14 +775,6 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               Sin sustitución de equipo asociada.
                             </span>
                           )}
-                          {s.esSustitucion && s.serialSustituto && (
-                            <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-amber-700 bg-amber-50 p-1.5 rounded border border-amber-200">
-                              <span className="font-bold">SUST: {s.serialSustituto}</span>
-                              {s.fechaSalida && (
-                                <span className="text-[9px] text-slate-500">Salida: {s.fechaSalida.split('-').reverse().join('/')}</span>
-                              )}
-                            </div>
-                          )}
                         </div>
                       </td>
 

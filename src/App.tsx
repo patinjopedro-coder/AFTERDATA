@@ -396,8 +396,26 @@ export default function App() {
   };
 
   const handleExportCSV = () => {
-    const filtered = serials.filter(s => includeCasillero || !s.isCasillero);
-    let csv = "SERIAL,ESTADO,REMITENTE,RIF,RAZON_SOCIAL,TICKET,GUIA_ENTRADA,DESTINO,FECHA_INGRESO\n";
+    const searchLow = globalSearch.toLowerCase();
+    const filtered = serials.filter(s => {
+      if (!includeCasillero && s.isCasillero) return false;
+      if (dateFrom && s.date < dateFrom) return false;
+      if (dateTo && s.date > dateTo) return false;
+      if (globalSearch) {
+        const matches =
+          s.serial.toLowerCase().includes(searchLow) ||
+          s.remitente.toLowerCase().includes(searchLow) ||
+          (s.rif && s.rif.toLowerCase().includes(searchLow)) ||
+          (s.razonSocial && s.razonSocial.toLowerCase().includes(searchLow)) ||
+          (s.source && s.source.toLowerCase().includes(searchLow)) ||
+          (s.destino && s.destino.toLowerCase().includes(searchLow)) ||
+          (s.ticket && s.ticket.toLowerCase().includes(searchLow));
+        if (!matches) return false;
+      }
+      return true;
+    });
+
+    let csv = "sep=,\nSERIAL,ESTADO,REMITENTE,RIF,RAZON_SOCIAL,TICKET,GUIA_ENTRADA,DESTINO,FECHA_INGRESO\n";
     filtered.forEach(s => {
       csv += `"${s.serial}","${s.status}","${s.remitente}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.source || ''}","${s.destino || ''}","${s.date}"\n`;
     });
@@ -437,7 +455,7 @@ export default function App() {
   };
 
   const handleExportFullCSVBackup = () => {
-    let csv = "ID,SERIAL,STATUS,REMITENTE,GUI_ENTRADA,RIF,RAZON_SOCIAL,TICKET,DESTINO,OBSERVACIONES,RESPONSABLE,FORRO,BATERIA,CARGADOR,CAJA,SIM,SIM_NUMBER,OPERADORA,MODELO_NEGOCIO,ENTREGADO_TECNICO,FECHA_LLEGADA,BANCO,BSF\n";
+    let csv = "sep=,\nID,SERIAL,STATUS,REMITENTE,GUI_ENTRADA,RIF,RAZON_SOCIAL,TICKET,DESTINO,OBSERVACIONES,RESPONSABLE,FORRO,BATERIA,CARGADOR,CAJA,SIM,SIM_NUMBER,OPERADORA,MODELO_NEGOCIO,ENTREGADO_TECNICO,FECHA_LLEGADA,BANCO,BSF\n";
     serials.forEach(s => {
       csv += `"${s.id}","${s.serial}","${s.status}","${s.remitente}","${s.source || ''}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.destino || ''}","${s.observaciones || ''}","${s.responsable || ''}","${s.forro}","${s.bateria}","${s.cargador}","${s.caja}","${s.sim}","${s.simNumber || ''}","${s.operadora || ''}","${s.modeloNegocio || ''}","${s.entregadoTecnico}","${s.date}","${s.banco || ''}","${s.bsf || ''}"\n`;
     });
@@ -1001,6 +1019,7 @@ export default function App() {
               usersProfiles={usersProfiles}
               activeCruceBatchId={activeCruceBatchId}
               setActiveCruceBatchId={setActiveCruceBatchId}
+              setCurrentTab={setCurrentTab}
             />
           </div>
 
