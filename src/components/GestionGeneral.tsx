@@ -498,6 +498,33 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
   const isAllSelected = paginatedSerials.length > 0 && paginatedSerials.every(s => s.selected);
 
+  const handleExportFilteredOrSelected = () => {
+    const selected = serials.filter(s => s.selected);
+    const targets = selected.length > 0 ? selected : filteredSerials;
+
+    if (targets.length === 0) {
+      alert("No hay registros seleccionados o reflejados para exportar.");
+      return;
+    }
+
+    let csv = "sep=;\nID;SERIAL_CRUCE;SERIAL_CASILLERO;STATUS;REMITENTE;GUI_ENTRADA;IS_CASILLERO;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;FECHA_CONFIRMADA;TICKET;ADDED_FROM_CRUCE;BANCO;BSF;USDT;CRUCE_BATCH_ID;FECHA_INGRESO\n";
+    targets.forEach(s => {
+      const serialCruce = !s.isCasillero ? s.serial : '';
+      const serialCasillero = s.isCasillero ? s.serial : '';
+      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
+    });
+
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const d = new Date();
+    const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `exportacion_gestion_${localDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Suggested Unique Remitentes for Datalist
   const uniqueRemitentes = useMemo(() => {
     return Array.from(new Set(serials.map(s => s.remitente))).filter(Boolean);
@@ -795,6 +822,16 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               >
                 <Trash2 size={12} />
                 ELIMINAR
+              </button>
+
+              <button
+                onClick={handleExportFilteredOrSelected}
+                className="bg-blue-650 hover:bg-blue-550 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-lg border border-blue-650 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
+                style={{ color: '#ffffff' }}
+                title="Exportar seleccionados o reflejados a CSV"
+              >
+                <FileSpreadsheet size={12} />
+                EXPORTAR CSV
               </button>
             </div>
           </div>

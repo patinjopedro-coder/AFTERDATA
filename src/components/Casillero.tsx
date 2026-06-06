@@ -595,13 +595,6 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       {/* ENTRADA (FECHA O GUÍA) */}
                       <td className="py-4 px-3 text-center whitespace-nowrap text-xs font-arial text-slate-800">
                         <div>{s.displayDate}</div>
-                        {s.source ? (
-                          <div className="mt-1 text-[14px] text-slate-700 font-bold font-arial">
-                            GUÍA: <span className="inline-flex items-center gap-1"><span className="text-slate-900 hover:underline cursor-pointer select-all font-bold" onClick={() => handleCopyText(s.source, `guia-${s.id}`)}>{s.source}</span>{copiedKey === `guia-${s.id}` && (<span className="inline-flex items-center justify-center w-4 h-4 bg-green-500 rounded animate-fade-in"><Check size={10} className="text-white" style={{ color: '#fff' }} /></span>)}</span>
-                          </div>
-                        ) : (
-                          <div className="text-[10px] text-slate-400 mt-1">MANUAL</div>
-                        )}
                         {s.addedFromCruce && (
                           <div className="mt-1.5">
                             <span className="text-[9px] bg-slate-200 hover:bg-slate-350 text-slate-700 font-bold px-2 py-0.5 rounded-full select-none cursor-pointer border border-transparent">
@@ -633,6 +626,12 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             </div>
                           </div>
 
+                          {/* GUIA */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Guía:</span>
+                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase select-all">{s.source || 'S/N'}</span>
+                          </div>
+
                           {/* MODELO DE HARDWARE */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Equipo:</span>
@@ -650,18 +649,15 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           </div>
 
                           {/* 3. CLIENTE / SOLICITANTE */}
-                          <div className="p-2 flex items-start justify-between gap-2">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider min-w-[60px]">Cliente:</span>
-                            <div className="flex flex-col items-end text-right truncate">
-                              <div className="text-slate-800 font-bold select-all text-[11px] truncate uppercase font-arial max-w-[150px]">
-                                {s.razonSocial || 'SIN RAZÓN SOCIAL'}
-                              </div>
-                              {s.rif && (
-                                <div className="text-[11px] text-slate-800 font-bold select-all font-arial">
-                                  {s.rif}
-                                </div>
-                              )}
-                            </div>
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cliente:</span>
+                            <span className="text-slate-800 font-bold select-all text-[11px] truncate uppercase font-arial max-w-[150px]">{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
+                          </div>
+
+                          {/* RIF */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Rif:</span>
+                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase select-all">{s.rif || 'S/N'}</span>
                           </div>
 
                           {/* 4. TICKET */}
