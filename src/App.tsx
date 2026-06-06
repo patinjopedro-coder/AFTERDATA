@@ -22,7 +22,7 @@ import {
   Database, FileSpreadsheet, Download, RefreshCw,
   Trash2, Layers, Search, Calendar, FolderCheck, Clock,
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
-  Menu, Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut
+  Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut
 } from 'lucide-react';
 
 export default function App() {
@@ -644,10 +644,15 @@ export default function App() {
       <aside className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-[#f8fafc] border-r border-slate-200 flex flex-col justify-between shrink-0 h-full select-none z-10`}>
         
         <div className="flex flex-col gap-6">
-          {/* Logo aislado en la parte superior */}
+          {/* Logo aislado en la parte superior — click para colapsar/expandir */}
           <div className="flex flex-col items-center pb-3 border-b border-slate-200">
-            {/* Logo */}
-            <div className={`flex items-center gap-3 py-4 w-full ${isSidebarCollapsed ? 'justify-center mt-2 px-1' : 'justify-start pl-4'}`}>
+            <div
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title="Colapsar / Expandir menú"
+              className={`flex items-center gap-3 py-4 w-full cursor-pointer hover:opacity-70 transition-opacity ${
+                isSidebarCollapsed ? 'justify-center mt-2 px-1' : 'justify-start pl-4'
+              }`}
+            >
               <LogoIcon className="w-12 h-12 text-black shrink-0" color="#000000" />
               {!isSidebarCollapsed && (
                 <div className="animate-fade-in">
@@ -661,15 +666,6 @@ export default function App() {
 
           {/* Menú de Navegación Vertical */}
           <nav className={`flex flex-col gap-1.5 px-3`}>
-            {/* Botón para desplazar / Colapsar alineado con los demás */}
-            <button 
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              title="Menú"
-              className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider rounded-xl transition-all border cursor-pointer text-left w-full bg-transparent text-slate-500 hover:bg-slate-200/50 hover:text-slate-900 border-transparent`}
-            >
-              <Menu size={18} className="text-slate-500" />
-              {!isSidebarCollapsed && <span className="truncate">Menú</span>}
-            </button>
             {[
               { id: 'general', label: 'Gestión General', icon: Home },
               { id: 'casillero', label: 'Casillero', icon: Flag },
@@ -680,7 +676,8 @@ export default function App() {
               { id: 'simcards', label: 'Gestión de SIM-Cards', icon: CardSim },
               { id: 'modelos', label: 'Modelos Registrados', icon: Smartphone },
               { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
-              { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users }
+              { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users },
+              { id: 'configuracion', label: 'Configuración', icon: Settings }
             ].map(t => {
               const Icon = t.icon;
               const isActive = currentTab === t.id;
