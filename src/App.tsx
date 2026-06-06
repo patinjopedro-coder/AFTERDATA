@@ -270,8 +270,25 @@ export default function App() {
             return;
           }
 
-          const parsedHeaders = lines[0].split(',').map(h => h.toUpperCase().replace(/_/g, '').replace(/\s/g, '').trim());
-          if (!parsedHeaders.some(h => h.includes('SERIAL'))) {
+          let headerLineIndex = 0;
+          let separator = ',';
+
+          if (lines[0].toLowerCase().startsWith('sep=')) {
+            separator = lines[0].split('=')[1] || ',';
+            headerLineIndex = 1;
+          } else {
+            // Auto-detect separator by counting occurrences
+            const firstLine = lines[0];
+            const commaCount = (firstLine.match(/,/g) || []).length;
+            const semiCount = (firstLine.match(/;/g) || []).length;
+            if (semiCount > commaCount) {
+              separator = ';';
+            }
+          }
+
+          const parsedHeaders = lines[headerLineIndex].split(separator).map(h => h.toUpperCase().replace(/_/g, '').replace(/\s/g, '').trim());
+          const hasSerialHeader = parsedHeaders.some(h => h.includes('SERIAL') || h.includes('SERIALCRUCE') || h.includes('SERIALCASILLERO'));
+          if (!hasSerialHeader) {
             alert("Formato no reconocido o falto de columna SERIAL.");
             return;
           }
@@ -279,7 +296,10 @@ export default function App() {
           if (confirm("¿Está seguro de importar los registros? Esto reescribirá la base logistica local.")) {
             // Find positions
             const idxID = parsedHeaders.findIndex(h => h === 'ID');
-            const idxSerial = parsedHeaders.findIndex(h => h === 'SERIAL' || (h.includes('SERIAL') && h !== 'SERIALSUSTITUTO'));
+            const idxSerialCruce = parsedHeaders.findIndex(h => h.includes('SERIALCRUCE'));
+            const idxSerialCasillero = parsedHeaders.findIndex(h => h.includes('SERIALCASILLERO'));
+            const idxSerial = parsedHeaders.findIndex(h => h === 'SERIAL' || (h.includes('SERIAL') && h !== 'SERIALSUSTITUTO' && h !== 'SERIALCRUCE' && h !== 'SERIALCASILLERO'));
+            
             const idxStatus = parsedHeaders.findIndex(h => h.includes('STATUS') || h.includes('ESTADO'));
             const idxRemitente = parsedHeaders.findIndex(h => h.includes('REMITENTE'));
             const idxRif = parsedHeaders.findIndex(h => h.includes('RIF'));
@@ -316,11 +336,26 @@ export default function App() {
 
             const importedItems: POSItem[] = [];
 
-            for (let i = 1; i < lines.length; i++) {
-              const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+            for (let i = headerLineIndex + 1; i < lines.length; i++) {
+              const cols = lines[i].split(separator).map(c => c.replace(/^"|"$/g, '').trim());
               if (cols.length < 2) continue;
 
-              const cleanSerial = cols[idxSerial]?.toUpperCase() || '';
+              let cleanSerial = '';
+              let isCasilleroVal = false;
+
+              if (idxSerialCasillero !== -1 && cols[idxSerialCasillero]) {
+                cleanSerial = cols[idxSerialCasillero].toUpperCase().trim();
+                isCasilleroVal = true;
+              } else if (idxSerialCruce !== -1 && cols[idxSerialCruce]) {
+                cleanSerial = cols[idxSerialCruce].toUpperCase().trim();
+                isCasilleroVal = false;
+              } else if (idxSerial !== -1 && cols[idxSerial]) {
+                cleanSerial = cols[idxSerial].toUpperCase().trim();
+                isCasilleroVal = idxIsCasillero !== -1 
+                  ? (cols[idxIsCasillero]?.toLowerCase() === 'true') 
+                  : (idxSource !== -1 && !!cols[idxSource]);
+              }
+
               if (!cleanSerial) continue;
 
               const d = new Date();
@@ -339,7 +374,7 @@ export default function App() {
                 status: statusVal,
                 remitente: idxRemitente !== -1 ? cols[idxRemitente].toUpperCase() : '',
                 source: idxSource !== -1 ? cols[idxSource].toUpperCase() : '',
-                isCasillero: idxIsCasillero !== -1 ? (cols[idxIsCasillero]?.toLowerCase() === 'true') : (idxSource !== -1 && !!cols[idxSource]),
+                isCasillero: isCasilleroVal,
                 selected: false,
                 rif: idxRif !== -1 ? formatRif(cols[idxRif]) : '',
                 razonSocial: idxRazon !== -1 ? cols[idxRazon].toUpperCase() : '',
@@ -463,9 +498,11 @@ export default function App() {
   };
 
   const handleExportFullCSVBackup = () => {
-    let csv = "sep=,\nID,SERIAL,STATUS,REMITENTE,GUI_ENTRADA,IS_CASILLERO,RIF,RAZON_SOCIAL,DESTINO,OBSERVACIONES,RESPONSABLE,FORRO,BATERIA,CARGADOR,CAJA,SIM,SIM_NUMBER,OPERADORA,MODELO_MANUAL,MODELO_NEGOCIO,ENTREGADO_TECNICO,ES_SUSTITUCION,SERIAL_SUSTITUTO,FECHA_SALIDA,FECHA_SALIDA_CLIENTE,GUIA_SALIDA_CLIENTE,DESTINO_SALIDA,FECHA_CONFIRMADA,TICKET,ADDED_FROM_CRUCE,BANCO,BSF,USDT,CRUCE_BATCH_ID,FECHA_INGRESO\n";
+    let csv = "sep=;\nID;SERIAL_CRUCE;SERIAL_CASILLERO;STATUS;REMITENTE;GUI_ENTRADA;IS_CASILLERO;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;FECHA_CONFIRMADA;TICKET;ADDED_FROM_CRUCE;BANCO;BSF;USDT;CRUCE_BATCH_ID;FECHA_INGRESO\n";
     serials.forEach(s => {
-      csv += `"${s.id}","${s.serial}","${s.status}","${s.remitente}","${s.source || ''}","${!!s.isCasillero}","${s.rif || ''}","${s.razonSocial || ''}","${s.destino || ''}","${s.observaciones || ''}","${s.responsable || ''}","${!!s.forro}","${!!s.bateria}","${!!s.cargador}","${!!s.caja}","${!!s.sim}","${s.simNumber || ''}","${s.operadora || ''}","${s.modeloManual || ''}","${s.modeloNegocio || ''}","${!!s.entregadoTecnico}","${!!s.esSustitucion}","${s.serialSustituto || ''}","${s.fechaSalida || ''}","${s.fechaSalidaCliente || ''}","${s.guiaSalidaCliente || ''}","${s.destinoSalida || ''}","${!!s.fechaConfirmada}","${s.ticket || ''}","${!!s.addedFromCruce}","${s.banco || ''}","${s.bsf || ''}","${s.usdt || ''}","${s.cruceBatchId || ''}","${s.date}"\n`;
+      const serialCruce = !s.isCasillero ? s.serial : '';
+      const serialCasillero = s.isCasillero ? s.serial : '';
+      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

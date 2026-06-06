@@ -653,16 +653,18 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           </div>
 
                           {/* 3. CLIENTE / SOLICITANTE */}
-                          <div className="p-2 flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cliente:</span>
-                            <div className="text-slate-900 font-bold select-all text-[11px] truncate uppercase font-arial">
-                              {s.razonSocial || 'SIN RAZÓN SOCIAL'}
-                            </div>
-                            {s.rif && (
-                              <div className="text-[10px] text-slate-500 font-bold select-all font-mono">
-                                {s.rif}
+                          <div className="p-2 flex items-start justify-between gap-2">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider min-w-[60px]">Cliente:</span>
+                            <div className="flex flex-col items-end text-right truncate">
+                              <div className="text-slate-900 font-bold select-all text-[11px] truncate uppercase font-arial max-w-[150px]">
+                                {s.razonSocial || 'SIN RAZÓN SOCIAL'}
                               </div>
-                            )}
+                              {s.rif && (
+                                <div className="text-[10px] text-slate-500 font-bold select-all font-mono">
+                                  {s.rif}
+                                </div>
+                              )}
+                            </div>
                           </div>
 
                           {/* 4. TICKET */}

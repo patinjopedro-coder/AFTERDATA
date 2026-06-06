@@ -546,12 +546,12 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     const allSetKeys = Array.from(new Set([...emailUniques, ...fisicoUniques]));
     if (allSetKeys.length === 0) return;
 
-    let csv = "sep=,\nSERIAL,ESTADO\n";
+    let csv = "sep=;\nSERIAL;ESTADO\n";
 
     for (const s of allSetKeys) {
       const matchMaster = lookupValidador(s);
       const status = matchMaster?.status || 'N#A';
-      csv += `"${s}","${status}"\n`;
+      csv += `"${s}";"${status}"\n`;
     }
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -1235,7 +1235,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                             type="checkbox"
                             checked={isSelected}
                             readOnly
-                            className="accent-slate-900 cursor-pointer pointer-events-none"
+                            className="rounded text-blue-600 bg-slate-100 border-slate-200 focus:ring-0 cursor-pointer pointer-events-none"
                           />
                           <span className="text-[10px] text-slate-400 font-bold font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
                           {/* Pure solid white text for extreme precise viewing of serials */}
