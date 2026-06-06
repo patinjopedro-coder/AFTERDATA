@@ -111,7 +111,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                     value={(editDraft[f.key] as string) || ''}
                     disabled={isDisabled}
                     onChange={e => setEditDraft(d => ({ ...d, [f.key]: e.target.value.toUpperCase() }))}
-                    className={`w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`w-full text-xs p-2 bg-${isDisabled ? 'slate-200' : 'slate-100'} border border-${isDisabled ? 'slate-350' : 'transparent'} text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     style={{ borderRadius: '4px' }}
                   />
                 </div>
@@ -768,7 +768,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 onChange={e => setCostoBsf(e.target.value)}
                 disabled={sinCosto}
                 placeholder=""
-                className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full text-sm p-2.5 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -779,22 +779,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 onChange={e => setCostoUsdt(e.target.value)}
                 disabled={sinCosto}
                 placeholder=""
-                className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-full text-sm p-2.5 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
             </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Banco</label>
-            <input
-              type="text"
-              value={banco}
-              onChange={e => setBanco(e.target.value)}
-              disabled={sinCosto}
-              placeholder=""
-              className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
-            />
-          </div>
-          
+
           <div className="flex items-center gap-2 bg-white p-2 border border-slate-200 mt-1" style={{ borderRadius: '0px' }}>
             <input
               type="checkbox"
@@ -813,6 +802,18 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             <label htmlFor="formSinCosto" className="text-xs font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
               Marcar Sin Costo
             </label>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Banco</label>
+            <input
+              type="text"
+              value={banco}
+              onChange={e => setBanco(e.target.value)}
+              disabled={sinCosto}
+              placeholder=""
+              className={`w-full text-sm p-2.5 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
+            />
           </div>
         </div>
 
