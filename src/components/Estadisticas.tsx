@@ -784,7 +784,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       alert("No hay datos para exportar.");
       return;
     }
-    const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;FECHA_INGRESO";
+    const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;SIN_COSTO;FECHA_INGRESO";
     const rows = modalList.map(s => {
       const m = getTerminalModel(s.serial, modelosDB);
       return [
@@ -798,6 +798,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         s.ticket || '',
         s.source || '',
         s.destino || '',
+        s.sinCosto ? 'TRUE' : 'FALSE',
         s.displayDate || s.date || ''
       ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
     });
@@ -1808,10 +1809,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         ? modalList.filter(s => s.date === detailSelectedDate)
                         : modalList;
                       if (itemsToExport.length === 0) { alert("No hay datos para exportar."); return; }
-                      const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;FECHA_INGRESO";
+                      const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;SIN_COSTO;FECHA_INGRESO";
                       const rows = itemsToExport.map(s => {
                         const m = getTerminalModel(s.serial, modelosDB);
-                        return [s.serial, m.modelo, m.so, s.status || 'SIN ESTATUS', s.remitente || '', s.razonSocial || '', s.rif || '', s.ticket || '', s.source || '', s.destino || '', s.displayDate || s.date || ''].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
+                        return [s.serial, m.modelo, m.so, s.status || 'SIN ESTATUS', s.remitente || '', s.razonSocial || '', s.rif || '', s.ticket || '', s.source || '', s.destino || '', s.sinCosto ? 'TRUE' : 'FALSE', s.displayDate || s.date || ''].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
                       });
                       const csvContent = [header, ...rows].join("\n");
                       downloadCSV(csvContent, `Detalle_${modalType}_${modalSelectedName}_${detailSelectedDate || 'TODOS'}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -1854,16 +1855,17 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   <div className="flex flex-1 overflow-hidden gap-0 border border-slate-200" style={{ borderRadius: '0px' }}>
                     {/* LEFT SIDEBAR: Dates */}
                     <div className="w-52 flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50 overflow-y-auto">
-                      <div className="px-3 py-2.5 bg-slate-100 border-b border-slate-200 sticky top-0 z-10">
+                      <div className="px-3 py-2.5 bg-slate-100 border-b border-slate-200 sticky top-0 z-10 flex-shrink-0">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600" style={{ fontFamily: 'Arial' }}>FECHA DE ENTREGAS</span>
                       </div>
                       <button
                         onClick={() => setDetailSelectedDate(null)}
-                        className={`w-full text-left px-3 py-2.5 text-[11px] font-bold uppercase border-b border-slate-100 cursor-pointer transition-colors ${!detailSelectedDate ? (modalType === 'colaborador' ? 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500' : 'bg-green-50 text-green-700 border-l-2 border-l-green-500') : 'text-slate-600 hover:bg-slate-100'}`}
-                        style={{ borderRadius: '0px', fontFamily: 'Arial' }}
+                        className={`w-full text-left px-3 py-3 text-[11px] font-bold uppercase border-b border-slate-250 cursor-pointer transition-colors ${!detailSelectedDate ? (modalType === 'colaborador' ? 'bg-blue-600 text-white font-black' : 'bg-green-600 text-white font-black') : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
+                        style={{ borderRadius: '0px', fontFamily: 'Arial', fontWeight: 'bold' }}
                       >
-                        TODOS ({modalList.length})
+                        MOSTRAR TODOS ({modalList.length})
                       </button>
+                      <div className="h-2 bg-slate-200 border-b border-slate-250 flex-shrink-0"></div>
                       {uniqueDates.map(date => {
                         const count = modalList.filter(s => s.date === date).length;
                         const isSelected = detailSelectedDate === date;
@@ -1871,8 +1873,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                           <button
                             key={date}
                             onClick={() => setDetailSelectedDate(date)}
-                            className={`w-full text-left px-3 py-2.5 text-[11px] font-bold border-b border-slate-100 cursor-pointer transition-colors ${isSelected ? (modalType === 'colaborador' ? 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500' : 'bg-green-50 text-green-700 border-l-2 border-l-green-500') : 'text-slate-600 hover:bg-slate-100'}`}
-                            style={{ borderRadius: '0px', fontFamily: 'Arial' }}
+                            className={`w-full text-left px-3 py-2.5 text-[11px] font-bold border-b border-slate-100 cursor-pointer transition-colors ${isSelected ? (modalType === 'colaborador' ? 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500 font-bold' : 'bg-green-50 text-green-700 border-l-2 border-l-green-500 font-bold') : 'text-slate-600 hover:bg-slate-100'}`}
+                            style={{ borderRadius: '0px', fontFamily: 'Arial', fontWeight: 'bold' }}
                           >
                             {date} <span className="text-slate-400 text-[9px] ml-1">({count})</span>
                           </button>
@@ -2181,13 +2183,33 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   Métricas de equipos entregados por periodo de tiempo
                 </p>
               </div>
-              <button 
-                onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
-                style={{ borderRadius: '0px' }}
-              >
-                Cerrar ✕
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const query = clientesSearchQuery.toUpperCase().trim();
+                    const filteredUsers = resolvedFilteredUsersDeliveryStats.clientes.filter(u => 
+                      u.name.includes(query)
+                    );
+                    if (filteredUsers.length === 0) { alert("No hay datos para exportar."); return; }
+                    const header = "sep=;\nCLIENTE;TOTAL\n";
+                    const rows = filteredUsers.map(u => `"${u.name}";"${u.total}"`);
+                    const csvContent = header + rows.join("\n");
+                    downloadCSV(csvContent, `Desglose_Clientes_${new Date().toISOString().split('T')[0]}.csv`);
+                  }}
+                  className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                  style={{ borderRadius: '0px', fontFamily: 'Arial' }}
+                >
+                  <FileDown size={14} />
+                  Exportar CSV
+                </button>
+                <button 
+                  onClick={closeAllModals}
+                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                  style={{ borderRadius: '0px' }}
+                >
+                  Cerrar ✕
+                </button>
+              </div>
             </div>
 
             {/* Date filter container */}
@@ -2220,12 +2242,6 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200 text-[11px] font-black tracking-widest text-slate-600 uppercase sticky top-0 z-10">
                     <th className="py-3.5 px-4">Cliente</th>
-                    <th className="py-3.5 px-4 text-center">Día</th>
-                    <th className="py-3.5 px-4 text-center">Semana</th>
-                    <th className="py-3.5 px-4 text-center">Mes</th>
-                    <th className="py-3.5 px-4 text-center">Trimestre</th>
-                    <th className="py-3.5 px-4 text-center">Semestre</th>
-                    <th className="py-3.5 px-4 text-center">Año</th>
                     <th className="py-3.5 px-4 text-center font-bold">Total</th>
                   </tr>
                 </thead>
@@ -2239,7 +2255,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     if (filteredUsers.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={8} className="text-center py-10 text-slate-400 font-arial text-xs uppercase font-bold">No se encontraron clientes.</td>
+                          <td colSpan={2} className="text-center py-10 text-slate-400 font-arial text-xs uppercase font-bold">No se encontraron clientes.</td>
                         </tr>
                       );
                     }
@@ -2260,12 +2276,6 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans">#{idx + 1}</span>
                           <span className="uppercase">{u.name}</span>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-emerald-650 text-[13px] font-arial">{u.dia || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-emerald-600 text-[13px] font-arial">{u.semana || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-emerald-600 text-[13px] font-arial">{u.mes || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-emerald-600 text-[13px] font-arial">{u.trimestre || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-emerald-600 text-[13px] font-arial">{u.semestre || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-emerald-600 text-[13px] font-arial">{u.año || '-'}</td>
                         <td className="py-3.5 px-4 text-center font-black text-[14px] text-emerald-800 bg-emerald-50/50 font-arial">{u.total}</td>
                       </tr>
                     ));
@@ -2299,13 +2309,33 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   Métricas de equipos entregados por periodo de tiempo
                 </p>
               </div>
-              <button 
-                onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
-                style={{ borderRadius: '0px' }}
-              >
-                Cerrar ✕
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    const query = colaboradoresSearchQuery.toUpperCase().trim();
+                    const filteredUsers = resolvedFilteredUsersDeliveryStats.colaboradores.filter(u => 
+                      u.name.includes(query)
+                    );
+                    if (filteredUsers.length === 0) { alert("No hay datos para exportar."); return; }
+                    const header = "sep=;\nCOLABORADOR;TOTAL\n";
+                    const rows = filteredUsers.map(u => `"${u.name}";"${u.total}"`);
+                    const csvContent = header + rows.join("\n");
+                    downloadCSV(csvContent, `Desglose_Colaboradores_${new Date().toISOString().split('T')[0]}.csv`);
+                  }}
+                  className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                  style={{ borderRadius: '0px', fontFamily: 'Arial' }}
+                >
+                  <FileDown size={14} />
+                  Exportar CSV
+                </button>
+                <button 
+                  onClick={closeAllModals}
+                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                  style={{ borderRadius: '0px' }}
+                >
+                  Cerrar ✕
+                </button>
+              </div>
             </div>
 
             {/* Date filter container */}
@@ -2338,12 +2368,6 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200 text-[11px] font-black tracking-widest text-slate-655 uppercase sticky top-0 z-10">
                     <th className="py-3.5 px-4">Usuario / Colaborador</th>
-                    <th className="py-3.5 px-4 text-center">Día</th>
-                    <th className="py-3.5 px-4 text-center">Semana</th>
-                    <th className="py-3.5 px-4 text-center">Mes</th>
-                    <th className="py-3.5 px-4 text-center">Trimestre</th>
-                    <th className="py-3.5 px-4 text-center">Semestre</th>
-                    <th className="py-3.5 px-4 text-center">Año</th>
                     <th className="py-3.5 px-4 text-center font-bold">Total</th>
                   </tr>
                 </thead>
@@ -2357,7 +2381,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     if (filteredUsers.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={8} className="text-center py-10 text-slate-400 font-arial text-xs uppercase font-bold">No se encontraron usuarios.</td>
+                          <td colSpan={2} className="text-center py-10 text-slate-400 font-arial text-xs uppercase font-bold">No se encontraron usuarios.</td>
                         </tr>
                       );
                     }
@@ -2378,12 +2402,6 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                           <span className="text-[10px] text-slate-400 font-sans">#{idx + 1}</span>
                           <span className="uppercase">{u.name}</span>
                         </td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-900 text-[13px] font-arial">{u.dia || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-900 text-[13px] font-arial">{u.semana || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-900 text-[13px] font-arial">{u.mes || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-900 text-[13px] font-arial">{u.trimestre || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-900 text-[13px] font-arial">{u.semestre || '-'}</td>
-                        <td className="py-3.5 px-4 text-center font-extrabold text-slate-900 text-[13px] font-arial">{u.año || '-'}</td>
                         <td className="py-3.5 px-4 text-center font-black text-[14px] text-slate-900 bg-slate-200/50 font-arial">{u.total}</td>
                       </tr>
                     ));
