@@ -546,32 +546,19 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     const allSetKeys = Array.from(new Set([...emailUniques, ...fisicoUniques]));
     if (allSetKeys.length === 0) return;
 
-    const maxLen = Math.max(...allSetKeys.map(s => s.length), 0);
-    
-    let csv = "sep=,\n";
-    // Header cells for each character position and then status
-    for (let i = 1; i <= maxLen; i++) {
-      csv += `C${i},`;
-    }
-    csv += "ESTADO\n";
+    let csv = "sep=,\nSERIAL,ESTADO\n";
 
     for (const s of allSetKeys) {
       const matchMaster = lookupValidador(s);
       const status = matchMaster?.status || 'N#A';
-      
-      // Each character in its own cell/column
-      for (let i = 0; i < maxLen; i++) {
-        const char = s[i] || '';
-        csv += `"${char}",`;
-      }
-      csv += `"${status}"\n`;
+      csv += `"${s}","${status}"\n`;
     }
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `reporte_cruzado_casillas_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `reporte_cruzado_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };

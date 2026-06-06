@@ -270,7 +270,7 @@ export default function App() {
             return;
           }
 
-          const parsedHeaders = lines[0].split(',').map(h => h.toUpperCase().trim());
+          const parsedHeaders = lines[0].split(',').map(h => h.toUpperCase().replace(/_/g, '').replace(/\s/g, '').trim());
           if (!parsedHeaders.some(h => h.includes('SERIAL'))) {
             alert("Formato no reconocido o falto de columna SERIAL.");
             return;
@@ -278,36 +278,41 @@ export default function App() {
 
           if (confirm("¿Está seguro de importar los registros? Esto reescribirá la base logistica local.")) {
             // Find positions
-            const idxID = parsedHeaders.findIndex(h => h.includes('ID'));
-            const idxSerial = parsedHeaders.findIndex(h => h.includes('SERIAL'));
+            const idxID = parsedHeaders.findIndex(h => h === 'ID');
+            const idxSerial = parsedHeaders.findIndex(h => h === 'SERIAL' || (h.includes('SERIAL') && h !== 'SERIALSUSTITUTO'));
             const idxStatus = parsedHeaders.findIndex(h => h.includes('STATUS') || h.includes('ESTADO'));
             const idxRemitente = parsedHeaders.findIndex(h => h.includes('REMITENTE'));
             const idxRif = parsedHeaders.findIndex(h => h.includes('RIF'));
             const idxRazon = parsedHeaders.findIndex(h => h.includes('RAZON'));
-            const idxSource = parsedHeaders.findIndex(h => h.includes('GUIAENTRADA') || h.includes('ORIGEN'));
-            const idxFecha = parsedHeaders.findIndex(h => h.includes('FECHA'));
+            const idxSource = parsedHeaders.findIndex(h => h.includes('GUIENTRADA') || h.includes('GUIAENTRADA') || h.includes('ORIGEN'));
+            const idxIsCasillero = parsedHeaders.findIndex(h => h.includes('ISCASILLERO'));
+            const idxFecha = parsedHeaders.findIndex(h => h === 'FECHA' || h === 'FECHAINGRESO' || h === 'DATE' || h === 'LLEGADA' || h === 'FECHALLEGADA');
             const idxForro = parsedHeaders.findIndex(h => h.includes('FORRO'));
             const idxBateria = parsedHeaders.findIndex(h => h.includes('BATERIA'));
             const idxCargador = parsedHeaders.findIndex(h => h.includes('CARGADOR'));
             const idxCaja = parsedHeaders.findIndex(h => h.includes('CAJA'));
-            const idxSim = parsedHeaders.findIndex(h => h.includes('SIM'));
+            const idxSim = parsedHeaders.findIndex(h => h.includes('SIM') && h !== 'SIMNUMBER');
             const idxSimNum = parsedHeaders.findIndex(h => h.includes('SIMNUMBER') || h.includes('NUMEROSIM'));
             const idxOper = parsedHeaders.findIndex(h => h.includes('OPERADORA'));
-            const idxModManual = parsedHeaders.findIndex(h => h.includes('MODELOMANUAL') || h.includes('MODELOMANUAL'));
+            const idxModManual = parsedHeaders.findIndex(h => h.includes('MODELOMANUAL'));
             const idxNegocio = parsedHeaders.findIndex(h => h.includes('MODELONEGOCIO'));
             const idxEntregadoTec = parsedHeaders.findIndex(h => h.includes('ENTREGADOTECNICO'));
             const idxSust = parsedHeaders.findIndex(h => h.includes('ESSUSTITUCION'));
-            const idxSerialSust = parsedHeaders.findIndex(h => h.includes('SUSTITUTO'));
-            const idxFechaSalida = parsedHeaders.findIndex(h => h.includes('FECHASALIDA'));
-            const idxFechaLiberacion = parsedHeaders.findIndex(h => h.includes('FECHASALIDACLIENTE'));
-            const idxGuiaLib = parsedHeaders.findIndex(h => h.includes('GUIASALIDACLIENTE'));
+            const idxSerialSust = parsedHeaders.findIndex(h => h.includes('SERIALSUSTITUTO') || h.includes('SUSTITUTO'));
+            const idxFechaSalida = parsedHeaders.findIndex(h => h === 'FECHASALIDA' || (h.includes('FECHASALIDA') && !h.includes('CLIENTE')));
+            const idxFechaLiberacion = parsedHeaders.findIndex(h => h.includes('FECHASALIDACLIENTE') || h.includes('FECHALIBERACION'));
+            const idxGuiaLib = parsedHeaders.findIndex(h => h.includes('GUIASALIDACLIENTE') || h.includes('GUIALIBERACION'));
             const idxDestinoSalida = parsedHeaders.findIndex(h => h.includes('DESTINOSALIDA'));
+            const idxFechaConfirmada = parsedHeaders.findIndex(h => h.includes('FECHACONFIRMADA'));
             const idxObs = parsedHeaders.findIndex(h => h.includes('OBSERVACIONES'));
             const idxResp = parsedHeaders.findIndex(h => h.includes('RESPONSABLE'));
             const idxTicket = parsedHeaders.findIndex(h => h.includes('TICKET'));
-            const idxDestino = parsedHeaders.findIndex(h => h.includes('DESTINO'));
+            const idxDestino = parsedHeaders.findIndex(h => h === 'DESTINO' || (h.includes('DESTINO') && h !== 'DESTINOSALIDA'));
             const idxBanco = parsedHeaders.findIndex(h => h.includes('BANCO'));
-            const idxBsf = parsedHeaders.findIndex(h => h.includes('BSF') || h.includes('BS'));
+            const idxBsf = parsedHeaders.findIndex(h => h.includes('BSF') || h === 'BS');
+            const idxUsdt = parsedHeaders.findIndex(h => h === 'USDT');
+            const idxCruceBatchId = parsedHeaders.findIndex(h => h.includes('CRUCEBATCHID'));
+            const idxAddedFromCruce = parsedHeaders.findIndex(h => h.includes('ADDEDFROMCRUCE'));
 
             const importedItems: POSItem[] = [];
 
@@ -334,7 +339,7 @@ export default function App() {
                 status: statusVal,
                 remitente: idxRemitente !== -1 ? cols[idxRemitente].toUpperCase() : '',
                 source: idxSource !== -1 ? cols[idxSource].toUpperCase() : '',
-                isCasillero: idxSource !== -1 && !!cols[idxSource],
+                isCasillero: idxIsCasillero !== -1 ? (cols[idxIsCasillero]?.toLowerCase() === 'true') : (idxSource !== -1 && !!cols[idxSource]),
                 selected: false,
                 rif: idxRif !== -1 ? formatRif(cols[idxRif]) : '',
                 razonSocial: idxRazon !== -1 ? cols[idxRazon].toUpperCase() : '',
@@ -356,11 +361,14 @@ export default function App() {
                 fechaSalidaCliente: idxFechaLiberacion !== -1 ? cols[idxFechaLiberacion] : '',
                 guiaSalidaCliente: idxGuiaLib !== -1 ? cols[idxGuiaLib] : '',
                 destinoSalida: idxDestinoSalida !== -1 ? cols[idxDestinoSalida] : '',
-                fechaConfirmada: false,
+                fechaConfirmada: idxFechaConfirmada !== -1 ? (cols[idxFechaConfirmada]?.toLowerCase() === 'true') : false,
                 ticket: idxTicket !== -1 ? cols[idxTicket].toUpperCase() : '',
                 destino: idxDestino !== -1 ? cols[idxDestino].toUpperCase() : '',
                 banco: idxBanco !== -1 ? cols[idxBanco]?.toUpperCase() : '',
-                bsf: idxBsf !== -1 ? cols[idxBsf]?.toUpperCase() : ''
+                bsf: idxBsf !== -1 ? cols[idxBsf]?.toUpperCase() : '',
+                usdt: idxUsdt !== -1 ? cols[idxUsdt]?.toUpperCase() : '',
+                cruceBatchId: idxCruceBatchId !== -1 ? cols[idxCruceBatchId] : '',
+                addedFromCruce: idxAddedFromCruce !== -1 ? (cols[idxAddedFromCruce]?.toLowerCase() === 'true') : false
               });
             }
 
@@ -455,9 +463,9 @@ export default function App() {
   };
 
   const handleExportFullCSVBackup = () => {
-    let csv = "sep=,\nID,SERIAL,STATUS,REMITENTE,GUI_ENTRADA,RIF,RAZON_SOCIAL,TICKET,DESTINO,OBSERVACIONES,RESPONSABLE,FORRO,BATERIA,CARGADOR,CAJA,SIM,SIM_NUMBER,OPERADORA,MODELO_NEGOCIO,ENTREGADO_TECNICO,FECHA_LLEGADA,BANCO,BSF\n";
+    let csv = "sep=,\nID,SERIAL,STATUS,REMITENTE,GUI_ENTRADA,IS_CASILLERO,RIF,RAZON_SOCIAL,DESTINO,OBSERVACIONES,RESPONSABLE,FORRO,BATERIA,CARGADOR,CAJA,SIM,SIM_NUMBER,OPERADORA,MODELO_MANUAL,MODELO_NEGOCIO,ENTREGADO_TECNICO,ES_SUSTITUCION,SERIAL_SUSTITUTO,FECHA_SALIDA,FECHA_SALIDA_CLIENTE,GUIA_SALIDA_CLIENTE,DESTINO_SALIDA,FECHA_CONFIRMADA,TICKET,ADDED_FROM_CRUCE,BANCO,BSF,USDT,CRUCE_BATCH_ID,FECHA_INGRESO\n";
     serials.forEach(s => {
-      csv += `"${s.id}","${s.serial}","${s.status}","${s.remitente}","${s.source || ''}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.destino || ''}","${s.observaciones || ''}","${s.responsable || ''}","${s.forro}","${s.bateria}","${s.cargador}","${s.caja}","${s.sim}","${s.simNumber || ''}","${s.operadora || ''}","${s.modeloNegocio || ''}","${s.entregadoTecnico}","${s.date}","${s.banco || ''}","${s.bsf || ''}"\n`;
+      csv += `"${s.id}","${s.serial}","${s.status}","${s.remitente}","${s.source || ''}","${!!s.isCasillero}","${s.rif || ''}","${s.razonSocial || ''}","${s.destino || ''}","${s.observaciones || ''}","${s.responsable || ''}","${!!s.forro}","${!!s.bateria}","${!!s.cargador}","${!!s.caja}","${!!s.sim}","${s.simNumber || ''}","${s.operadora || ''}","${s.modeloManual || ''}","${s.modeloNegocio || ''}","${!!s.entregadoTecnico}","${!!s.esSustitucion}","${s.serialSustituto || ''}","${s.fechaSalida || ''}","${s.fechaSalidaCliente || ''}","${s.guiaSalidaCliente || ''}","${s.destinoSalida || ''}","${!!s.fechaConfirmada}","${s.ticket || ''}","${!!s.addedFromCruce}","${s.banco || ''}","${s.bsf || ''}","${s.usdt || ''}","${s.cruceBatchId || ''}","${s.date}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
