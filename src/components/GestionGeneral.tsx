@@ -881,7 +881,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                   <th className="py-3 px-4 w-12 text-center">
                     <button
                       onClick={() => toggleSelectAll(!isAllSelected)}
-                      className="text-slate-500 hover:text-slate-800 p-1 rounded transition-colors inline-block"
+                      className="btn-transparent text-slate-500 hover:text-slate-800 p-1 transition-colors inline-block"
                     >
                       {isAllSelected ? (
                         <CheckSquare className="w-4 h-4 text-slate-800" />

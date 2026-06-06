@@ -100,17 +100,17 @@ aside h1, aside h2, aside .text-white {
   color: #34495e !important;
 }
 
-/* Logo toggle button — styled black like nav items */
+/* Logo toggle button — styled opaque gray like nav items */
 aside > div > div:first-child button {
-  background-color: #0a0a0a !important;
+  background-color: #3f3f46 !important;
   color: #ffffff !important;
   border: none !important;
-  border-radius: 0 !important;
+  border-radius: 0px !important;
   width: 100% !important;
 }
 
 aside > div > div:first-child button:hover {
-  background-color: #1a1a1a !important;
+  background-color: #27272a !important;
 }
 
 aside > div > div:first-child button h1,
@@ -148,7 +148,7 @@ aside nav button {
   background-color: transparent !important;
   color: #64748b !important;
   border: 1px solid transparent !important;
-  border-radius: 4px !important;
+  border-radius: 0px !important;
 }
 
 aside nav button:hover {
@@ -175,7 +175,7 @@ aside nav button.active-tab {
   border-color: rgba(226, 232, 240, 0.8) !important;
   box-shadow: 0 2px 6px rgba(148, 163, 184, 0.1) !important;
   font-weight: 700 !important;
-  border-radius: 4px !important;
+  border-radius: 0px !important;
 }
 
 aside nav button[class*="bg-white"] *,
@@ -221,7 +221,7 @@ section.bg-\[\#f8fafc\] {
 .bg-white:not(button):not(input):not(textarea):not(select):not(.active-tab):not(.accessory-btn):not(.user-btn) {
   background-color: #ffffff !important;
   border: 1px solid rgba(226, 232, 240, 0.9) !important;
-  border-radius: 4px !important;
+  border-radius: 0px !important;
   box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.04) !important;
 }
 
@@ -231,7 +231,7 @@ section.bg-\[\#f8fafc\] {
   border: 1px solid rgba(241, 245, 249, 0.8) !important;
   color: #34495e !important;
   box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -2px rgba(0, 0, 0, 0.06) !important;
-  border-radius: 4px !important;
+  border-radius: 0px !important;
 }
 
 .dark-panel h2,
@@ -272,14 +272,14 @@ section.bg-\[\#f8fafc\] {
 }
 
 .dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.custom-entregado-btn):not(.status-filter-btn) {
-  background-color: #0a0a0a !important;
-  border: 1px solid #0a0a0a !important;
+  background-color: #3f3f46 !important;
+  border: 1px solid #3f3f46 !important;
   color: #ffffff !important;
 }
 
 .dark-panel button:not(.accessory-btn):not(.btn-green):not(.btn-blue):not(.custom-entregado-btn):not(.status-filter-btn):hover {
-  background-color: #f8fafc !important;
-  border-color: rgba(226, 232, 240, 0.9) !important;
+  background-color: #27272a !important;
+  border-color: #27272a !important;
 }
 
 /* Table rows styling: light gray rows with soft hover */
@@ -349,7 +349,7 @@ button[class*="bg-zinc-950"],
   background-color: #e2e8f0 !important;
   border: 1px solid transparent !important;
   color: #000000 !important;
-  border-radius: 0.75rem !important; /* rounded-xl */
+  border-radius: 0px !important; /* rounded-xl -> square */
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05) !important;
   transition: all 0.2s ease !important;
 }
@@ -396,19 +396,19 @@ select:focus {
 }
 
 /* 5. Buttons and Actions */
-/* Default Zinc/Secondary Button and all general buttons: Black background, white text */
+/* Default Zinc/Secondary Button and all general buttons: Opaque gray background, white text */
 button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) {
-  background-color: #0a0a0a !important;
-  border: 1px solid #0a0a0a !important;
+  background-color: #3f3f46 !important;
+  border: 1px solid #3f3f46 !important;
   color: #ffffff !important;
-  border-radius: 0.75rem !important; /* rounded-xl */
+  border-radius: 0px !important; /* rounded-xl -> square */
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
   transition: all 0.2s ease !important;
 }
 
 button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):hover {
-  background-color: #1e293b !important;
-  border-color: #1e293b !important;
+  background-color: #27272a !important;
+  border-color: #27272a !important;
   color: #ffffff !important;
 }
 
@@ -508,7 +508,7 @@ button.bg-black,
   background-color: #f1f5f9 !important;
   color: #475569 !important;
   border: 1px solid #cbd5e1 !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0px !important;
   transition: all 0.15s ease !important;
 }
 
@@ -599,7 +599,7 @@ button[class*="text-slate-700"][class*="border-slate-200"] {
   background-color: #16a34a !important; /* Bold green background */
   color: #ffffff !important; /* White text for high contrast */
   border: 1px solid transparent !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0px !important;
   transition: all 0.2s ease !important;
 }
 
@@ -620,7 +620,7 @@ button[class*="text-red-400"][class*="hover:bg-red-500"] {
   background-color: #fee2e2 !important; /* Soft Pastel Red */
   color: #b91c1c !important; /* Red icon */
   border: 1px solid transparent !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0px !important;
   transition: all 0.2s ease !important;
 }
 
@@ -650,7 +650,7 @@ button[class*="text-red-400"][class*="hover:bg-red-500"]:hover {
   background-color: #f97316 !important; /* Orange */
   color: #ffffff !important; /* White text */
   border: 1px solid #f97316 !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0px !important;
 }
 
 [class*="bg-amber-100"] *:not(option),
@@ -665,7 +665,7 @@ button[class*="text-red-400"][class*="hover:bg-red-500"]:hover {
   background-color: #16a34a !important; /* Green */
   color: #ffffff !important; /* White text */
   border: 1px solid #16a34a !important;
-  border-radius: 0.5rem !important;
+  border-radius: 0px !important;
 }
 
 [class*="bg-emerald-100"] *:not(option),
@@ -821,7 +821,7 @@ select.casillero-input {
   background-color: #f1f5f9 !important; /* bg-slate-100 */
   color: #1e293b !important; /* text-slate-800 */
   border: 1px solid #cbd5e1 !important; /* border-slate-300 */
-  border-radius: 0.5rem !important;
+  border-radius: 0px !important;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
   transition: all 0.2s ease !important;
 }
@@ -838,29 +838,29 @@ select.casillero-input:focus {
   color: #94a3b8 !important;
 }
 
-/* Pagination buttons styling: Black background, white text */
+/* Pagination buttons styling: Zinc-700 background, white text */
 .pagination-btn,
 button.pagination-btn,
 .pagination-btn:not(:disabled),
 button.pagination-btn:not(:disabled) {
-  background-color: #000000 !important;
+  background-color: #3f3f46 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #3f3f46 !important;
   transition: all 0.2s ease !important;
 }
 .pagination-btn:hover:not(:disabled),
 button.pagination-btn:hover:not(:disabled) {
-  background-color: #1e293b !important;
-  border-color: #1e293b !important;
+  background-color: #27272a !important;
+  border-color: #27272a !important;
   color: #ffffff !important;
 }
 .pagination-btn:disabled,
 button.pagination-btn:disabled {
   opacity: 1 !important;
   cursor: not-allowed !important;
-  background-color: #000000 !important;
+  background-color: #3f3f46 !important;
   color: rgba(255, 255, 255, 0.4) !important;
-  border-color: #000000 !important;
+  border-color: #3f3f46 !important;
 }
 .pagination-btn:disabled *,
 button.pagination-btn:disabled * {
@@ -882,7 +882,7 @@ button.filter-btn {
   background-color: #f1f5f9 !important;
   color: #475569 !important;
   border: 1px solid transparent !important;
-  border-radius: 0.375rem !important; /* rounded-md */
+  border-radius: 0px !important; /* rounded-md */
   padding: 0.25rem 0.5rem !important;
   font-size: 10px !important;
   font-weight: 700 !important;
@@ -934,7 +934,7 @@ select.bulk-select {
   background-color: #f1f5f9 !important;
   color: #34495e !important;
   border: 1px solid #cbd5e1 !important;
-  border-radius: 0.375rem !important; /* rounded-md */
+  border-radius: 0px !important; /* rounded-md */
   font-size: 11px !important;
   padding: 0.25rem 0.5rem !important;
   height: 28px !important;
@@ -943,10 +943,10 @@ select.bulk-select {
 
 .bulk-btn,
 button.bulk-btn {
-  background-color: #000000 !important;
+  background-color: #3f3f46 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
-  border-radius: 0.375rem !important; /* rounded-md */
+  border: 1px solid #3f3f46 !important;
+  border-radius: 0px !important; /* rounded-md */
   font-size: 11px !important;
   padding: 0.25rem 0.5rem !important;
   height: 28px !important;
@@ -956,8 +956,8 @@ button.bulk-btn {
 }
 .bulk-btn:hover,
 button.bulk-btn:hover {
-  background-color: #1e293b !important;
-  border-color: #1e293b !important;
+  background-color: #27272a !important;
+  border-color: #27272a !important;
   color: #ffffff !important;
 }
 
@@ -1264,10 +1264,10 @@ button.status-filter-btn {
   font-family: Arial, Helvetica, sans-serif !important;
   font-weight: 900 !important; /* negritas extra bold */
   text-transform: uppercase !important;
-  font-size: 12px !important; /* letras más grandes */
+  font-size: 11px !important; /* letras más pequeñas/delgadas */
   letter-spacing: 0.05em !important;
-  padding: 8px 14px !important;
-  border-radius: 0.5rem !important; /* rounded-lg */
+  padding: 4px 10px !important; /* más delgados */
+  border-radius: 0px !important; /* square */
   transition: all 0.2s ease-in-out !important;
   cursor: pointer !important;
   display: inline-flex !important;
@@ -1279,8 +1279,8 @@ button.status-filter-btn {
 
 /* Button colors - Resting colors */
 button.status-btn-todos {
-  background-color: #000000 !important;
-  border-color: #000000 !important;
+  background-color: #3f3f46 !important;
+  border-color: #3f3f46 !important;
   color: #ffffff !important;
 }
 button.status-btn-todos,
@@ -1320,8 +1320,8 @@ button.status-btn-gray * {
 
 /* Hover state: do not change colors */
 button.status-btn-todos:hover {
-  background-color: #000000 !important;
-  border-color: #000000 !important;
+  background-color: #27272a !important;
+  border-color: #27272a !important;
   color: #ffffff !important;
 }
 button.status-btn-todos:hover * {
@@ -1384,7 +1384,7 @@ button.custom-entregado-btn {
   background-color: #94a3b8 !important; /* slate-400 */
   border-color: #94a3b8 !important;
   color: #ffffff !important;
-  border-radius: 0.5rem !important; /* rounded-lg */
+  border-radius: 0px !important; /* rounded-lg */
 }
 
 button.custom-entregado-btn:hover {
@@ -1550,17 +1550,17 @@ div[style*="rgba(0,0,0,0.45)"] > div * {
 /* Toggles and buttons styling in Cruce de Seriales */
 .cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active),
 .fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) {
-  background-color: #000000 !important;
+  background-color: #3f3f46 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #3f3f46 !important;
   border-radius: 0px !important;
   box-shadow: none !important;
 }
 
 .cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active):hover,
 .fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active):hover {
-  background-color: #1e293b !important;
-  border-color: #1e293b !important;
+  background-color: #27272a !important;
+  border-color: #27272a !important;
 }
 
 .cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg,
@@ -1574,9 +1574,9 @@ div[style*="rgba(0,0,0,0.45)"] > div * {
 /* Specific Active / Inactive states for visual toggles and secondary buttons */
 .cruce-tab-container .toggle-active,
 .fixed .toggle-active {
-  background-color: #000000 !important;
+  background-color: #3f3f46 !important;
   color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid #3f3f46 !important;
 }
 
 .cruce-tab-container .toggle-inactive,
@@ -1629,6 +1629,22 @@ button.status-btn-gray.active-filter {
   box-shadow: none !important;
   outline: none !important;
   transform: none !important;
+}
+
+/* Raw transparent button resets (no background, no borders) */
+.btn-transparent,
+button.btn-transparent,
+button.btn-transparent:hover,
+button.btn-transparent:active,
+button.btn-transparent:focus,
+button.btn-transparent * {
+  background-color: transparent !important;
+  border: none !important;
+  color: inherit !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 
