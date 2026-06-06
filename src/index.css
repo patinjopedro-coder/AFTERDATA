@@ -471,6 +471,38 @@ button.bg-black,
   border-color: #15803d !important;
 }
 
+.btn-orange {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+  border: 1px solid #ea580c !important;
+}
+.btn-orange *,
+.btn-orange svg,
+.btn-orange svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+.btn-orange:hover {
+  background-color: #c2410c !important;
+  border-color: #c2410c !important;
+}
+
+.btn-red {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+  border: 1px solid #ef4444 !important;
+}
+.btn-red *,
+.btn-red svg,
+.btn-red svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+.btn-red:hover {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
 /* Accessory buttons (FORRO, BATERIA, etc.): Modern toggle style */
 .accessory-btn {
   background-color: #f1f5f9 !important;
@@ -680,20 +712,12 @@ html body select.status-select-orange {
   color: #ffffff !important;
   border: 1px solid #f97316 !important;
 }
-body select.status-select-orange *,
-html body select.status-select-orange * {
-  color: #ffffff !important;
-}
 
 body select.status-select-green,
 html body select.status-select-green {
   background-color: #16a34a !important;
   color: #ffffff !important;
   border: 1px solid #16a34a !important;
-}
-body select.status-select-green *,
-html body select.status-select-green * {
-  color: #ffffff !important;
 }
 
 /* Metrics and Statistics specific text styles to ensure high contrast dark black */
@@ -1331,26 +1355,18 @@ button.status-btn-gray:hover * {
   color: #ffffff !important;
 }
 
-/* Active vs Inactive state styling: active glows, inactive is dimmed */
+/* Active vs Inactive state styling: active is fully opaque, inactive is dimmed. NO GLOWS. */
 button.status-filter-btn.active-filter {
   opacity: 1 !important;
-  transform: scale(1.05) !important;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-button.status-btn-todos.active-filter {
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), 0 0 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-button.status-btn-orange.active-filter {
-  box-shadow: 0 0 15px #ea580c, 0 0 5px #ffffff !important;
-}
-
-button.status-btn-green.active-filter {
-  box-shadow: 0 0 15px #16a34a, 0 0 5px #ffffff !important;
-}
-
+button.status-btn-todos.active-filter,
+button.status-btn-orange.active-filter,
+button.status-btn-green.active-filter,
 button.status-btn-gray.active-filter {
-  box-shadow: 0 0 15px #64748b, 0 0 5px #ffffff !important;
+  box-shadow: none !important;
 }
 
 button.status-filter-btn:not(.active-filter) {
@@ -1529,4 +1545,90 @@ div[style*="rgba(0,0,0,0.45)"] > div,
 div[style*="rgba(0,0,0,0.45)"] > div * {
   border-radius: 0px !important;
 }
+
+
+/* Toggles and buttons styling in Cruce de Seriales */
+.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active),
+.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+}
+
+.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active):hover,
+.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active):hover {
+  background-color: #1e293b !important;
+  border-color: #1e293b !important;
+}
+
+.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg,
+.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg *,
+.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg,
+.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Specific Active / Inactive states for visual toggles and secondary buttons */
+.cruce-tab-container .toggle-active,
+.fixed .toggle-active {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+}
+
+.cruce-tab-container .toggle-inactive,
+.fixed .toggle-inactive {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.cruce-tab-container .toggle-inactive:hover,
+.fixed .toggle-inactive:hover {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.cruce-tab-container .toggle-active svg,
+.cruce-tab-container .toggle-active svg *,
+.fixed .toggle-active svg,
+.fixed .toggle-active svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.cruce-tab-container .toggle-inactive svg,
+.cruce-tab-container .toggle-inactive svg *,
+.fixed .toggle-inactive svg,
+.fixed .toggle-inactive svg * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Force dropdown options list to always have black text on white background (no white-on-white) */
+select option,
+select optgroup,
+select option:checked,
+select option:hover {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Strip neon active glow/box-shadow from filters and buttons */
+button:active,
+button:focus,
+button.active-filter,
+button.status-filter-btn.active-filter,
+button.status-btn-todos.active-filter,
+button.status-btn-orange.active-filter,
+button.status-btn-green.active-filter,
+button.status-btn-gray.active-filter {
+  box-shadow: none !important;
+  outline: none !important;
+  transform: none !important;
+}
+
 

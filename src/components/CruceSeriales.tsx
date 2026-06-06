@@ -588,7 +588,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-5 text-slate-800 pb-16 font-arial">
+    <div className="flex flex-col gap-5 text-slate-800 pb-16 font-arial cruce-tab-container">
       
       {/* SECCIÓN VALIDADOR / HOJA DE CONTROL: ENVIADO HACIA LOGICA IMS / CMS */}
       <div className="dark-panel p-5 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -685,10 +685,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button 
                 onClick={() => setEmailViewMode(prev => prev === 'visual' ? 'edit' : 'visual')}
                 disabled={emailText === ''}
-                className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1 text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
                   emailViewMode === 'visual' 
-                    ? 'bg-blue-50 border border-blue-200 text-blue-700 font-extrabold shadow-sm' 
-                    : 'bg-slate-100 border border-slate-200 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs'
+                    ? 'toggle-active' 
+                    : 'toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed'
                 }`}
               >
                 {emailViewMode === 'visual' ? <Edit2 size={10} /> : <Play size={10} />}
@@ -701,7 +701,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setEmailViewMode('edit');
                 }}
                 disabled={emailText === ''}
-                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-[10px] font-extrabold uppercase cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm"
+                className="px-2 py-1 toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Limpiar campo correo"
               >
                 <Trash2 size={10} />
@@ -723,7 +723,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   if (emailText.trim()) setEmailViewMode('visual');
                 }}
                 disabled={!emailText.trim()}
-                className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase rounded-lg border border-transparent cursor-pointer transition-all shadow-sm active:scale-98"
+                className="w-full py-1.5 btn-blue disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold uppercase cursor-pointer transition-all"
               >
                 Procesar y Hacer Match
               </button>
@@ -781,10 +781,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button 
                 onClick={() => setFisicoViewMode(prev => prev === 'visual' ? 'edit' : 'visual')}
                 disabled={fisicoText === ''}
-                className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1 text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
                   fisicoViewMode === 'visual' 
-                    ? 'bg-orange-50 border border-orange-200 text-orange-700 font-extrabold shadow-sm' 
-                    : 'bg-slate-100 border border-slate-200 text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-xs'
+                    ? 'toggle-active' 
+                    : 'toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed'
                 }`}
               >
                 {fisicoViewMode === 'visual' ? <Edit2 size={10} /> : <Play size={10} />}
@@ -797,7 +797,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setFisicoViewMode('edit');
                 }}
                 disabled={fisicoText === ''}
-                className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded text-[10px] font-extrabold uppercase cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 shadow-sm"
+                className="px-2 py-1 toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Limpiar campo físico"
               >
                 <Trash2 size={10} />
@@ -819,7 +819,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   if (fisicoText.trim()) setFisicoViewMode('visual');
                 }}
                 disabled={!fisicoText.trim()}
-                className="w-full py-1.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase rounded-lg border border-transparent cursor-pointer transition-all shadow-sm active:scale-98"
+                className="w-full py-1.5 btn-orange disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold uppercase cursor-pointer transition-all"
               >
                 Procesar y Hacer Match
               </button>
@@ -896,7 +896,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button
                 onClick={() => setIsFlatModalOpen(true)}
                 disabled={fisicoUniques.length === 0}
-                className="w-full text-xs font-extrabold uppercase py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-none mb-2 active:scale-98 text-white-force"
+                className="w-full text-xs font-extrabold uppercase py-2.5 bg-slate-900 hover:bg-slate-800 text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2 text-white-force"
                 style={{ color: '#ffffff' }}
               >
                 <Clipboard size={13} className="text-white" />
@@ -910,7 +910,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setIsBulkModalOpen(true);
                 }}
                 disabled={fisicoUniques.length === 0}
-                className="w-full text-xs font-extrabold uppercase py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl transition-all cursor-pointer shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-none active:scale-98"
+                className="w-full text-xs font-extrabold uppercase py-2.5 btn-orange transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 <Layers size={13} className="text-white" />
                 <span>ASIGNACION DE STATUS GRUPAL</span>
@@ -918,7 +918,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button
                 onClick={handleAddMatchesToGeneral}
                 disabled={coincidencias.length === 0}
-                className="w-full text-xs font-extrabold uppercase py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:border-slate-200 disabled:cursor-not-allowed text-white rounded-xl transition-all cursor-pointer shadow-md flex items-center justify-center gap-2 border-none mt-2 active:scale-98 btn-green"
+                className="w-full text-xs font-extrabold uppercase py-2.5 btn-green disabled:bg-slate-100 disabled:text-slate-450 disabled:border-slate-200 disabled:cursor-not-allowed text-white transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
               >
                 <Send size={13} className="text-white" />
                 <span>Añadir Coincidencias a Gestión</span>
@@ -1003,7 +1003,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           <button
             onClick={handleExportCruceReport}
             disabled={totalUnicos === 0}
-            className="px-4 py-2 bg-blue-600 disabled:opacity-50 hover:bg-blue-500 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-md btn-blue active:scale-98"
+            className="px-4 py-2 btn-blue disabled:opacity-50 text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Import size={13} />
             <span>Descargar Reporte Cruzado</span>
@@ -1011,7 +1011,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
           <button
             onClick={limpiarTodo}
-            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-transparent rounded-xl text-xs font-bold text-slate-750 hover:text-slate-900 uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 justify-center shadow-sm active:scale-98"
+            className="px-4 py-2 toggle-inactive text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 justify-center"
           >
             <Trash2 size={13} />
             <span>Limpiar Campos</span>
@@ -1034,7 +1034,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               </div>
               <button 
                 onClick={() => setIsIMSModalOpen(false)}
-                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
+                className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
               >
                 Cerrar
               </button>
@@ -1099,7 +1099,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     setImsSerialsRaw('');
                     setImsStatusRaw('');
                   }}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-transparent rounded-lg text-slate-750 hover:text-slate-900 text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                  className="px-4 py-2 toggle-inactive text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
                 >
                   Limpiar Ventana
                 </button>
@@ -1136,7 +1136,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               </div>
               <button 
                 onClick={() => setIsFlatModalOpen(false)}
-                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 hover:text-slate-900 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
+                className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
               >
                 Cerrar ✕
               </button>
@@ -1162,7 +1162,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     navigator.clipboard.writeText(fisicoUniques.join('\n'));
                     alert('⚡ Todos los seriales han sido copiados al portapapeles.');
                   }}
-                  className="bg-[#22c55e] hover:bg-[#16a34a] text-white font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 rounded-lg border border-[#22c55e] cursor-pointer transition-all shadow-xs flex items-center gap-1.5 text-white-force"
+                  className="btn-green font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 cursor-pointer transition-all flex items-center gap-1.5 text-white-force"
                   style={{ color: '#ffffff' }}
                 >
                   <Clipboard size={12} />
@@ -1170,7 +1170,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 </button>
                 <button
                   onClick={() => setIsFlatModalOpen(false)}
-                  className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 rounded-lg border border-slate-300 cursor-pointer transition-all shadow-xs"
+                  className="px-4 py-2 toggle-inactive text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all"
                 >
                   Cerrar
                 </button>
@@ -1199,7 +1199,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               </div>
               <button 
                 onClick={() => setIsBulkModalOpen(false)}
-                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 hover:text-slate-900 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
+                className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
               >
                 Cerrar
               </button>
@@ -1217,7 +1217,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   
                   <button
                     onClick={handleSelectAllBulk}
-                    className="text-[9.5px] font-black text-slate-700 hover:text-slate-900 uppercase bg-slate-100 hover:bg-slate-200 border border-slate-250 px-2 py-0.5 rounded cursor-pointer transition-all shadow-xs"
+                    className="px-2 py-0.5 toggle-inactive text-[9.5px] font-black uppercase cursor-pointer transition-all"
                   >
                     {selectedSerialsBulk.size === fisicoUniques.length ? 'Desmarcar Todos' : 'Seleccionar Todos'}
                   </button>
@@ -1286,7 +1286,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                           key={statusValue}
                           onClick={() => handleAssignBulkStatus(statusValue)}
                           disabled={selectedSerialsBulk.size === 0}
-                          className="py-2 px-1 text-[9.5px] font-black border uppercase tracking-wider rounded bg-slate-50 hover:bg-slate-100 border-slate-250 hover:border-slate-400 text-slate-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95 text-center flex items-center justify-center shadow-xs"
+                          className="py-2 px-1 toggle-inactive text-[9.5px] font-black uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-all text-center flex items-center justify-center"
                         >
                           {statusValue}
                         </button>
@@ -1335,7 +1335,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               </div>
               <button 
                 onClick={() => setIsCMSModalOpen(false)}
-                className="p-1 px-2.5 rounded bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-700 hover:text-slate-900 uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all shadow-sm"
+                className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
               >
                 Cerrar
               </button>
@@ -1430,7 +1430,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     setCMSRemitenteRaw('');
                     setCMSFechaRaw('');
                   }}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 border border-transparent rounded-lg text-slate-750 hover:text-slate-900 text-xs font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                  className="px-4 py-2 toggle-inactive text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
                 >
                   Limpiar Ventana
                 </button>
