@@ -613,14 +613,14 @@ export const Casillero: React.FC<CasilleroProps> = ({
 
                       {/* CLASIFICACIÓN Y DATOS COMERCIALES */}
                       <td className="py-4 px-4 text-xs font-arial">
-                        <div className="flex flex-col divide-y divide-slate-100 border border-slate-200 bg-white" style={{ borderRadius: '0px' }}>
+                        <div className="flex flex-col divide-y divide-slate-100 border border-slate-200" style={{ borderRadius: '0px' }}>
                           
                           {/* 1. EQUIPO / SERIAL */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Serial:</span>
                             <div className="flex items-center gap-1">
                               <span 
-                                className={`text-[12px] font-mono cursor-pointer hover:text-slate-900 select-all font-bold ${serialColorClass}`}
+                                className="text-[11px] font-arial cursor-pointer hover:text-slate-900 select-all font-bold text-slate-800"
                                 onClick={() => handleCopyText(s.serial, `serial-${s.id}`)}
                               >
                                 {s.serial}
@@ -636,18 +636,15 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* MODELO DE HARDWARE */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Equipo:</span>
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] bg-slate-100 text-slate-600 font-arial px-1.5 py-0.5 rounded-none uppercase font-semibold border border-transparent">
-                                {modelInfo.so === 'ANDROID' ? 'android' : modelInfo.so === 'LINUX' ? 'linux' : 'unk'}
-                              </span>
-                              <span className="text-[10px] text-slate-700 font-bold font-arial">{modelInfo.modelo}</span>
-                            </div>
+                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase">
+                              {modelInfo.so === 'ANDROID' ? 'ANDROID' : modelInfo.so === 'LINUX' ? 'LINUX' : 'UNK'} - {modelInfo.modelo}
+                            </span>
                           </div>
 
                           {/* 2. MODELO DE NEGOCIO */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mod. Negocio:</span>
-                            <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-none ${s.modeloNegocio === 'COMODATO' ? 'bg-indigo-100 text-indigo-800' : s.modeloNegocio === 'BASICO' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}`}>
+                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase">
                               {s.modeloNegocio || 'SIN ASIGNAR'}
                             </span>
                           </div>
@@ -656,11 +653,11 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           <div className="p-2 flex items-start justify-between gap-2">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider min-w-[60px]">Cliente:</span>
                             <div className="flex flex-col items-end text-right truncate">
-                              <div className="text-slate-900 font-bold select-all text-[11px] truncate uppercase font-arial max-w-[150px]">
+                              <div className="text-slate-800 font-bold select-all text-[11px] truncate uppercase font-arial max-w-[150px]">
                                 {s.razonSocial || 'SIN RAZÓN SOCIAL'}
                               </div>
                               {s.rif && (
-                                <div className="text-[10px] text-slate-500 font-bold select-all font-mono">
+                                <div className="text-[11px] text-slate-800 font-bold select-all font-arial">
                                   {s.rif}
                                 </div>
                               )}
@@ -670,22 +667,23 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* 4. TICKET */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ticket:</span>
-                            <span className="text-[11px] font-mono font-bold text-slate-955 uppercase select-all">{s.ticket || 'S/N'}</span>
+                            <span className="text-[11px] font-arial font-bold text-slate-800 uppercase select-all">{s.ticket || 'S/N'}</span>
                           </div>
 
                           {/* 5. BANCO */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Banco:</span>
-                            <span className="text-[10px] font-bold text-slate-800 uppercase select-all">{s.banco || 'S/N'}</span>
+                            <span className="text-[11px] font-arial font-bold text-slate-800 uppercase select-all">{s.banco || 'S/N'}</span>
                           </div>
 
                           {/* 6. MONTOS */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Monto:</span>
-                            <div className="flex gap-1.5">
-                              {s.bsf && <span className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded-none font-extrabold text-[9px] font-mono">{s.bsf} BSF</span>}
-                              {s.usdt && <span className="bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded-none font-extrabold text-[9px] font-mono">{s.usdt} USDT</span>}
-                              {!s.bsf && !s.usdt && <span className="text-slate-400 text-[10px]">S/N</span>}
+                            <div className="flex gap-1">
+                              {s.bsf && <span className="text-slate-800 font-bold text-[11px] font-arial">{s.bsf} BSF</span>}
+                              {s.bsf && s.usdt && <span className="text-slate-800 font-bold text-[11px] font-arial">/</span>}
+                              {s.usdt && <span className="text-slate-800 font-bold text-[11px] font-arial">{s.usdt} USDT</span>}
+                              {!s.bsf && !s.usdt && <span className="text-slate-800 font-bold text-[11px] font-arial">S/N</span>}
                             </div>
                           </div>
 
