@@ -21,7 +21,7 @@
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.08s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.05s ease forwards;
 }
 
 @keyframes fadeInOverlay {
@@ -58,7 +58,7 @@
 
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 999px;
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -100,6 +100,27 @@ aside h1, aside h2, aside .text-white {
   color: #34495e !important;
 }
 
+/* Logo toggle button — styled black like nav items */
+aside > div > div:first-child button {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 0 !important;
+  width: 100% !important;
+}
+
+aside > div > div:first-child button:hover {
+  background-color: #1a1a1a !important;
+}
+
+aside > div > div:first-child button h1,
+aside > div > div:first-child button span,
+aside > div > div:first-child button svg,
+aside > div > div:first-child button svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
 /* Sidebar top-left container where hamburger button resides: Refined to #2c3e50 background */
 aside div[class*="bg-[#2c3e50]"] {
   background-color: #f1f5f9 !important;
@@ -127,7 +148,7 @@ aside nav button {
   background-color: transparent !important;
   color: #64748b !important;
   border: 1px solid transparent !important;
-  border-radius: 0.75rem !important; /* rounded-xl */
+  border-radius: 4px !important;
 }
 
 aside nav button:hover {
@@ -146,14 +167,15 @@ aside nav button:not(.active-tab):not(:hover) svg * {
   stroke: #ffffff !important;
 }
 
-/* Active sidebar button: Floating card with ambient shadow */
+/* Active sidebar button */
 aside nav button[class*="bg-white"],
 aside nav button.active-tab {
   background-color: #ffffff !important;
   color: #0f172a !important;
   border-color: rgba(226, 232, 240, 0.8) !important;
-  box-shadow: 0 4px 15px -1px rgba(148, 163, 184, 0.12) !important;
+  box-shadow: 0 2px 6px rgba(148, 163, 184, 0.1) !important;
   font-weight: 700 !important;
+  border-radius: 4px !important;
 }
 
 aside nav button[class*="bg-white"] *,
@@ -190,7 +212,7 @@ section.bg-\[\#f8fafc\] {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.01) !important;
 }
 
-/* 2. Main Containers: Pure White cards (#ffffff), Rounded-2xl, soft floating shadow, NO border */
+/* 2. Main Containers: White cards, square corners */
 [class*="bg-[#151518]"],
 [class*="bg-[#1e1e21]"],
 [class*="bg-[#16161d]"],
@@ -198,9 +220,9 @@ section.bg-\[\#f8fafc\] {
 [class*="bg-[#18181b]"],
 .bg-white:not(button):not(input):not(textarea):not(select):not(.active-tab):not(.accessory-btn):not(.user-btn) {
   background-color: #ffffff !important;
-  border: 1px solid rgba(241, 245, 249, 0.8) !important;
-  border-radius: 1rem !important; /* rounded-2xl */
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.05), 0 1px 4px -1px rgba(0, 0, 0, 0.04) !important;
 }
 
 /* Redefine dark-panel to be a clean white panel to support the Soft UI transition */
@@ -208,8 +230,8 @@ section.bg-\[\#f8fafc\] {
   background-color: #ffffff !important;
   border: 1px solid rgba(241, 245, 249, 0.8) !important;
   color: #34495e !important;
-  box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.2), 0 10px 15px -6px rgba(0, 0, 0, 0.15) !important;
-  border-radius: 1rem !important;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -2px rgba(0, 0, 0, 0.06) !important;
+  border-radius: 4px !important;
 }
 
 .dark-panel h2,
@@ -1353,5 +1375,158 @@ button.custom-entregado-btn:hover {
   background-color: #64748b !important; /* slate-500 */
   border-color: #64748b !important;
   color: #ffffff !important;
+}
+
+
+/* ==========================================================================
+   MATHEMATICAL GRID & SQUARE STYLE OVERRIDES: NO CURVES, NO ANIMATIONS
+   ========================================================================== */
+
+/* 1. Global Reset to Square Corners (excluding SVG elements and circular elements) */
+*:not(svg):not(path):not(rect):not(circle):not(line):not(polyline):not(polygon):not(ellipse):not(.rounded-full):not([class*="rounded-full"]):not(.notification-container span):not(.avatar):not(span.w-1\.5):not(span.w-2\.5):not(span.w-2) {
+  border-radius: 0px !important;
+}
+
+/* Ensure circular status dots, avatars, and notification bubbles remain round */
+.rounded-full,
+[class*="rounded-full"],
+.notification-container span,
+.avatar,
+.w-9.h-9.rounded-full,
+span.w-1.h-1.rounded-full,
+span.w-1\.5.h-1\.5.rounded-full,
+span.w-2.h-2.rounded-full,
+span.w-2\.5.h-2\.5.rounded-full {
+  border-radius: 9999px !important;
+}
+
+/* 2. Remove all hover animations, translations, transitions, and scaling effects */
+*:hover,
+*:focus,
+button,
+div,
+span,
+tr,
+input,
+select,
+textarea {
+  transform: none !important;
+  transition: none !important;
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+}
+
+/* Ensure no scale transitions on active filters or buttons */
+button.status-filter-btn.active-filter,
+button.status-filter-btn:not(.active-filter),
+.estadisticas-tab-container .bg-white.rounded-2xl:hover,
+.estadisticas-tab-container .bg-slate-50.rounded-xl:hover,
+.estadisticas-tab-container .bg-blue-50\/40.rounded-xl:hover,
+.estadisticas-tab-container .bg-amber-50\/40.rounded-xl:hover,
+button.stats-sims-btn:hover {
+  transform: none !important;
+}
+
+/* 3. Strip soft shadows for a clean flat mathematical grid layout */
+.dark-panel,
+.bg-white,
+[class*="bg-white"],
+.gestion-general-tab .dark-panel,
+.gestion-general-tab .bg-white.rounded-xl,
+.casillero-table tbody tr,
+.casillero-table tbody tr:hover,
+button,
+input,
+select,
+textarea {
+  box-shadow: none !important;
+}
+
+/* 4. Table card layouts in Casillero: Eliminate card gaps and curved cell edges for a true table grid */
+.casillero-table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  margin-top: 0 !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  width: 100% !important;
+}
+
+.casillero-table tbody tr {
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  box-shadow: none !important;
+}
+
+.casillero-table tbody tr:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.casillero-table tbody tr td {
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-radius: 0px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+}
+
+.casillero-table tbody tr td:first-child {
+  border-left: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-top-left-radius: 0px !important;
+  border-bottom-left-radius: 0px !important;
+}
+
+.casillero-table tbody tr td:last-child {
+  border-right: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-top-right-radius: 0px !important;
+  border-bottom-right-radius: 0px !important;
+}
+
+/* Standard tables in General Management, Stand-by, and Model Configuration tabs */
+table {
+  border-collapse: collapse !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+}
+
+table th, 
+table td {
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+}
+
+/* 5. Inputs and Buttons style update: crisp straight borders with fine outlines */
+input,
+textarea,
+select,
+.search-input,
+.casillero-input {
+  border: 1px solid rgba(148, 163, 184, 0.5) !important;
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #0f172a !important;
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* Accessory buttons: Crisp square toggles */
+.accessory-btn {
+  border: 1px solid rgba(148, 163, 184, 0.5) !important;
+  background-color: #ffffff !important;
+  color: #475569 !important;
+}
+
+.accessory-btn.active {
+  background-color: #16a34a !important;
+  border-color: #16a34a !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* Modals background and border overrides for clean grids */
+div[style*="rgba(0,0,0,0.45)"] > div,
+div[style*="rgba(0,0,0,0.45)"] > div * {
+  border-radius: 0px !important;
 }
 

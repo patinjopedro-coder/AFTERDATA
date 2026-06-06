@@ -5,7 +5,8 @@ import { formatRif } from '../utils';
 import { 
   FileText, CheckSquare, Square, Search, Layers, 
   Trash2, Filter, ChevronLeft, ChevronRight, User, 
-  MapPin, ShieldCheck, HelpCircle, FileSpreadsheet, Play, Check
+  MapPin, ShieldCheck, HelpCircle, FileSpreadsheet, Play, Check,
+  Pencil, X
 } from 'lucide-react';
 
 interface GestionGeneralProps {
@@ -45,10 +46,119 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   activeCruceBatchId
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [editingItem, setEditingItem] = useState<POSItem | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<POSItem>>({});
+
   const handleCopyText = async (text: string, key: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 1500);
+  };
+
+  const openEdit = (item: POSItem) => {
+    setEditingItem(item);
+    setEditDraft({ ...item });
+  };
+
+  const saveEdit = () => {
+    if (!editingItem) return;
+    setSerials(prev => prev.map(s => {
+      if (s.id !== editingItem.id) return s;
+      const updated = { ...s, ...editDraft };
+      // Keep displayDate in sync if date changed
+      if (editDraft.date && editDraft.date !== s.date) {
+        updated.displayDate = editDraft.date.split('-').reverse().join('/');
+      }
+      return updated;
+    }));
+    setEditingItem(null);
+    setEditDraft({});
+  };
+
+  const renderEditModal = () => {
+    if (!editingItem) return null;
+    const fields: Array<{ key: keyof POSItem; label: string; type?: string }> = [
+      { key: 'serial', label: 'Serial' },
+      { key: 'remitente', label: 'Remitente' },
+      { key: 'source', label: 'Guía de Entrada' },
+      { key: 'rif', label: 'RIF' },
+      { key: 'razonSocial', label: 'Razón Social' },
+      { key: 'destino', label: 'Destino / Origen' },
+      { key: 'ticket', label: 'Ticket' },
+      { key: 'banco', label: 'Banco' },
+      { key: 'bsf', label: 'Monto BsF' },
+      { key: 'usdt', label: 'Monto USDT' },
+      { key: 'observaciones', label: 'Observaciones' },
+      { key: 'date', label: 'Fecha Ingreso (YYYY-MM-DD)', type: 'date' },
+    ];
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div className="bg-white w-full max-w-lg mx-4 shadow-2xl" style={{ borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-900">Editar — {editingItem.serial}</span>
+            <button onClick={() => setEditingItem(null)} className="p-1 hover:bg-slate-100 cursor-pointer" style={{ borderRadius: '4px' }}>
+              <X size={16} className="text-slate-600" />
+            </button>
+          </div>
+          <div className="p-5 grid grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
+            {fields.map(f => (
+              <div key={f.key} className="flex flex-col gap-1">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{f.label}</label>
+                <input
+                  type={f.type || 'text'}
+                  value={(editDraft[f.key] as string) || ''}
+                  onChange={e => setEditDraft(d => ({ ...d, [f.key]: e.target.value.toUpperCase() }))}
+                  className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                  style={{ borderRadius: '4px' }}
+                />
+              </div>
+            ))}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Estado</label>
+              <select
+                value={(editDraft.status as string) || ''}
+                onChange={e => setEditDraft(d => ({ ...d, status: e.target.value as POSStatus }))}
+                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                style={{ borderRadius: '4px' }}
+              >
+                <option value="PENDIENTE">PENDIENTE</option>
+                <option value="ACTIVO">ACTIVO</option>
+                <option value="SUSPENDIDO">SUSPENDIDO</option>
+                <option value="CANCELADO">CANCELADO</option>
+                <option value="N#A">N#A</option>
+                <option value="RECUPERADO">RECUPERADO</option>
+                <option value="SIN ESTATUS">SIN ESTATUS</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo Negocio</label>
+              <select
+                value={(editDraft.modeloNegocio as string) || ''}
+                onChange={e => setEditDraft(d => ({ ...d, modeloNegocio: e.target.value as any }))}
+                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                style={{ borderRadius: '4px' }}
+              >
+                <option value="">SIN ASIGNAR</option>
+                <option value="BASICO">BÁSICO</option>
+                <option value="COMODATO">COMODATO</option>
+              </select>
+            </div>
+          </div>
+          <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              onClick={() => setEditingItem(null)}
+              className="px-4 py-2 text-xs font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >Cancelar</button>
+            <button
+              onClick={saveEdit}
+              className="px-4 py-2 text-xs font-bold uppercase bg-[#0a0a0a] hover:bg-slate-800 text-white cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >Guardar Cambios</button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   // Form State
@@ -786,6 +896,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                   <th className="py-3 px-4">Remitente</th>
                   <th className="py-3 px-4">Guía</th>
                   <th className="py-3 px-4 w-36">Fecha Ingreso</th>
+                  <th className="py-3 px-4 w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -966,6 +1077,16 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                             className="bg-slate-100 border border-transparent rounded font-mono text-[11px] p-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 w-24 text-center"
                           />
                         </td>
+                        <td className="py-3 px-2 text-center">
+                          <button
+                            onClick={() => openEdit(s)}
+                            title="Editar registro"
+                            className="p-1.5 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-500 cursor-pointer transition-colors"
+                            style={{ borderRadius: '4px' }}
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })
@@ -1017,6 +1138,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
       </div>
 
+      {renderEditModal()}
     </div>
   );
 };

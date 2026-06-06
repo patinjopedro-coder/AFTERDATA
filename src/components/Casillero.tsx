@@ -5,7 +5,7 @@ import { formatRif } from '../utils';
 import { 
   FolderLock, Check, Trash2,
   ChevronLeft, ChevronRight,
-  FileSpreadsheet
+  FileSpreadsheet, Pencil, X
 } from 'lucide-react';
 
 interface CasilleroProps {
@@ -43,6 +43,114 @@ export const Casillero: React.FC<CasilleroProps> = ({
   };
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
+
+  const [editingItem, setEditingItem] = useState<POSItem | null>(null);
+  const [editDraft, setEditDraft] = useState<Partial<POSItem>>({});
+
+  const openEdit = (item: POSItem) => {
+    setEditingItem(item);
+    setEditDraft({ ...item });
+  };
+
+  const saveEdit = () => {
+    if (!editingItem) return;
+    setSerials(prev => prev.map(s => {
+      if (s.id !== editingItem.id) return s;
+      const updated = { ...s, ...editDraft };
+      if (editDraft.date && editDraft.date !== s.date) {
+        updated.displayDate = (editDraft.date as string).split('-').reverse().join('/');
+      }
+      return updated;
+    }));
+    setEditingItem(null);
+    setEditDraft({});
+  };
+
+  const renderEditModal = () => {
+    if (!editingItem) return null;
+    const fields: Array<{ key: keyof POSItem; label: string; type?: string }> = [
+      { key: 'serial', label: 'Serial' },
+      { key: 'remitente', label: 'Agencia / Remitente' },
+      { key: 'source', label: 'Guía Entrante' },
+      { key: 'rif', label: 'RIF' },
+      { key: 'razonSocial', label: 'Razón Social' },
+      { key: 'banco', label: 'Banco' },
+      { key: 'ticket', label: 'Ticket' },
+      { key: 'destino', label: 'Destino / Origen' },
+      { key: 'observaciones', label: 'Observaciones' },
+      { key: 'bsf', label: 'Monto BsF' },
+      { key: 'usdt', label: 'Monto USDT' },
+      { key: 'date', label: 'Fecha Ingreso (YYYY-MM-DD)', type: 'date' },
+    ];
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div className="bg-white w-full max-w-lg mx-4 shadow-2xl" style={{ borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-900">Editar — {editingItem.serial}</span>
+            <button onClick={() => setEditingItem(null)} className="p-1 hover:bg-slate-100 cursor-pointer" style={{ borderRadius: '4px' }}>
+              <X size={16} className="text-slate-600" />
+            </button>
+          </div>
+          <div className="p-5 grid grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
+            {fields.map(f => (
+              <div key={f.key} className="flex flex-col gap-1">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{f.label}</label>
+                <input
+                  type={f.type || 'text'}
+                  value={(editDraft[f.key] as string) || ''}
+                  onChange={e => setEditDraft(d => ({ ...d, [f.key]: e.target.value.toUpperCase() }))}
+                  className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                  style={{ borderRadius: '4px' }}
+                />
+              </div>
+            ))}
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Estado</label>
+              <select
+                value={(editDraft.status as string) || ''}
+                onChange={e => setEditDraft(d => ({ ...d, status: e.target.value as POSStatus }))}
+                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                style={{ borderRadius: '4px' }}
+              >
+                <option value="PENDIENTE">PENDIENTE</option>
+                <option value="ACTIVO">ACTIVO</option>
+                <option value="SUSPENDIDO">SUSPENDIDO</option>
+                <option value="CANCELADO">CANCELADO</option>
+                <option value="N#A">N#A</option>
+                <option value="RECUPERADO">RECUPERADO</option>
+                <option value="SIN ESTATUS">SIN ESTATUS</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo Negocio</label>
+              <select
+                value={(editDraft.modeloNegocio as string) || ''}
+                onChange={e => setEditDraft(d => ({ ...d, modeloNegocio: e.target.value as any }))}
+                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                style={{ borderRadius: '4px' }}
+              >
+                <option value="">SIN ASIGNAR</option>
+                <option value="BASICO">BÁSICO</option>
+                <option value="COMODATO">COMODATO</option>
+              </select>
+            </div>
+          </div>
+          <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              onClick={() => setEditingItem(null)}
+              className="px-4 py-2 text-xs font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >Cancelar</button>
+            <button
+              onClick={saveEdit}
+              className="px-4 py-2 text-xs font-bold uppercase bg-[#0a0a0a] hover:bg-slate-800 text-white cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >Guardar Cambios</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const handleImportMatriz = () => {
     const input = document.createElement('input');
@@ -451,6 +559,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 <th className="py-3 px-4 w-72">Observaciones</th>
                 <th className="py-3 px-4 w-52">Sustitución</th>
                 <th className="py-3 px-4 w-72">Liberación / Despacho</th>
+                <th className="py-3 px-4 w-10"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -503,96 +612,81 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       </td>
 
                       {/* CLASIFICACIÓN Y DATOS COMERCIALES */}
-                      <td className="py-4 px-4 text-xs">
-                        <div className="flex flex-col gap-1 pr-2">
-                          <span className="inline-flex items-center gap-1">
-                            <span 
-                              className={`text-base cursor-help hover:text-slate-900 select-all font-arial transition-colors font-bold ${serialColorClass}`}
-                              onClick={() => handleCopyText(s.serial, `serial-${s.id}`)}
-                            >
-                              {s.serial}
-                            </span>
-                            {copiedKey === `serial-${s.id}` && (
-                              <span className="inline-flex items-center justify-center w-4 h-4 bg-green-500 rounded animate-fade-in">
-                                <Check size={10} className="text-white" style={{ color: '#fff' }} />
-                              </span>
-                            )}
-                          </span>
+                      <td className="py-4 px-4 text-xs font-arial">
+                        <div className="flex flex-col divide-y divide-slate-100 border border-slate-200 bg-white" style={{ borderRadius: '0px' }}>
                           
-                          <div className="flex flex-wrap gap-1.5 items-center mt-0.5 -ml-1">
-                            <span className="text-[9px] bg-slate-100 text-slate-600 font-arial px-1.5 py-0.5 rounded uppercase font-semibold border border-transparent">
-                              {modelInfo.so === 'ANDROID' ? 'android' : modelInfo.so === 'LINUX' ? 'linux' : 'unk'}
-                            </span>
-                            <span className="text-[10px] text-slate-600 font-medium font-arial">{modelInfo.modelo}</span>
-                          </div>
-
-                          {(s.rif || s.razonSocial || s.banco || s.bsf || s.usdt) && (
-                            <div className="mt-1.5 bg-blue-50/70 p-2.5 rounded-xl border border-blue-100 text-slate-800">
-                              <span className="text-[9px] text-blue-700 block uppercase font-bold tracking-wider">Cliente / Solicitante</span>
-                              <div className="text-slate-900 font-bold select-all text-[11px] truncate mt-0.5 font-arial">
-                                {s.razonSocial || 'RAZON SOCIAL INC.'}
-                              </div>
-                              <div className="flex justify-between items-center text-[10px] text-slate-600 font-arial mt-1">
-                                <span className="font-bold select-all">{s.rif || 'S/R RIF'}</span>
-                                <div className="flex gap-1.5">
-                                  {s.bsf && !s.usdt && <span className="bg-blue-100 text-blue-800 px-1 py-0.2 rounded font-extrabold text-[9px]">{s.bsf} BsF</span>}
-                                  {!s.bsf && s.usdt && <span className="bg-emerald-100 text-emerald-800 px-1 py-0.2 rounded font-extrabold text-[9px]">{s.usdt} USDT</span>}
-                                  {s.bsf && s.usdt && (
-                                    <>
-                                      <span className="bg-blue-100 text-blue-800 px-1 py-0.2 rounded font-extrabold text-[9px]">{s.bsf} BsF</span>
-                                      <span className="bg-emerald-100 text-emerald-800 px-1 py-0.2 rounded font-extrabold text-[9px]">{s.usdt} USDT</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                              {s.banco && (
-                                <div className="text-[9px] text-slate-500 truncate mt-1.5 border-t border-blue-100/70 pt-1 select-all font-semibold uppercase">
-                                  BANCO: {s.banco}
-                                </div>
+                          {/* 1. EQUIPO / SERIAL */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Serial:</span>
+                            <div className="flex items-center gap-1">
+                              <span 
+                                className={`text-[12px] font-mono cursor-pointer hover:text-slate-900 select-all font-bold ${serialColorClass}`}
+                                onClick={() => handleCopyText(s.serial, `serial-${s.id}`)}
+                              >
+                                {s.serial}
+                              </span>
+                              {copiedKey === `serial-${s.id}` && (
+                                <span className="inline-flex items-center justify-center w-3.5 h-3.5 bg-green-500 rounded-none animate-fade-in">
+                                  <Check size={8} className="text-white" style={{ color: '#fff' }} />
+                                </span>
                               )}
                             </div>
-                          )}
+                          </div>
 
-                          {/* INGRESO MANUAL DEL TICKET Y COSTOS */}
-                          <div className="mt-1.5 grid grid-cols-3 gap-1.5">
-                            <div>
-                              <label className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider">Ticket</label>
-                              <input
-                                type="text"
-                                value={s.ticket || ''}
-                                onChange={e => handleUpdateTextVal(s.id, 'ticket', e.target.value.toUpperCase())}
-                                className="w-full text-[11px] font-arial p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider">Costo BsF</label>
-                              <input
-                                type="text"
-                                value={s.bsf || ''}
-                                onChange={e => handleUpdateTextVal(s.id, 'bsf', e.target.value.toUpperCase())}
-                                className="w-full text-[11px] font-arial p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-[8px] text-slate-500 block uppercase font-bold tracking-wider">Costo USDT</label>
-                              <input
-                                type="text"
-                                value={s.usdt || ''}
-                                onChange={e => handleUpdateTextVal(s.id, 'usdt', e.target.value.toUpperCase())}
-                                className="w-full text-[11px] font-arial p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input"
-                              />
+                          {/* MODELO DE HARDWARE */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Equipo:</span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[9px] bg-slate-100 text-slate-600 font-arial px-1.5 py-0.5 rounded-none uppercase font-semibold border border-transparent">
+                                {modelInfo.so === 'ANDROID' ? 'android' : modelInfo.so === 'LINUX' ? 'linux' : 'unk'}
+                              </span>
+                              <span className="text-[10px] text-slate-700 font-bold font-arial">{modelInfo.modelo}</span>
                             </div>
                           </div>
 
-                          <div className="mt-1.5">
-                            <label className="text-[9px] text-slate-500 block uppercase font-bold tracking-wider">Banco</label>
-                            <input
-                              type="text"
-                              value={s.banco || ''}
-                              onChange={e => handleUpdateTextVal(s.id, 'banco', e.target.value.toUpperCase())}
-                              className="w-full text-xs font-arial p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded uppercase text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input"
-                            />
+                          {/* 2. MODELO DE NEGOCIO */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mod. Negocio:</span>
+                            <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-none ${s.modeloNegocio === 'COMODATO' ? 'bg-indigo-100 text-indigo-800' : s.modeloNegocio === 'BASICO' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-500'}`}>
+                              {s.modeloNegocio || 'SIN ASIGNAR'}
+                            </span>
                           </div>
+
+                          {/* 3. CLIENTE / SOLICITANTE */}
+                          <div className="p-2 flex flex-col gap-0.5">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cliente:</span>
+                            <div className="text-slate-900 font-bold select-all text-[11px] truncate uppercase font-arial">
+                              {s.razonSocial || 'SIN RAZÓN SOCIAL'}
+                            </div>
+                            {s.rif && (
+                              <div className="text-[10px] text-slate-500 font-bold select-all font-mono">
+                                {s.rif}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* 4. TICKET */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ticket:</span>
+                            <span className="text-[11px] font-mono font-bold text-slate-955 uppercase select-all">{s.ticket || 'S/N'}</span>
+                          </div>
+
+                          {/* 5. BANCO */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Banco:</span>
+                            <span className="text-[10px] font-bold text-slate-800 uppercase select-all">{s.banco || 'S/N'}</span>
+                          </div>
+
+                          {/* 6. MONTOS */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Monto:</span>
+                            <div className="flex gap-1.5">
+                              {s.bsf && <span className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded-none font-extrabold text-[9px] font-mono">{s.bsf} BSF</span>}
+                              {s.usdt && <span className="bg-emerald-100 text-emerald-800 px-1 py-0.5 rounded-none font-extrabold text-[9px] font-mono">{s.usdt} USDT</span>}
+                              {!s.bsf && !s.usdt && <span className="text-slate-400 text-[10px]">S/N</span>}
+                            </div>
+                          </div>
+
                         </div>
                       </td>
 
@@ -847,6 +941,17 @@ export const Casillero: React.FC<CasilleroProps> = ({
                         </div>
                       </td>
 
+                      <td className="py-4 px-2 text-center align-top">
+                        <button
+                          onClick={() => openEdit(s)}
+                          title="Editar registro"
+                          className="p-1.5 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-500 cursor-pointer transition-colors mt-1"
+                          style={{ borderRadius: '4px' }}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </td>
+
                     </tr>
                   );
                 })
@@ -897,6 +1002,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
         </div>
       </div>
 
+      {renderEditModal()}
     </div>
   );
 };

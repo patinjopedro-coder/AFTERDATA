@@ -644,24 +644,20 @@ export default function App() {
       <aside className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-[#f8fafc] border-r border-slate-200 flex flex-col justify-between shrink-0 h-full select-none z-10`}>
         
         <div className="flex flex-col gap-6">
-          {/* Logo aislado en la parte superior — click para colapsar/expandir */}
-          <div className="flex flex-col items-center pb-3 border-b border-slate-200">
-            <div
+          {/* Logo — botón de toggle estilizado igual que los otros del menú */}
+          <div className="flex flex-col pb-3 px-3 pt-3 border-b border-slate-200">
+            <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               title="Colapsar / Expandir menú"
-              className={`flex items-center gap-3 py-4 w-full cursor-pointer hover:opacity-70 transition-opacity ${
-                isSidebarCollapsed ? 'justify-center mt-2 px-1' : 'justify-start pl-4'
-              }`}
+              className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} w-full cursor-pointer transition-all border border-transparent`}
             >
-              <LogoIcon className="w-12 h-12 text-black shrink-0" color="#000000" />
+              <LogoIcon className="w-[18px] h-[18px] shrink-0" color="#ffffff" />
               {!isSidebarCollapsed && (
-                <div className="animate-fade-in">
-                  <h1 className="text-xs font-black text-black uppercase tracking-wider leading-none">
-                    TRACKING
-                  </h1>
-                </div>
+                <h1 className="text-xs font-black uppercase tracking-wider leading-none text-white">
+                  TRACKING
+                </h1>
               )}
-            </div>
+            </button>
           </div>
 
           {/* Menú de Navegación Vertical */}
@@ -676,8 +672,7 @@ export default function App() {
               { id: 'simcards', label: 'Gestión de SIM-Cards', icon: CardSim },
               { id: 'modelos', label: 'Modelos Registrados', icon: Smartphone },
               { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
-              { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users },
-              { id: 'configuracion', label: 'Configuración', icon: Settings }
+              { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users }
             ].map(t => {
               const Icon = t.icon;
               const isActive = currentTab === t.id;

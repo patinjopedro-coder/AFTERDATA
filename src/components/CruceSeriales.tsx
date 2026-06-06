@@ -543,23 +543,35 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   };
 
   const handleExportCruceReport = () => {
-    let csv = "sep=,\nSERIAL,CORREO_CONTIENE,FISICO_CONTIENE,MATCH,ESTADO_IMS,OPERADORA,SIM_CARD,TICKET_CASO\n";
     const allSetKeys = Array.from(new Set([...emailUniques, ...fisicoUniques]));
+    if (allSetKeys.length === 0) return;
+
+    const maxLen = Math.max(...allSetKeys.map(s => s.length), 0);
+    
+    let csv = "sep=,\n";
+    // Header cells for each character position and then status
+    for (let i = 1; i <= maxLen; i++) {
+      csv += `C${i},`;
+    }
+    csv += "ESTADO\n";
 
     for (const s of allSetKeys) {
-      const inEmail = emailSet.has(s) ? "SI" : "NO";
-      const inFisico = fisicoSet.has(s) ? "SI" : "NO";
-      const isMatch = (inEmail === "SI" && inFisico === "SI") ? "COINCIDENCIA" : "DIFERENCIA";
       const matchMaster = lookupValidador(s);
-
-      csv += `"${s}","${inEmail}","${inFisico}","${isMatch}","${matchMaster?.status || 'N#A'}","${matchMaster?.operadora || 'DISPONIBLE'}","${matchMaster?.simNumber || ''}","${matchMaster?.ticket || ''}"\n`;
+      const status = matchMaster?.status || 'N#A';
+      
+      // Each character in its own cell/column
+      for (let i = 0; i < maxLen; i++) {
+        const char = s[i] || '';
+        csv += `"${char}",`;
+      }
+      csv += `"${status}"\n`;
     }
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `cruce_realtime_reporte_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `reporte_cruzado_casillas_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
