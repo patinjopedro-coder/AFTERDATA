@@ -1,0 +1,247 @@
+{
+  "serialesDB": [
+    {
+      "id": 1,
+      "serial": "K300-ABC123",
+      "date": "2025-04-01",
+      "displayDate": "01/04/2025",
+      "status": "PENDIENTE",
+      "remitente": "CLIENTE1",
+      "source": "",
+      "isCasillero": false,
+      "selected": false,
+      "rif": "",
+      "razonSocial": "",
+      "destino": "CARACAS",
+      "observaciones": "",
+      "forro": true,
+      "bateria": false,
+      "cargador": true,
+      "caja": false,
+      "sim": false,
+      "simNumber": "",
+      "operadora": "",
+      "modeloManual": "",
+      "modeloNegocio": "",
+      "entregadoTecnico": false,
+      "esSustitucion": false,
+      "serialSustituto": "",
+      "fechaSalida": "",
+      "fechaSalidaCliente": "",
+      "guiaSalidaCliente": "",
+      "destinoSalida": "",
+      "fechaConfirmada": false,
+      "ticket": ""
+    },
+    {
+      "id": 2,
+      "serial": "V200C-001A2F",
+      "date": "2025-04-02",
+      "displayDate": "02/04/2025",
+      "status": "ACTIVO",
+      "remitente": "LOGISTICA",
+      "source": "GUIA123",
+      "isCasillero": true,
+      "selected": false,
+      "rif": "J-123456",
+      "razonSocial": "EMPRESA X",
+      "destino": "MARACAY",
+      "observaciones": "",
+      "forro": false,
+      "bateria": false,
+      "cargador": false,
+      "caja": false,
+      "sim": true,
+      "simNumber": "8901234567890",
+      "operadora": "MOVISTAR",
+      "modeloManual": "V200C",
+      "modeloNegocio": "BASICO",
+      "entregadoTecnico": false,
+      "esSustitucion": false,
+      "serialSustituto": "",
+      "fechaSalida": "",
+      "fechaSalidaCliente": "2025-04-10",
+      "guiaSalidaCliente": "GUIACLIE001",
+      "destinoSalida": "VALENCIA",
+      "fechaConfirmada": false,
+      "ticket": ""
+    }
+  ],
+  "enviosExternosDB": [],
+  "modelosDB": {
+    "V200C": {
+      "modelo": "VERIFONE V200C",
+      "so": "LINUX"
+    },
+    "V205C": {
+      "modelo": "VERIFONE V205C",
+      "so": "LINUX"
+    },
+    "V400C": {
+      "modelo": "VERIFONE V400C",
+      "so": "LINUX"
+    },
+    "T650C": {
+      "modelo": "VERIFONE T650C",
+      "so": "ANDROID"
+    },
+    "T650M": {
+      "modelo": "VERIFONE T650M",
+      "so": "ANDROID"
+    },
+    "T650P": {
+      "modelo": "VERIFONE T650P",
+      "so": "ANDROID"
+    },
+    "V240M": {
+      "modelo": "VERIFONE V240M",
+      "so": "LINUX"
+    },
+    "V400M": {
+      "modelo": "VERIFONE V400M",
+      "so": "LINUX"
+    },
+    "CARBONMOBILE5": {
+      "modelo": "VERIFONE CARBON5",
+      "so": "ANDROID"
+    },
+    "E285": {
+      "modelo": "VERIFONE E285",
+      "so": "ANDROID"
+    },
+    "X990": {
+      "modelo": "VERIFONE X990",
+      "so": "ANDROID"
+    },
+    "VICTAMOBILE": {
+      "modelo": "VERIFONE VICTA",
+      "so": "ANDROID"
+    },
+    "T2": {
+      "modelo": "SUNMI T2",
+      "so": "ANDROID"
+    },
+    "T2S": {
+      "modelo": "SUNMI T2S",
+      "so": "ANDROID"
+    },
+    "V2SPLUS": {
+      "modelo": "SUNMI V2S",
+      "so": "ANDROID"
+    },
+    "KC50": {
+      "modelo": "ZEBRA KC50",
+      "so": "ANDROID"
+    },
+    "EC50": {
+      "modelo": "ZEBRA EC50",
+      "so": "ANDROID"
+    },
+    "ET50": {
+      "modelo": "ZEBRA ET50",
+      "so": "ANDROID"
+    },
+    "SWIFT1": {
+      "modelo": "IMIN SWIFT1",
+      "so": "ANDROID"
+    },
+    "SWIFT2": {
+      "modelo": "IMIN SWIFT2",
+      "so": "ANDROID"
+    },
+    "SWIFT2PRO": {
+      "modelo": "IMIN SWIFT2PRO",
+      "so": "ANDROID"
+    },
+    "USC100": {
+      "modelo": "ADVANTECH USC100",
+      "so": "LINUX"
+    },
+    "USC200": {
+      "modelo": "ADVANTECH USC200",
+      "so": "LINUX"
+    },
+    "USC300": {
+      "modelo": "ADVANTECH USC300",
+      "so": "LINUX"
+    },
+    "USC500": {
+      "modelo": "ADVANTECH USC500",
+      "so": "LINUX"
+    },
+    "YUNO": {
+      "modelo": "ADVANTECH YUNO",
+      "so": "LINUX"
+    },
+    "VEGA3000P3": {
+      "modelo": "CASTLES VEGA3000",
+      "so": "LINUX"
+    },
+    "S80": {
+      "modelo": "PAX S80",
+      "so": "LINUX"
+    },
+    "S800": {
+      "modelo": "PAX S800",
+      "so": "LINUX"
+    },
+    "IM30": {
+      "modelo": "PAX IM30",
+      "so": "ANDROID"
+    },
+    "A920": {
+      "modelo": "PAX A920",
+      "so": "ANDROID"
+    },
+    "D210": {
+      "modelo": "PAX D210",
+      "so": "LINUX"
+    },
+    "DESKO": {
+      "modelo": "INGENICO DESKO",
+      "so": "LINUX"
+    },
+    "MOVE5000": {
+      "modelo": "INGENICO MOVE",
+      "so": "LINUX"
+    },
+    "SELF2000": {
+      "modelo": "INGENICO SELF",
+      "so": "LINUX"
+    },
+    "LANE5000": {
+      "modelo": "INGENICO LANE",
+      "key": "LANE5000",
+      "so": "LINUX"
+    },
+    "LINK2500": {
+      "modelo": "INGENICO LINK",
+      "so": "LINUX"
+    },
+    "G2": {
+      "modelo": "G2",
+      "so": "ANDROID"
+    },
+    "N820": {
+      "modelo": "N820",
+      "so": "ANDROID"
+    },
+    "N800": {
+      "modelo": "N800",
+      "so": "ANDROID"
+    },
+    "K300": {
+      "modelo": "K300",
+      "so": "ANDROID"
+    },
+    "WP": {
+      "modelo": "WP",
+      "so": "ANDROID"
+    }
+  },
+  "usersProfilesDB": {},
+  "currentTab": "general",
+  "simCardBatchesDB": [],
+  "standbyListDB": [],
+  "activeCruceBatchIdDB": ""
+}
