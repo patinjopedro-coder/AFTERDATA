@@ -122,6 +122,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
   const [bizModelSearchQuery, setBizModelSearchQuery] = useState('');
   const [clientesSearchQuery, setClientesSearchQuery] = useState('');
   const [colaboradoresSearchQuery, setColaboradoresSearchQuery] = useState('');
+  const [detailSelectedDate, setDetailSelectedDate] = useState<string | null>(null);
 
   const closeAllModals = () => {
     setModalType(null);
@@ -134,6 +135,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
     setShowBizModelDatesModal(false);
     setModalDateDesde('');
     setModalDateHasta('');
+    setDetailSelectedDate(null);
   };
 
   const renderDateRangeFilter = () => (
@@ -782,7 +784,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       alert("No hay datos para exportar.");
       return;
     }
-    const header = "sep=,\nSERIAL,MODELO,SO,ESTATUS,REMITENTE,CLIENTE_RAZON_SOCIAL,TICKET,GUIA_ENTRADA,DESTINO,FECHA_INGRESO";
+    const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;FECHA_INGRESO";
     const rows = modalList.map(s => {
       const m = getTerminalModel(s.serial, modelosDB);
       return [
@@ -792,11 +794,12 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         s.status || 'SIN ESTATUS',
         s.remitente || '',
         s.razonSocial || '',
+        s.rif || '',
         s.ticket || '',
         s.source || '',
         s.destino || '',
         s.displayDate || s.date || ''
-      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",");
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
     });
     const csvContent = [header, ...rows].join("\n");
     downloadCSV(csvContent, `Exportacion_${modalType}_${new Date().toISOString().split('T')[0]}.csv`);
@@ -1123,7 +1126,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       </div>
 
       {/* SECCIÓN 1.6: TOP 5 COLABORADORES */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 border-t-4 border-t-blue-500 shadow-sm flex flex-col gap-4">
+      <div className="bg-white p-5 border border-slate-200 border-t-4 border-t-blue-500 shadow-sm flex flex-col gap-4" style={{ borderRadius: '0px' }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
           <div>
             <h4 className="font-bold text-xs tracking-widest uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
@@ -1134,7 +1137,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           </div>
           <button
             onClick={() => setShowAllColaboradoresModal(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white-force rounded-xl text-xs font-extrabold uppercase transition-all shadow-md flex items-center gap-1.5 cursor-pointer border-none"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white-force text-xs font-extrabold uppercase transition-all shadow-md flex items-center gap-1.5 cursor-pointer border-none"
+            style={{ borderRadius: '0px', color: '#fff' }}
           >
             <Layers size={13} />
             <span>Ver Desglose Completo</span>
@@ -1148,10 +1152,11 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             top5Colaboradores.map((u, idx) => (
               <div 
                 key={u.name} 
-                onClick={() => { setModalType('colaborador'); setModalSelectedName(u.name); setModalSearch(''); }}
-                className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between gap-2 hover:border-slate-350 cursor-pointer transition-all shadow-xs relative"
+                onClick={() => { setModalType('colaborador'); setModalSelectedName(u.name); setModalSearch(''); setDetailSelectedDate(null); }}
+                className="bg-slate-50 p-4 border border-slate-200 flex flex-col justify-between gap-2 hover:border-slate-350 cursor-pointer transition-all shadow-xs relative"
+                style={{ borderRadius: '0px' }}
               >
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-slate-200/80 flex items-center justify-center text-[9px] font-black font-sans text-slate-600">
+                <div className="absolute top-3 right-3 w-5 h-5 bg-slate-200/80 flex items-center justify-center text-[9px] font-black font-sans text-slate-600" style={{ borderRadius: '0px' }}>
                   #{idx + 1}
                 </div>
                 <div className="pr-6">
@@ -1169,7 +1174,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       </div>
 
       {/* SECCIÓN 1.5: TOP 5 CLIENTES */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 border-t-4 border-t-green-500 shadow-sm flex flex-col gap-4">
+      <div className="bg-white p-5 border border-slate-200 border-t-4 border-t-green-500 shadow-sm flex flex-col gap-4" style={{ borderRadius: '0px' }}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
           <div>
             <h4 className="font-bold text-xs tracking-widest uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
@@ -1180,7 +1185,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           </div>
           <button
             onClick={() => setShowAllClientesModal(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white-force rounded-xl text-xs font-extrabold uppercase transition-all shadow-md flex items-center gap-1.5 cursor-pointer border-none"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white-force text-xs font-extrabold uppercase transition-all shadow-md flex items-center gap-1.5 cursor-pointer border-none"
+            style={{ borderRadius: '0px', color: '#fff' }}
           >
             <Layers size={13} />
             <span>Ver Desglose Completo</span>
@@ -1194,10 +1200,11 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             top5Clientes.map((u, idx) => (
               <div 
                 key={u.name} 
-                onClick={() => { setModalType('cliente'); setModalSelectedName(u.name); setModalSearch(''); }}
-                className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between gap-2 hover:border-slate-350 cursor-pointer transition-all shadow-xs relative"
+                onClick={() => { setModalType('cliente'); setModalSelectedName(u.name); setModalSearch(''); setDetailSelectedDate(null); }}
+                className="bg-slate-50 p-4 border border-slate-200 flex flex-col justify-between gap-2 hover:border-slate-350 cursor-pointer transition-all shadow-xs relative"
+                style={{ borderRadius: '0px' }}
               >
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-slate-200/80 flex items-center justify-center text-[9px] font-black font-sans text-slate-600">
+                <div className="absolute top-3 right-3 w-5 h-5 bg-slate-200/80 flex items-center justify-center text-[9px] font-black font-sans text-slate-600" style={{ borderRadius: '0px' }}>
                   #{idx + 1}
                 </div>
                 <div className="pr-6">
@@ -1769,12 +1776,13 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in"
+            className={`bg-white border border-slate-200 w-full ${(modalType === 'cliente' || modalType === 'colaborador') ? 'max-w-5xl' : 'max-w-2xl'} p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in font-arial`}
+            style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
-                <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider">
+                <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider" style={{ fontFamily: 'Arial', fontWeight: 'bold' }}>
                   Listado: {modalType === 'total' ? 'TODOS LOS EQUIPOS RECIBIDOS' : 
                            modalType === 'disponibles' ? 'EQUIPOS DISPONIBLES' : 
                            modalType === 'entregados' ? 'EQUIPOS ENTREGADOS' :
@@ -1793,77 +1801,189 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 </p>
               </div>
               <div className="flex gap-2">
-                <button 
-                  onClick={exportModalDataToCSV}
-                  className="text-white font-bold bg-green-600 hover:bg-green-700 rounded border border-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm"
-                >
-                  <FileDown size={14} />
-                  Exportar a Excel
-                </button>
+                {(modalType === 'cliente' || modalType === 'colaborador') ? (
+                  <button 
+                    onClick={() => {
+                      const itemsToExport = detailSelectedDate 
+                        ? modalList.filter(s => s.date === detailSelectedDate)
+                        : modalList;
+                      if (itemsToExport.length === 0) { alert("No hay datos para exportar."); return; }
+                      const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;FECHA_INGRESO";
+                      const rows = itemsToExport.map(s => {
+                        const m = getTerminalModel(s.serial, modelosDB);
+                        return [s.serial, m.modelo, m.so, s.status || 'SIN ESTATUS', s.remitente || '', s.razonSocial || '', s.rif || '', s.ticket || '', s.source || '', s.destino || '', s.displayDate || s.date || ''].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
+                      });
+                      const csvContent = [header, ...rows].join("\n");
+                      downloadCSV(csvContent, `Detalle_${modalType}_${modalSelectedName}_${detailSelectedDate || 'TODOS'}_${new Date().toISOString().split('T')[0]}.csv`);
+                    }}
+                    className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                    style={{ borderRadius: '0px', fontFamily: 'Arial' }}
+                  >
+                    <FileDown size={14} />
+                    Exportar CSV
+                  </button>
+                ) : (
+                  <button 
+                    onClick={exportModalDataToCSV}
+                    className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                    style={{ borderRadius: '0px' }}
+                  >
+                    <FileDown size={14} />
+                    Exportar a Excel
+                  </button>
+                )}
                 <button 
                   onClick={closeAllModals}
-                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 rounded border border-slate-200 px-2.5 py-1 text-xs cursor-pointer transition-colors"
+                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer transition-colors"
+                  style={{ borderRadius: '0px' }}
                 >
                   Cerrar ✕
                 </button>
               </div>
             </div>
 
-            {/* Date filter container */}
-            {renderDateRangeFilter()}
-
-            {/* Modal search bar */}
-            <div className="relative flex-shrink-0">
-              <input
-                type="text"
-                value={modalSearch}
-                onChange={e => setModalSearch(e.target.value)}
-                placeholder="Filtrar por serial, remitente, cliente RIF..."
-                className="w-full text-xs p-2.5 pl-8 bg-white border border-slate-350 rounded-lg text-slate-800 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
-              />
-              <Search size={14} className="absolute left-2.5 top-3.5" style={{ color: '#0d9488' }} />
-            </div>
-
-            <div className="overflow-y-auto pr-1 flex-1 font-arial text-[13px] flex flex-col gap-2">
-              {modalList.length === 0 ? (
-                <div className="text-center py-10 text-slate-450">Ningún registro coincide con el filtro del modal.</div>
-              ) : (
-                modalList.map(s => {
-                  const m = getTerminalModel(s.serial, modelosDB);
-                  return (
-                    <div key={s.id} className="py-3 px-4 hover:bg-slate-100/70 bg-slate-50/50 border border-slate-200/60 rounded-xl flex justify-between items-center gap-4 transition-all">
-                      <div className="flex flex-col gap-1">
-                        <span 
-                          className="text-[14px] font-extrabold text-slate-900 select-all tracking-wider font-arial cursor-pointer hover:text-slate-600 transition-colors flex items-center gap-1"
-                          onClick={(e) => { e.stopPropagation(); handleCopyText(s.serial, `modal-serial-${s.id}`); }}
-                          title="Click para copiar"
-                        >
-                          {s.serial}
-                          {copiedKey === `modal-serial-${s.id}` && (
-                            <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded p-0.5 ml-1 transition-all animate-fade-in shrink-0">
-                              <Check className="w-3 h-3 text-white" />
-                            </span>
-                          )}
-                        </span>
-                        <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-600 font-medium font-arial">
-                          <span className="bg-slate-200/70 text-slate-800 px-1.5 py-0.5 rounded font-bold uppercase">{m.modelo}</span>
-                          {s.razonSocial && (
-                            <span className="text-slate-700">Cliente: <span className="font-bold">{s.razonSocial}</span></span>
-                          )}
-                        </div>
+            {/* SPLIT LAYOUT for cliente/colaborador */}
+            {(modalType === 'cliente' || modalType === 'colaborador') ? (
+              (() => {
+                const uniqueDates = [...new Set(modalList.map(s => s.date))] as string[];
+                uniqueDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                const serialsForDate = detailSelectedDate 
+                  ? modalList.filter(s => s.date === detailSelectedDate) 
+                  : modalList;
+                return (
+                  <div className="flex flex-1 overflow-hidden gap-0 border border-slate-200" style={{ borderRadius: '0px' }}>
+                    {/* LEFT SIDEBAR: Dates */}
+                    <div className="w-52 flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50 overflow-y-auto">
+                      <div className="px-3 py-2.5 bg-slate-100 border-b border-slate-200 sticky top-0 z-10">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600" style={{ fontFamily: 'Arial' }}>FECHA DE ENTREGAS</span>
                       </div>
-                      
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider block text-center ${getStatusStyle(s.status)}`}>
-                          {s.status}
-                        </span>
-                        <span className="text-[11px] font-bold text-slate-500 font-arial">Ingreso: {s.displayDate}</span>
-                      </div>
+                      <button
+                        onClick={() => setDetailSelectedDate(null)}
+                        className={`w-full text-left px-3 py-2.5 text-[11px] font-bold uppercase border-b border-slate-100 cursor-pointer transition-colors ${!detailSelectedDate ? (modalType === 'colaborador' ? 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500' : 'bg-green-50 text-green-700 border-l-2 border-l-green-500') : 'text-slate-600 hover:bg-slate-100'}`}
+                        style={{ borderRadius: '0px', fontFamily: 'Arial' }}
+                      >
+                        TODOS ({modalList.length})
+                      </button>
+                      {uniqueDates.map(date => {
+                        const count = modalList.filter(s => s.date === date).length;
+                        const isSelected = detailSelectedDate === date;
+                        return (
+                          <button
+                            key={date}
+                            onClick={() => setDetailSelectedDate(date)}
+                            className={`w-full text-left px-3 py-2.5 text-[11px] font-bold border-b border-slate-100 cursor-pointer transition-colors ${isSelected ? (modalType === 'colaborador' ? 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500' : 'bg-green-50 text-green-700 border-l-2 border-l-green-500') : 'text-slate-600 hover:bg-slate-100'}`}
+                            style={{ borderRadius: '0px', fontFamily: 'Arial' }}
+                          >
+                            {date} <span className="text-slate-400 text-[9px] ml-1">({count})</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                  );
-                })
-              )}
-            </div>
+                    {/* RIGHT PANEL: 4-column serial grid */}
+                    <div className="flex-1 overflow-y-auto bg-white p-4">
+                      <div className="px-1 pb-2 mb-3 border-b border-slate-100">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500" style={{ fontFamily: 'Arial' }}>
+                          {detailSelectedDate ? `SERIALES DEL ${detailSelectedDate}` : 'TODOS LOS SERIALES'} — {serialsForDate.length} equipos
+                        </span>
+                      </div>
+                      {serialsForDate.length === 0 ? (
+                        <div className="text-center py-10 text-slate-400 text-xs font-bold uppercase" style={{ fontFamily: 'Arial' }}>No hay seriales para esta fecha.</div>
+                      ) : (
+                        <div className="grid grid-cols-4 gap-2">
+                          {serialsForDate.map((s, idx) => {
+                            const m = getTerminalModel(s.serial, modelosDB);
+                            return (
+                              <div 
+                                key={s.id} 
+                                className="border border-slate-200 p-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex flex-col gap-1"
+                                style={{ borderRadius: '0px' }}
+                                onClick={() => handleCopyText(s.serial, `split-serial-${s.id}`)}
+                                title="Click para copiar serial"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-slate-900 select-all tracking-wider" style={{ fontFamily: 'Arial' }}>
+                                    {s.serial}
+                                  </span>
+                                  {copiedKey === `split-serial-${s.id}` && (
+                                    <span className="inline-flex items-center justify-center bg-emerald-600 p-0.5 animate-fade-in shrink-0" style={{ borderRadius: '0px' }}>
+                                      <Check className="w-2.5 h-2.5 text-white" />
+                                    </span>
+                                  )}
+                                </div>
+                                <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-center ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
+                                  {s.status}
+                                </span>
+                                <span className="text-[8px] text-slate-400 font-bold uppercase truncate" style={{ fontFamily: 'Arial' }}>{m.modelo}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()
+            ) : (
+              /* STANDARD LIST VIEW for other modal types */
+              <>
+                {/* Date filter container */}
+                {renderDateRangeFilter()}
+
+                {/* Modal search bar */}
+                <div className="relative flex-shrink-0">
+                  <input
+                    type="text"
+                    value={modalSearch}
+                    onChange={e => setModalSearch(e.target.value)}
+                    placeholder="Filtrar por serial, remitente, cliente RIF..."
+                    className="w-full text-xs p-2.5 pl-8 bg-white border border-slate-350 text-slate-800 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                    style={{ borderRadius: '0px' }}
+                  />
+                  <Search size={14} className="absolute left-2.5 top-3.5" style={{ color: '#0d9488' }} />
+                </div>
+
+                <div className="overflow-y-auto pr-1 flex-1 font-arial text-[13px] flex flex-col gap-2">
+                  {modalList.length === 0 ? (
+                    <div className="text-center py-10 text-slate-450">Ningún registro coincide con el filtro del modal.</div>
+                  ) : (
+                    modalList.map(s => {
+                      const m = getTerminalModel(s.serial, modelosDB);
+                      return (
+                        <div key={s.id} className="py-3 px-4 hover:bg-slate-100/70 bg-slate-50/50 border border-slate-200/60 flex justify-between items-center gap-4 transition-all" style={{ borderRadius: '0px' }}>
+                          <div className="flex flex-col gap-1">
+                            <span 
+                              className="text-[14px] font-extrabold text-slate-900 select-all tracking-wider font-arial cursor-pointer hover:text-slate-600 transition-colors flex items-center gap-1"
+                              onClick={(e) => { e.stopPropagation(); handleCopyText(s.serial, `modal-serial-${s.id}`); }}
+                              title="Click para copiar"
+                            >
+                              {s.serial}
+                              {copiedKey === `modal-serial-${s.id}` && (
+                                <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 p-0.5 ml-1 transition-all animate-fade-in shrink-0" style={{ borderRadius: '0px' }}>
+                                  <Check className="w-3 h-3 text-white" />
+                                </span>
+                              )}
+                            </span>
+                            <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-600 font-medium font-arial">
+                              <span className="bg-slate-200/70 text-slate-800 px-1.5 py-0.5 font-bold uppercase" style={{ borderRadius: '0px' }}>{m.modelo}</span>
+                              {s.razonSocial && (
+                                <span className="text-slate-700">Cliente: <span className="font-bold">{s.razonSocial}</span></span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider block text-center ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
+                              {s.status}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-500 font-arial">Ingreso: {s.displayDate}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>,
         document.body
@@ -2047,12 +2167,13 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in font-arial"
+            className="bg-white border border-slate-200 w-full max-w-4xl p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in font-arial"
+            style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
-                <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Arial' }}>
                   <Users size={18} className="text-emerald-600" style={{ color: '#16a34a' }} />
                   Desglose de Entregas por Clientes
                 </h3>
@@ -2062,7 +2183,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
               </div>
               <button 
                 onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 rounded text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                style={{ borderRadius: '0px' }}
               >
                 Cerrar ✕
               </button>
@@ -2078,7 +2200,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 value={clientesSearchQuery}
                 onChange={e => setClientesSearchQuery(e.target.value)}
                 placeholder="BUSCAR CLIENTE / REMITENTE..."
-                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-900 uppercase placeholder-slate-400 font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                style={{ borderRadius: '0px' }}
               />
               <Search size={13} className="absolute left-2.5 top-3.5 text-slate-455" />
               {clientesSearchQuery && (
@@ -2092,7 +2215,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             </div>
 
             {/* Tabla Tabular de Desglose de Tiempos */}
-            <div className="overflow-auto border border-slate-200 rounded-xl flex-1 bg-slate-50">
+            <div className="overflow-auto border border-slate-200 flex-1 bg-slate-50" style={{ borderRadius: '0px' }}>
               <table className="w-full text-left border-collapse text-[13px] font-arial">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200 text-[11px] font-black tracking-widest text-slate-600 uppercase sticky top-0 z-10">
@@ -2122,7 +2245,17 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     }
 
                     return filteredUsers.map((u, idx) => (
-                      <tr key={u.name} className="hover:bg-slate-50 text-slate-800 transition-colors">
+                      <tr 
+                        key={u.name} 
+                        onClick={() => {
+                          setModalType('cliente');
+                          setModalSelectedName(u.name);
+                          setModalSearch('');
+                          setDetailSelectedDate(null);
+                          setShowAllClientesModal(false);
+                        }}
+                        className="hover:bg-slate-50 text-slate-800 transition-colors cursor-pointer"
+                      >
                         <td className="py-3.5 px-4 font-extrabold select-all tracking-wider text-slate-900 flex items-center gap-2 text-[13px] font-arial">
                           <span className="text-[10px] text-slate-400 font-sans">#{idx + 1}</span>
                           <span className="uppercase">{u.name}</span>
@@ -2152,12 +2285,13 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in font-arial"
+            className="bg-white border border-slate-200 w-full max-w-4xl p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in font-arial"
+            style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
-                <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Arial' }}>
                   <Users size={18} className="text-slate-900" style={{ color: '#0f172a' }} />
                   Desglose de Entregas por Usuarios Disglobal
                 </h3>
@@ -2167,7 +2301,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
               </div>
               <button 
                 onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 rounded text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                style={{ borderRadius: '0px' }}
               >
                 Cerrar ✕
               </button>
@@ -2183,13 +2318,14 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 value={colaboradoresSearchQuery}
                 onChange={e => setColaboradoresSearchQuery(e.target.value)}
                 placeholder="BUSCAR USUARIO DISGLOBAL / REMITENTE..."
-                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-900 uppercase placeholder-slate-400 font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                style={{ borderRadius: '0px' }}
               />
               <Search size={13} className="absolute left-2.5 top-3.5 text-slate-455" />
               {colaboradoresSearchQuery && (
                 <button
                   onClick={() => setColaboradoresSearchQuery('')}
-                  className="absolute right-3 top-2.5 text-[10px] font-bold text-slate-450 hover:text-red-655 cursor-pointer bg-transparent border-none"
+                  className="absolute right-3 top-2.5 text-[10px] font-bold text-slate-455 hover:text-red-655 cursor-pointer bg-transparent border-none"
                 >
                   ✕
                 </button>
@@ -2197,7 +2333,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             </div>
 
             {/* Tabla Tabular de Desglose de Tiempos */}
-            <div className="overflow-auto border border-slate-200 rounded-xl flex-1 bg-slate-50">
+            <div className="overflow-auto border border-slate-200 flex-1 bg-slate-50" style={{ borderRadius: '0px' }}>
               <table className="w-full text-left border-collapse text-[13px] font-arial">
                 <thead>
                   <tr className="bg-slate-100 border-b border-slate-200 text-[11px] font-black tracking-widest text-slate-655 uppercase sticky top-0 z-10">
@@ -2227,7 +2363,17 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     }
 
                     return filteredUsers.map((u, idx) => (
-                      <tr key={u.name} className="hover:bg-slate-50 text-slate-800 transition-colors">
+                      <tr 
+                        key={u.name} 
+                        onClick={() => {
+                          setModalType('colaborador');
+                          setModalSelectedName(u.name);
+                          setModalSearch('');
+                          setDetailSelectedDate(null);
+                          setShowAllColaboradoresModal(false);
+                        }}
+                        className="hover:bg-slate-50 text-slate-800 transition-colors cursor-pointer"
+                      >
                         <td className="py-3.5 px-4 font-extrabold select-all tracking-wider text-slate-900 flex items-center gap-2 text-[13px] font-arial">
                           <span className="text-[10px] text-slate-400 font-sans">#{idx + 1}</span>
                           <span className="uppercase">{u.name}</span>
