@@ -1,124 +1,60 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
-
 export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
-  if (!isSupabaseConfigured) {
-    try {
-      const response = await fetch(`/api/db?key=${encodeURIComponent(key)}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.value !== undefined && data.value !== null) {
-          return data.value as T;
-        }
-      }
-    } catch (e) {
-      console.warn(`Error al leer de la base de datos compartida local para [${key}], cayendo a localStorage:`, e);
-    }
-
-    // Respaldo y migración desde localStorage
-    const localRaw = localStorage.getItem(key);
-    if (localRaw !== null) {
-      try {
-        const parsed = JSON.parse(localRaw) as T;
-        // Intentar migrar al archivo compartido local_db.json
-        try {
-          await fetch('/api/db', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ key, value: parsed })
-          });
-        } catch (err) {
-          console.warn("No se pudo migrar el dato a la base de datos compartida:", err);
-        }
-        return parsed;
-      } catch (e) {
-        return defaultValue;
-      }
-    }
-    return defaultValue;
-  }
-
   try {
-    const { data, error } = await supabase
-      .from('app_data')
-      .select('value')
-      .eq('key', key)
-      .maybeSingle();
-
-    if (error) throw error;
-
-    if (data && data.value !== undefined) {
-      return data.value as T;
-    }
-
-    const localRaw = localStorage.getItem(key);
-    if (localRaw !== null) {
-      try {
-        const parsed = JSON.parse(localRaw) as T;
-        await setDBItem(key, parsed);
-        localStorage.removeItem(key);
-        return parsed;
-      } catch (e) {
-        return defaultValue;
+    const response = await fetch(`/api/db?key=${encodeURIComponent(key)}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.value !== undefined && data.value !== null) {
+        return data.value as T;
       }
     }
-
-    return defaultValue;
-  } catch (error) {
-    console.error(`Error al leer la clave [${key}] desde Supabase, usando localStorage como respaldo:`, error);
-    const localRaw = localStorage.getItem(key);
-    if (localRaw !== null) {
-      try {
-        return JSON.parse(localRaw) as T;
-      } catch (e) {
-        return defaultValue;
-      }
-    }
-    return defaultValue;
+  } catch (e) {
+    console.warn(`Error al leer de la base de datos compartida local para [${key}], cayendo a localStorage:`, e);
   }
+
+  // Respaldo y migración desde localStorage
+  const localRaw = localStorage.getItem(key);
+  if (localRaw !== null) {
+    try {
+      const parsed = JSON.parse(localRaw) as T;
+      // Intentar migrar al archivo compartido local_db.json
+      try {
+        await fetch('/api/db', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, value: parsed })
+        });
+      } catch (err) {
+        console.warn("No se pudo migrar el dato a la base de datos compartida:", err);
+      }
+      return parsed;
+    } catch (e) {
+      return defaultValue;
+    }
+  }
+  return defaultValue;
 }
 
 export async function setDBItem<T>(key: string, value: T): Promise<void> {
-  if (!isSupabaseConfigured) {
-    // Intentar escribir en la base de datos compartida local
-    try {
-      const response = await fetch('/api/db', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, value })
-      });
-      if (response.ok) {
-        // También guardar en localStorage local del navegador como respaldo
-        localStorage.setItem(key, JSON.stringify(value));
-        return;
-      }
-    } catch (e) {
-      console.warn("Error al guardar en la base de datos compartida local, respaldando solo en localStorage:", e);
-    }
-
-    try {
+  // Intentar escribir en la base de datos compartida local
+  try {
+    const response = await fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, value })
+    });
+    if (response.ok) {
+      // También guardar en localStorage local del navegador como respaldo
       localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-      console.error("Error crítico: No se pudo respaldar en localStorage", e);
+      return;
     }
-    return;
+  } catch (e) {
+    console.warn("Error al guardar en la base de datos compartida local, respaldando solo en localStorage:", e);
   }
 
   try {
-    const { error } = await supabase
-      .from('app_data')
-      .upsert(
-        { key: key, value: value, updated_at: new Date().toISOString() },
-        { onConflict: 'key' }
-      );
-
-    if (error) throw error;
-  } catch (error) {
-    console.error(`Error al guardar la clave [${key}] en Supabase, respaldando en localStorage:`, error);
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-    } catch (e) {
-      console.error("Error crítico: No se pudo respaldar en localStorage", e);
-    }
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.error("Error crítico: No se pudo respaldar en localStorage", e);
   }
 }
 
