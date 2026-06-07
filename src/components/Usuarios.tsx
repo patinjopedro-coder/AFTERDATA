@@ -246,7 +246,7 @@ export const Usuarios: React.FC<UsuariosProps> = ({
           onClick={() => { setActiveTab('usuarios'); setCurrentPage(1); }}
           className={`usuarios-tab-btn flex-1 py-2.5 text-xs font-extrabold uppercase rounded-lg transition-all cursor-pointer border-none ${
             activeTab === 'usuarios'
-              ? 'bg-[#0f172a] text-white-force shadow-sm font-black'
+              ? 'bg-[#2563eb] text-white-force shadow-sm font-black'
               : 'bg-transparent text-slate-500 hover:text-slate-750 hover:bg-slate-200/50'
           }`}
         >

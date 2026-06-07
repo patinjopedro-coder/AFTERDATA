@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { POSItem, POSStatus, ModelConfig, UserProfile } from '../types';
 import { getTerminalModel } from '../data';
-import { formatRif } from '../utils';
+import { formatRif, trackAndLogChanges } from '../utils';
 import { 
   FolderLock, Check, Trash2,
   ChevronLeft, ChevronRight,
@@ -56,11 +56,11 @@ export const Casillero: React.FC<CasilleroProps> = ({
     if (!editingItem) return;
     setSerials(prev => prev.map(s => {
       if (s.id !== editingItem.id) return s;
-      const updated = { ...s, ...editDraft };
+      const draft = { ...editDraft };
       if (editDraft.date && editDraft.date !== s.date) {
-        updated.displayDate = (editDraft.date as string).split('-').reverse().join('/');
+        draft.displayDate = (editDraft.date as string).split('-').reverse().join('/');
       }
-      return updated;
+      return trackAndLogChanges(s, draft);
     }));
     setEditingItem(null);
     setEditDraft({});
@@ -150,6 +150,30 @@ export const Casillero: React.FC<CasilleroProps> = ({
         </div>
       </div>
     );
+  };
+
+  const handleExportHistorico = () => {
+    const targets = serials.filter(s => s.isCasillero);
+
+    if (targets.length === 0) {
+      alert("No hay registros en el casillero para exportar.");
+      return;
+    }
+
+    let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID\n";
+    targets.forEach(s => {
+      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}"\n`;
+    });
+
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const d = new Date();
+    const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `historico_casillero_${localDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleImportMatriz = () => {
@@ -459,7 +483,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
     setSerials(prev => prev.map(s => {
       if (s.id === id) {
         const val = s[key];
-        return { ...s, [key]: !val };
+        return trackAndLogChanges(s, { [key]: !val } as any);
       }
       return s;
     }));
@@ -468,7 +492,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
   const handleUpdateTextVal = (id: number, key: keyof POSItem, text: string) => {
     setSerials(prev => prev.map(s => {
       if (s.id === id) {
-        return { ...s, [key]: text };
+        return trackAndLogChanges(s, { [key]: text });
       }
       return s;
     }));
@@ -496,6 +520,15 @@ export const Casillero: React.FC<CasilleroProps> = ({
         </div>
         
         <div className="flex items-center gap-4">
+          <button
+            onClick={handleExportHistorico}
+            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
+            title="Exportar Histórico de Casillero a CSV/Excel"
+          >
+            <FileSpreadsheet size={14} className="text-white" />
+            <span>EXPORTAR HISTORICO</span>
+          </button>
+
           <button
             onClick={handleImportMatriz}
             className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
@@ -574,6 +607,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                   const modelInfo = getTerminalModel(s.serial, modelosDB);
                   const isNew = s.date && (Math.floor((Date.now() - new Date(s.date).getTime()) / 86400000) <= 7);
                   const isRepetido = serials.filter(o => o.serial === s.serial).length > 1;
+                  const isRecuperado = s.observaciones === 'RECUPERACION';
 
                   const serialColorClass = 'text-slate-800';
 
@@ -629,7 +663,20 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* GUIA */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Guía:</span>
-                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase select-all">{s.source || 'S/N'}</span>
+                            <div className="flex items-center gap-1">
+                              <span 
+                                className="text-[11px] font-arial cursor-pointer hover:text-slate-900 select-all font-bold text-slate-800 uppercase"
+                                onClick={() => handleCopyText(s.source || 'S/N', `guia-${s.id}`)}
+                                title="Click para copiar guía"
+                              >
+                                {s.source || 'S/N'}
+                              </span>
+                              {copiedKey === `guia-${s.id}` && (
+                                <span className="inline-flex items-center justify-center w-3.5 h-3.5 bg-green-500 rounded-none animate-fade-in">
+                                  <Check size={8} className="text-white" style={{ color: '#fff' }} />
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           {/* MODELO DE HARDWARE */}
@@ -690,40 +737,44 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       <td className="py-4 px-3 text-xs w-44">
                         <div className="flex flex-col gap-1.5 pr-2">
                           <button
+                            disabled={isRecuperado}
                             onClick={() => toggleBooleanRef(s.id, 'forro')}
                             className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
                               s.forro ? 'active' : ''
-                            }`}
+                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
                           >
                             <span>FORRO</span>
                             {s.forro && <Check size={12} />}
                           </button>
                           
                           <button
+                            disabled={isRecuperado}
                             onClick={() => toggleBooleanRef(s.id, 'bateria')}
                             className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
                               s.bateria ? 'active' : ''
-                            }`}
+                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
                           >
                             <span>BATERÍA</span>
                             {s.bateria && <Check size={12} />}
                           </button>
 
                           <button
+                            disabled={isRecuperado}
                             onClick={() => toggleBooleanRef(s.id, 'cargador')}
                             className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
                               s.cargador ? 'active' : ''
-                            }`}
+                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
                           >
                             <span>CARGADOR</span>
                             {s.cargador && <Check size={12} />}
                           </button>
 
                           <button
+                            disabled={isRecuperado}
                             onClick={() => toggleBooleanRef(s.id, 'caja')}
                             className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
                               s.caja ? 'active' : ''
-                            }`}
+                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
                           >
                             <span>CAJA</span>
                             {s.caja && <Check size={12} />}
@@ -731,9 +782,10 @@ export const Casillero: React.FC<CasilleroProps> = ({
 
                           {/* SIM CARD CHIP TOGGLE */}
                           <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-1.5">
-                            <label className="flex items-center gap-2 text-[10px] select-none cursor-pointer text-slate-500 font-bold uppercase">
+                            <label className={`flex items-center gap-2 text-[10px] select-none cursor-pointer text-slate-500 font-bold uppercase ${isRecuperado ? 'opacity-50 cursor-not-allowed' : ''}`}>
                               <input
                                 type="checkbox"
+                                disabled={isRecuperado}
                                 checked={!!s.sim}
                                 onChange={e => {
                                   setSerials(prev => prev.map(o => {
@@ -750,10 +802,13 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             {s.sim && (
                               <input
                                 type="text"
+                                disabled={isRecuperado}
                                 value={s.simNumber || ''}
                                 onChange={e => handleUpdateTextVal(s.id, 'simNumber', e.target.value.toUpperCase())}
                                 placeholder=""
-                                className="w-full text-[10px] font-arial p-1 bg-slate-100 border border-transparent rounded text-amber-600 uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input"
+                                className={`w-full text-[10px] font-arial p-1 bg-slate-100 border border-transparent rounded text-amber-600 uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
+                                  isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350' : ''
+                                }`}
                               />
                             )}
                           </div>
@@ -762,12 +817,13 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           <div className="mt-1 border-t border-slate-100 pt-2">
                             <button
                               type="button"
+                              disabled={isRecuperado}
                               onClick={() => toggleBooleanRef(s.id, 'entregadoTecnico')}
                               className={`w-full py-1.5 px-3 rounded-lg text-[10px] font-bold uppercase transition-colors flex items-center justify-center gap-1.5 mt-1 cursor-pointer border ${
                                 s.entregadoTecnico 
                                   ? 'bg-slate-400 hover:bg-slate-500 border-slate-400 text-white shadow-sm custom-entregado-btn' 
                                   : 'bg-slate-800 hover:bg-slate-700 border-slate-800 text-white shadow-sm'
-                              }`}
+                              } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
                             >
                               {s.entregadoTecnico && <Check size={12} className="text-white" />}
                               <span>{s.entregadoTecnico ? 'ENTREGADO' : 'ENTREGAR'}</span>
@@ -780,15 +836,45 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       <td className="py-4 px-3 text-xs w-72">
                         <div className="flex flex-col gap-1 pr-2">
                           <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Nota de reparación o estado físico</label>
-                          <textarea
+                          <select
                             disabled={!!s.entregadoTecnico}
                             value={s.observaciones || ''}
-                            onChange={e => handleUpdateTextVal(s.id, 'observaciones', e.target.value)}
-                            placeholder=""
-                            className={`w-full min-h-[90px] text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
+                            onChange={e => {
+                              const val = e.target.value;
+                              setSerials(prev => prev.map(o => {
+                                if (o.id === s.id) {
+                                  let updated = { ...o, observaciones: val };
+                                  if (val === 'RECUPERACION') {
+                                    updated.status = 'RECUPERADO';
+                                    updated.esSustitucion = false;
+                                  } else if (val === 'SUSTITUCION') {
+                                    updated.esSustitucion = true;
+                                    if (updated.status === 'RECUPERADO') {
+                                      updated.status = 'PENDIENTE';
+                                    }
+                                  } else {
+                                    if (updated.status === 'RECUPERADO') {
+                                      updated.status = 'PENDIENTE';
+                                    }
+                                  }
+                                  return updated;
+                                }
+                                return o;
+                              }));
+                            }}
+                            className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
                               s.entregadoTecnico ? 'bg-slate-50 border-transparent text-slate-400 cursor-not-allowed select-none' : ''
                             }`}
-                          />
+                          >
+                            <option value="">NINGUNA</option>
+                            <option value="RECUPERACION">RECUPERACIÓN</option>
+                            <option value="SUSTITUCION">SUSTITUCIÓN</option>
+                          </select>
+                          {isRecuperado && (
+                            <span className="text-[10px] text-emerald-700 font-extrabold mt-1.5 uppercase tracking-wider block">
+                              SE RECUPERÓ {new Date().toLocaleDateString('es-ES')}
+                            </span>
+                          )}
                           {s.entregadoTecnico && (
                             <span className="text-[9px] text-black font-extrabold mt-1">
                               ASIGNACION CONFIRMADA
@@ -798,12 +884,12 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Responsable</label>
                             <input
                               type="text"
-                              disabled={!!s.entregadoTecnico}
+                              disabled={isRecuperado || !!s.entregadoTecnico}
                               value={s.responsable || ''}
                               onChange={e => handleUpdateTextVal(s.id, 'responsable', e.target.value.toUpperCase())}
                               placeholder=""
                               className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 font-arial uppercase focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
-                                s.entregadoTecnico ? 'bg-slate-50 border-transparent text-slate-400 cursor-not-allowed select-none' : ''
+                                (isRecuperado || s.entregadoTecnico) ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
                               }`}
                             />
                           </div>
@@ -813,9 +899,10 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       {/* ADAPTACIÓN DE SUSTITUCIONES */}
                       <td className="py-4 px-3 text-xs w-52">
                         <div className="flex flex-col gap-1.5 pr-2">
-                          <label className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-wider select-none cursor-pointer">
+                          <label className={`flex items-center gap-2 text-[10px] uppercase font-bold tracking-wider select-none cursor-pointer ${isRecuperado ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <input
                               type="checkbox"
+                              disabled={isRecuperado}
                               checked={!!s.esSustitucion}
                               onChange={e => {
                                 setSerials(prev => prev.map(o => {
@@ -841,19 +928,25 @@ export const Casillero: React.FC<CasilleroProps> = ({
                                 <label className="text-[9px] text-slate-500 block uppercase">Serial Sustituto</label>
                                 <input
                                   type="text"
+                                  disabled={isRecuperado}
                                   value={s.serialSustituto || ''}
                                   onChange={e => handleUpdateTextVal(s.id, 'serialSustituto', e.target.value.toUpperCase())}
                                   placeholder=""
-                                  className="w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input"
+                                  className={`w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
+                                    isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                                  }`}
                                 />
                               </div>
                               <div>
                                 <label className="text-[9px] text-slate-500 block uppercase font-bold text-left">Fecha Salida</label>
                                 <input
                                   type="date"
+                                  disabled={isRecuperado}
                                   value={s.fechaSalida || ''}
                                   onChange={e => handleUpdateTextVal(s.id, 'fechaSalida', e.target.value)}
-                                  className="w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input"
+                                  className={`w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
+                                    isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                                  }`}
                                 />
                               </div>
                             </div>
@@ -876,11 +969,11 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Fecha Salida Cliente</label>
                             <input
                               type="date"
-                              disabled={!!s.fechaConfirmada}
+                              disabled={isRecuperado || !!s.fechaConfirmada}
                               value={s.fechaSalidaCliente || ''}
                               onChange={e => handleUpdateTextVal(s.id, 'fechaSalidaCliente', e.target.value)}
                               className={`w-full text-xs font-arial font-semibold p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
-                                s.fechaConfirmada ? 'bg-slate-50 text-slate-400 border-transparent cursor-not-allowed font-medium' : ''
+                                (isRecuperado || s.fechaConfirmada) ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
                               }`}
                             />
                           </div>
@@ -889,10 +982,13 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Guía Salida (Cliente)</label>
                             <input
                               type="text"
+                              disabled={isRecuperado}
                               value={s.guiaSalidaCliente || ''}
                               onChange={e => handleUpdateTextVal(s.id, 'guiaSalidaCliente', e.target.value.toUpperCase())}
                               placeholder=""
-                              className="w-full text-xs font-arial font-semibold p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded-lg uppercase text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input"
+                              className={`w-full text-xs font-arial font-semibold p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded-lg uppercase text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
+                                isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                              }`}
                             />
                           </div>
 
@@ -900,17 +996,21 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">DESTINO</label>
                             <input
                               type="text"
+                              disabled={isRecuperado}
                               value={s.destinoSalida || s.destino || ''}
                               onChange={e => handleUpdateTextVal(s.id, 'destinoSalida', e.target.value.toUpperCase())}
                               placeholder=""
-                              className="w-full text-xs font-arial font-semibold p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded-lg uppercase text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input"
+                              className={`w-full text-xs font-arial font-semibold p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded-lg uppercase text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
+                                isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                              }`}
                             />
                           </div>
 
                           <div className="mt-1 border-t border-slate-100 pt-1.5 flex items-center justify-between">
-                            <label className="flex items-center gap-1.5 text-[10px] select-none cursor-pointer font-bold text-slate-500">
+                            <label className={`flex items-center gap-1.5 text-[10px] select-none cursor-pointer font-bold text-slate-500 ${isRecuperado ? 'opacity-50 cursor-not-allowed' : ''}`}>
                               <input
                                 type="checkbox"
+                                disabled={isRecuperado}
                                 checked={!!s.fechaConfirmada}
                                 onChange={e => {
                                   setSerials(prev => prev.map(o => {

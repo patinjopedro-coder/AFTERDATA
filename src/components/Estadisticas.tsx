@@ -4,62 +4,9 @@ import { POSItem, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
 import { 
   BarChart3, Calendar, FileDown, Search, 
-  Layers, Cpu, Smartphone, CardSim, Users, Compass, Check
+  Layers, Cpu, Smartphone, CardSim, Users, Compass, Check,
+  Lock, Unlock, Send
 } from 'lucide-react';
-
-/* ── Custom POS icon with closed lock (Entregados) ── */
-const PosLocked: React.FC<{ size?: number; color?: string }> = ({ size = 20, color = '#0f766e' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* POS terminal body */}
-    <rect x="2" y="4" width="14" height="14" rx="2" stroke={color} strokeWidth="1.6" fill="none" />
-    {/* Screen */}
-    <rect x="4" y="6" width="10" height="5" rx="1" fill={color} opacity="0.25" />
-    {/* Keypad dots */}
-    <circle cx="5.5" cy="13" r="0.7" fill={color} />
-    <circle cx="9" cy="13" r="0.7" fill={color} />
-    <circle cx="12.5" cy="13" r="0.7" fill={color} />
-    <circle cx="5.5" cy="16" r="0.7" fill={color} />
-    <circle cx="9" cy="16" r="0.7" fill={color} />
-    <circle cx="12.5" cy="16" r="0.7" fill={color} />
-    {/* Closed lock – overlapping bottom-right */}
-    <g transform="translate(12, 12)">
-      {/* Lock shackle (closed arc) */}
-      <path d="M2.5 4.5 V3 A2.5 2.5 0 0 0 -2.5 3 V4.5" stroke={color} strokeWidth="1.4" fill="none" strokeLinecap="round" />
-      {/* Lock body */}
-      <rect x="-3.5" y="4.5" width="7" height="5.5" rx="1.2" fill={color} />
-      {/* Keyhole */}
-      <circle cx="0" cy="7.2" r="1" fill="white" />
-      <rect x="-0.5" y="8" width="1" height="1.2" fill="white" />
-    </g>
-  </svg>
-);
-
-/* ── Custom POS icon with open lock (Disponibles) ── */
-const PosUnlocked: React.FC<{ size?: number; color?: string }> = ({ size = 20, color = '#0f766e' }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* POS terminal body */}
-    <rect x="2" y="4" width="14" height="14" rx="2" stroke={color} strokeWidth="1.6" fill="none" />
-    {/* Screen */}
-    <rect x="4" y="6" width="10" height="5" rx="1" fill={color} opacity="0.25" />
-    {/* Keypad dots */}
-    <circle cx="5.5" cy="13" r="0.7" fill={color} />
-    <circle cx="9" cy="13" r="0.7" fill={color} />
-    <circle cx="12.5" cy="13" r="0.7" fill={color} />
-    <circle cx="5.5" cy="16" r="0.7" fill={color} />
-    <circle cx="9" cy="16" r="0.7" fill={color} />
-    <circle cx="12.5" cy="16" r="0.7" fill={color} />
-    {/* Open lock – overlapping bottom-right, shackle swung open to the right */}
-    <g transform="translate(12, 12)">
-      {/* Open shackle – right side open/raised */}
-      <path d="M-2.5 4.5 V3 A2.5 2.5 0 0 1 2.5 3 V1" stroke={color} strokeWidth="1.4" fill="none" strokeLinecap="round" />
-      {/* Lock body */}
-      <rect x="-3.5" y="4.5" width="7" height="5.5" rx="1.2" fill={color} />
-      {/* Keyhole */}
-      <circle cx="0" cy="7.2" r="1" fill="white" />
-      <rect x="-0.5" y="8" width="1" height="1.2" fill="white" />
-    </g>
-  </svg>
-);
 
 const DEPARTMENT_COLORS = [
   '#0d9488', // Teal
@@ -83,12 +30,20 @@ interface EstadisticasProps {
 }
 
 export const Estadisticas: React.FC<EstadisticasProps> = ({
-  serials,
+  serials: rawSerials,
   modelosDB,
   onUserClick,
   usersProfiles,
   simCardBatches = []
 }) => {
+  const serials = useMemo(() => {
+    return rawSerials.map(s => {
+      if (s.isCasillero && s.status === 'RECUPERADO') {
+        return { ...s, isCasillero: false };
+      }
+      return s;
+    });
+  }, [rawSerials]);
   const [modalType, setModalType] = useState<'total' | 'disponibles' | 'entregados' | 'android' | 'linux' | 'manual_cruce' | 'zoom' | 'cliente' | 'colaborador' | 'modeloFisico' | 'modeloNegocio' | 'departamento' | null>(null);
   const [modalSelectedName, setModalSelectedName] = useState<string | null>(null);
   const [modalDateDesde, setModalDateDesde] = useState('');
@@ -124,6 +79,13 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
   const [colaboradoresSearchQuery, setColaboradoresSearchQuery] = useState('');
   const [detailSelectedDate, setDetailSelectedDate] = useState<string | null>(null);
 
+  const [activeStatsTab, setActiveStatsTab] = useState<'total' | 'disponibles' | 'entregados' | 'android' | 'linux' | 'simcards'>('total');
+  const [statsSearch, setStatsSearch] = useState('');
+  const [statsDateDesde, setStatsDateDesde] = useState('');
+  const [statsDateHasta, setStatsDateHasta] = useState('');
+  const [statsCurrentPage, setStatsCurrentPage] = useState(1);
+  const [modalCurrentPage, setModalCurrentPage] = useState(1);
+
   const closeAllModals = () => {
     setModalType(null);
     setModalSelectedName(null);
@@ -136,10 +98,11 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
     setModalDateDesde('');
     setModalDateHasta('');
     setDetailSelectedDate(null);
+    setModalCurrentPage(1);
   };
 
   const renderDateRangeFilter = () => (
-    <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs font-arial flex-shrink-0">
+    <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-3 border border-slate-200 text-xs font-arial flex-shrink-0" style={{ borderRadius: '0px' }}>
       <div className="flex items-center gap-1.5 text-slate-700 font-bold shrink-0">
         <Calendar size={14} className="text-teal-600" />
         <span>Filtrar por Fechas:</span>
@@ -150,7 +113,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           type="date"
           value={modalDateDesde}
           onChange={e => setModalDateDesde(e.target.value)}
-          className="p-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-slate-500 font-bold text-xs"
+          className="p-1.5 bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-slate-500 font-bold text-xs"
+          style={{ borderRadius: '0px' }}
         />
       </div>
       <div className="flex items-center gap-2">
@@ -159,13 +123,15 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           type="date"
           value={modalDateHasta}
           onChange={e => setModalDateHasta(e.target.value)}
-          className="p-1.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:outline-none focus:border-slate-500 font-bold text-xs"
+          className="p-1.5 bg-white border border-slate-300 text-slate-800 focus:outline-none focus:border-slate-500 font-bold text-xs"
+          style={{ borderRadius: '0px' }}
         />
       </div>
       {(modalDateDesde || modalDateHasta) && (
         <button
           onClick={() => { setModalDateDesde(''); setModalDateHasta(''); }}
-          className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold rounded-lg border border-red-200 cursor-pointer text-[10px] uppercase font-mono"
+          className="px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold border border-red-200 cursor-pointer text-[10px] uppercase font-mono"
+          style={{ borderRadius: '0px' }}
         >
           Limpiar
         </button>
@@ -349,14 +315,15 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       return;
     }
 
-    let csv = "sep=,\nSERIAL,MODELO,SO,ESTADO,REMITENTE,RIF,RAZON_SOCIAL,TICKET,FECHA\n";
-    items.forEach(s => {
+    const header = "sep=;\nMODELO;SERIAL;STATUS\n";
+    const rows = items.map(s => {
       const m = getTerminalModel(s.serial, modelosDB);
-      csv += `"${s.serial}","${m.modelo}","${m.so}","${s.status}","${s.remitente}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.date}"\n`;
+      return `"${m.modelo || 'DESCONOCIDO'}";"${String(s.serial).replace(/"/g, '""')}";"${String(s.status || '').replace(/"/g, '""')}"`;
     });
+    const csvContent = header + rows.join("\n");
 
     const filterSuffix = exportCasilleroFilter === 'no-casillero' ? '_sin_casillero' : exportCasilleroFilter === 'only-casillero' ? '_solo_casillero' : '';
-    downloadCSV(csv, `informe_${statusGroup}_${period}_${hoyStr}${filterSuffix}.csv`);
+    downloadCSV(csvContent, `informe_${statusGroup}_${period}_${hoyStr}${filterSuffix}.csv`);
     alert(`Exportado ${items.length} registros correspondientes al período.`);
   };
 
@@ -704,6 +671,68 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
   const allSimsList = annulledSims;
   const totalSimCards = allSimsList.length;
 
+  const getStatsFilteredList = () => {
+    if (activeStatsTab === 'simcards') {
+      const query = statsSearch.toUpperCase().trim();
+      let filteredSims = allSimsList.filter(s => 
+        s.serial.toUpperCase().includes(query) || 
+        s.source.toUpperCase().includes(query)
+      );
+      if (statsDateDesde) {
+        filteredSims = filteredSims.filter(s => s.date >= statsDateDesde);
+      }
+      if (statsDateHasta) {
+        filteredSims = filteredSims.filter(s => s.date <= statsDateHasta);
+      }
+      return filteredSims;
+    }
+
+    let list = serials;
+    if (exportCasilleroFilter === 'no-casillero') {
+      list = list.filter(s => !s.isCasillero);
+    } else if (exportCasilleroFilter === 'only-casillero') {
+      list = list.filter(s => s.isCasillero);
+    }
+
+    if (activeStatsTab === 'disponibles') {
+      list = list.filter(s => ['DISPONIBLE', 'CANCELADO', 'RECUPERADO', 'N#A'].includes((s.status || '').toUpperCase().trim()));
+    } else if (activeStatsTab === 'entregados') {
+      list = list.filter(s => ['ENTREGADO', 'ACTIVO', 'SUSPENDIDO', 'PENDIENTE'].includes((s.status || '').toUpperCase().trim()));
+    } else if (activeStatsTab === 'android') {
+      list = list.filter(s => {
+        const modelInfo = getTerminalModel(s.serial, modelosDB);
+        return modelInfo.so === 'ANDROID';
+      });
+    } else if (activeStatsTab === 'linux') {
+      list = list.filter(s => {
+        const modelInfo = getTerminalModel(s.serial, modelosDB);
+        return modelInfo.so === 'LINUX';
+      });
+    }
+
+    if (statsDateDesde) {
+      list = list.filter(s => s.date >= statsDateDesde);
+    }
+    if (statsDateHasta) {
+      list = list.filter(s => s.date <= statsDateHasta);
+    }
+
+    if (statsSearch) {
+      const lowS = statsSearch.toLowerCase();
+      list = list.filter(o => 
+        o.serial.toLowerCase().includes(lowS) || 
+        o.remitente.toLowerCase().includes(lowS) ||
+        (o.rif && o.rif.toLowerCase().includes(lowS)) ||
+        (o.razonSocial && o.razonSocial.toLowerCase().includes(lowS))
+      );
+    }
+    return list.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
+  const statsList = useMemo(() => {
+    return getStatsFilteredList();
+  }, [serials, activeStatsTab, statsSearch, statsDateDesde, statsDateHasta, exportCasilleroFilter, modelosDB]);
+
   // Modal dataset filter
   const getModalItems = () => {
     let list = serials;
@@ -784,26 +813,43 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       alert("No hay datos para exportar.");
       return;
     }
-    const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;SIN_COSTO;FECHA_INGRESO";
+    const { headers } = getPOSItemFields(modalList[0], modalType || '');
+    const header = "sep=;\n" + headers.join(";") + "\n";
     const rows = modalList.map(s => {
-      const m = getTerminalModel(s.serial, modelosDB);
-      return [
-        s.serial,
-        m.modelo,
-        m.so,
-        s.status || 'SIN ESTATUS',
-        s.remitente || '',
-        s.razonSocial || '',
-        s.rif || '',
-        s.ticket || '',
-        s.source || '',
-        s.destino || '',
-        s.sinCosto ? 'TRUE' : 'FALSE',
-        s.displayDate || s.date || ''
-      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
+      const { values } = getPOSItemFields(s, modalType || '');
+      return values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
     });
-    const csvContent = [header, ...rows].join("\n");
+    const csvContent = header + rows.join("\n");
     downloadCSV(csvContent, `Exportacion_${modalType}_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
+  const handleExportSims = () => {
+    const query = simsSearchQuery.toUpperCase().trim();
+    let filteredSims = allSimsList.filter(s => 
+      s.serial.toUpperCase().includes(query) || 
+      s.source.toUpperCase().includes(query)
+    );
+
+    if (modalDateDesde) {
+      filteredSims = filteredSims.filter(s => s.date >= modalDateDesde);
+    }
+    if (modalDateHasta) {
+      filteredSims = filteredSims.filter(s => s.date <= modalDateHasta);
+    }
+
+    if (filteredSims.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const header = "sep=;\nSERIAL SIM;LOTE;ESTADO\n";
+    const rows = filteredSims.map(s => [
+      s.serial || '',
+      s.source || '',
+      s.status || ''
+    ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";"));
+    const csvContent = header + rows.join("\n");
+    downloadCSV(csvContent, `Exportacion_SIM_Cards_${new Date().toISOString().split('T')[0]}.csv`);
   };
 
   // Unified General list at the bottom
@@ -923,203 +969,650 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
   const offsetLinux = -strokeAndroid;
   const offsetOther = -(strokeAndroid + strokeLinux);
 
+  // Delivery by Area calculations
+  const areaDeliveryStats = useMemo(() => {
+    let atc = 0;
+    let ventas = 0;
+    let postventa = 0;
+    let zoom = 0;
+    let otros = 0;
+
+    serials.forEach(s => {
+      // Filter by casillero option
+      if (exportCasilleroFilter === 'no-casillero' && s.isCasillero) return;
+      if (exportCasilleroFilter === 'only-casillero' && !s.isCasillero) return;
+
+      const isZoom = !!(s.rif || s.razonSocial);
+      if (isZoom) {
+        zoom++;
+      } else if (s.remitente) {
+        const remKey = s.remitente.toUpperCase().trim();
+        const p = usersProfiles[remKey];
+        if (p && p.isUsuario && p.area) {
+          const areaUp = p.area.toUpperCase().trim();
+          if (areaUp === 'ATC') atc++;
+          else if (areaUp === 'VENTAS') ventas++;
+          else if (areaUp === 'POSTVENTA') postventa++;
+          else otros++;
+        } else {
+          otros++;
+        }
+      } else {
+        otros++;
+      }
+    });
+
+    return { atc, ventas, postventa, zoom, otros };
+  }, [serials, usersProfiles, exportCasilleroFilter]);
+
+  const totalAreaCount = areaDeliveryStats.atc + areaDeliveryStats.ventas + areaDeliveryStats.postventa + areaDeliveryStats.zoom;
+  const totalAreaDoughnut = Math.max(totalAreaCount, 1);
+  const pATC = areaDeliveryStats.atc / totalAreaDoughnut;
+  const pVentas = areaDeliveryStats.ventas / totalAreaDoughnut;
+  const pPostventa = areaDeliveryStats.postventa / totalAreaDoughnut;
+  const pZoom = areaDeliveryStats.zoom / totalAreaDoughnut;
+
+  const strokeATC = Math.max(pATC * circ, 0);
+  const strokeVentas = Math.max(pVentas * circ, 0);
+  const strokePostventa = Math.max(pPostventa * circ, 0);
+  const strokeZoom = Math.max(pZoom * circ, 0);
+
+  const offsetATC = 0;
+  const offsetVentas = -strokeATC;
+  const offsetPostventa = -(strokeATC + strokeVentas);
+  const offsetZoom = -(strokeATC + strokeVentas + strokePostventa);
+
+  const totalStatusDoughnut = Math.max(totalCount, 1);
+  const pDisponibles = Math.max(disponiblesCount, 0) / totalStatusDoughnut;
+  const pEntregados = Math.max(entregadosCount, 0) / totalStatusDoughnut;
+  const pOtrosStatus = Math.max(totalCount - disponiblesCount - entregadosCount, 0) / totalStatusDoughnut;
+
+  const strokeDisponibles = Math.max(pDisponibles * circ, 0);
+  const strokeEntregados = Math.max(pEntregados * circ, 0);
+  const strokeOtrosStatus = Math.max(pOtrosStatus * circ, 0);
+
+  const offsetDisponibles = 0;
+  const offsetEntregados = -strokeDisponibles;
+  const offsetOtrosStatus = -(strokeDisponibles + strokeEntregados);
+
+  const renderPOSListTable = (items: any[]) => {
+    return (
+      <div className="overflow-x-auto border border-slate-200" style={{ borderRadius: '0px' }}>
+        <table className="w-full text-left min-w-[1100px] border-collapse text-[11px] font-arial bg-white">
+          <thead>
+            <tr className="bg-slate-100 border-b border-slate-250 text-[9px] text-slate-505 font-bold uppercase tracking-wider">
+              <th className="py-2.5 px-3 w-24 text-center">Fecha Entrada</th>
+              <th className="py-2.5 px-3 w-80">Equipo / Ticket / Cliente</th>
+              <th className="py-2.5 px-3 w-40">Accesorios</th>
+              <th className="py-2.5 px-3 w-60">Observaciones</th>
+              <th className="py-2.5 px-3 w-44">Sustitución</th>
+              <th className="py-2.5 px-3 w-60">Liberación / Despacho</th>
+              <th className="py-2.5 px-3 w-24 text-center">Estado</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-150">
+            {items.map(s => {
+              const m = getTerminalModel(s.serial, modelosDB);
+              return (
+                <tr key={s.id} className="hover:bg-slate-50 transition-colors align-top">
+                  <td className="py-3 px-2.5 text-center whitespace-nowrap text-slate-700">
+                    <div>{s.displayDate || s.date}</div>
+                    {s.addedFromCruce && (
+                      <div className="mt-1">
+                        <span className="text-[8px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5" style={{ borderRadius: '0px' }}>
+                          CRUCE
+                        </span>
+                      </div>
+                    )}
+                  </td>
+                  <td className="py-3 px-3">
+                    <div className="flex flex-col divide-y divide-slate-100 border border-slate-200 bg-white" style={{ borderRadius: '0px' }}>
+                      <div className="p-1.5 flex items-center justify-between">
+                        <span className="text-[9px] text-slate-450 font-bold uppercase">Serial:</span>
+                        <div className="flex items-center gap-1">
+                          <span 
+                            className="font-mono font-bold text-slate-905 cursor-pointer select-all hover:text-slate-600"
+                            onClick={() => handleCopyText(s.serial, `serial-${s.id}`)}
+                          >
+                            {s.serial}
+                          </span>
+                          {copiedKey === `serial-${s.id}` && (
+                            <span className="inline-flex items-center justify-center w-3 h-3 bg-green-500 rounded-none">
+                              <Check size={8} className="text-white" />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="p-1.5 flex items-center justify-between">
+                        <span className="text-[9px] text-slate-450 font-bold uppercase">Guía:</span>
+                        <span className="font-bold text-slate-800 uppercase">{s.source || 'S/N'}</span>
+                      </div>
+                      <div className="p-1.5 flex items-center justify-between">
+                        <span className="text-[9px] text-slate-450 font-bold uppercase">Equipo:</span>
+                        <span className="font-bold text-slate-805 uppercase">{m.so} - {m.modelo}</span>
+                      </div>
+                      {s.modeloNegocio && (
+                        <div className="p-1.5 flex items-center justify-between">
+                          <span className="text-[9px] text-slate-450 font-bold uppercase">Mod. Negocio:</span>
+                          <span className="font-bold text-slate-800 uppercase">{s.modeloNegocio}</span>
+                        </div>
+                      )}
+                      <div className="p-1.5 flex items-center justify-between">
+                        <span className="text-[9px] text-slate-450 font-bold uppercase">Cliente:</span>
+                        <span className="font-bold text-slate-800 uppercase truncate max-w-[130px]" title={s.razonSocial}>{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
+                      </div>
+                      {s.rif && (
+                        <div className="p-1.5 flex items-center justify-between">
+                          <span className="text-[9px] text-slate-450 font-bold uppercase">Rif:</span>
+                          <span className="font-bold text-slate-800 uppercase select-all">{s.rif}</span>
+                        </div>
+                      )}
+                      {s.ticket && (
+                        <div className="p-1.5 flex items-center justify-between">
+                          <span className="text-[9px] text-slate-450 font-bold uppercase">Ticket:</span>
+                          <span className="font-bold text-slate-800 uppercase select-all">{s.ticket}</span>
+                        </div>
+                      )}
+                      {s.banco && (
+                        <div className="p-1.5 flex items-center justify-between">
+                          <span className="text-[9px] text-slate-455 font-bold uppercase">Banco:</span>
+                          <span className="font-bold text-slate-800 uppercase select-all">{s.banco}</span>
+                        </div>
+                      )}
+                      {(s.bsf || s.usdt) && (
+                        <div className="p-1.5 flex items-center justify-between">
+                          <span className="text-[9px] text-slate-455 font-bold uppercase">Monto:</span>
+                          <span className="font-bold text-slate-850 uppercase text-[10px]">
+                            {s.bsf ? `${s.bsf} BSF` : ''} {s.bsf && s.usdt ? '/' : ''} {s.usdt ? `${s.usdt} USDT` : ''}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-2.5">
+                    <div className="flex flex-col gap-1">
+                      {[
+                        { label: 'FORRO', val: s.forro },
+                        { label: 'BATERÍA', val: s.bateria },
+                        { label: 'CARGADOR', val: s.cargador },
+                        { label: 'CAJA', val: s.caja }
+                      ].map(acc => (
+                        <div 
+                          key={acc.label}
+                          className={`flex items-center justify-between text-[9px] font-bold px-2 py-0.5 border ${
+                            acc.val 
+                              ? 'bg-slate-900 border-slate-900 text-white' 
+                              : 'bg-slate-50 border-slate-200 text-slate-400'
+                          }`}
+                          style={{ borderRadius: '0px' }}
+                        >
+                          <span>{acc.label}</span>
+                          {acc.val && <Check size={10} />}
+                        </div>
+                      ))}
+                      {s.sim && (
+                        <div className="mt-1.5 pt-1.5 border-t border-slate-100 flex flex-col gap-0.5">
+                          <span className="text-[8px] text-slate-455 font-bold uppercase">SIM INCORPORADO</span>
+                          {s.simNumber && (
+                            <span className="font-mono text-[9px] bg-amber-50 text-amber-805 border border-amber-200 px-1 font-bold block text-center" style={{ borderRadius: '0px' }}>
+                              {s.simNumber}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-2.5">
+                    <div className="flex flex-col gap-2">
+                      <div>
+                        <span className="text-[8px] text-slate-400 font-bold uppercase block mb-0.5">Observación / Estado Físico:</span>
+                        <div className="p-1.5 bg-slate-50 border border-slate-200 text-slate-800 font-bold uppercase" style={{ borderRadius: '0px', minHeight: '28px' }}>
+                          {s.observaciones || 'NINGUNA'}
+                        </div>
+                      </div>
+                      {s.responsable && (
+                        <div>
+                          <span className="text-[8px] text-slate-400 font-bold uppercase block mb-0.5">Responsable:</span>
+                          <div className="p-1 bg-slate-50 border border-slate-200 text-slate-700 font-bold uppercase" style={{ borderRadius: '0px' }}>
+                            {s.responsable}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-2.5">
+                    {s.esSustitucion ? (
+                      <div className="flex flex-col gap-1 border border-blue-200 bg-blue-50/50 p-2" style={{ borderRadius: '0px' }}>
+                        <span className="text-[8px] text-blue-700 font-black uppercase">SUSTITUCIÓN ACTIVA</span>
+                        {s.serialSustituto && (
+                          <div>
+                            <span className="text-[8px] text-slate-400 font-bold uppercase">Serial Sustituto:</span>
+                            <span className="font-mono font-bold text-slate-850 block select-all">{s.serialSustituto}</span>
+                          </div>
+                        )}
+                        {s.fechaSalida && (
+                          <div>
+                            <span className="text-[8px] text-slate-400 font-bold uppercase">Fecha Salida:</span>
+                            <span className="font-bold text-slate-800 block">{s.fechaSalida}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">SIN SUSTITUCIÓN</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-2.5">
+                    {(s.fechaSalidaCliente || s.guiaSalidaCliente || s.destinoSalida) ? (
+                      <div className="flex flex-col gap-1 border border-slate-200 p-2 bg-slate-50/50" style={{ borderRadius: '0px' }}>
+                        {s.fechaSalidaCliente && (
+                          <div>
+                            <span className="text-[8px] text-slate-400 font-bold uppercase">Salida Cliente:</span>
+                            <span className="font-bold text-slate-800 block">{s.fechaSalidaCliente}</span>
+                          </div>
+                        )}
+                        {s.guiaSalidaCliente && (
+                          <div>
+                            <span className="text-[8px] text-slate-400 font-bold uppercase">Guía Salida:</span>
+                            <span className="font-bold text-slate-850 block uppercase select-all">{s.guiaSalidaCliente}</span>
+                          </div>
+                        )}
+                        {s.destinoSalida && (
+                          <div>
+                            <span className="text-[8px] text-slate-400 font-bold uppercase">Destino:</span>
+                            <span className="font-bold text-slate-800 block uppercase">{s.destinoSalida}</span>
+                          </div>
+                        )}
+                        {s.fechaConfirmada && (
+                          <span className="inline-block mt-0.5 bg-green-100 text-green-800 text-[8px] font-bold px-1.5 py-0.5 w-max" style={{ borderRadius: '0px' }}>
+                            SALIDA CONFIRMADA
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400 italic">SIN SALIDA</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-2.5 text-center">
+                    <span className={`px-2 py-1 text-[9px] font-black uppercase tracking-wider inline-block text-center ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
+                      {s.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const renderPOSSummaryTable = (items: any[]) => {
+    return (
+      <div className="overflow-x-auto border border-slate-200 bg-white" style={{ borderRadius: '0px' }}>
+        <table className="w-full text-left min-w-[1000px] border-collapse text-[11px] font-arial">
+          <thead>
+            <tr className="bg-slate-100 border-b border-slate-250 text-[9px] text-slate-550 font-bold uppercase tracking-wider">
+              <th className="py-2.5 px-3 text-center w-24">Fecha</th>
+              <th className="py-2.5 px-3 w-40">Serial</th>
+              <th className="py-2.5 px-3 w-28">Guía / Origen</th>
+              <th className="py-2.5 px-3 w-40">Equipo (SO + Modelo)</th>
+              <th className="py-2.5 px-3 w-32">Mod. Negocio</th>
+              <th className="py-2.5 px-3 w-60">Cliente / Razón Social</th>
+              <th className="py-2.5 px-3 w-28">RIF</th>
+              <th className="py-2.5 px-3 w-28">Ticket / Banco</th>
+              <th className="py-2.5 px-3 text-center w-28">Estatus</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-150">
+            {items.map((s, idx) => {
+              const m = getTerminalModel(s.serial, modelosDB);
+              return (
+                <tr key={s.id || idx} className="hover:bg-slate-50 transition-colors align-middle">
+                  <td className="py-2 px-3 text-center whitespace-nowrap text-slate-700">
+                    {s.displayDate || s.date}
+                  </td>
+                  <td className="py-2 px-3 font-mono font-bold text-slate-900 select-all">
+                    {s.serial}
+                  </td>
+                  <td className="py-2 px-3 text-slate-700 uppercase">
+                    {s.source || 'S/N'}
+                  </td>
+                  <td className="py-2 px-3 font-bold text-slate-805 uppercase">
+                    {m.so} - {m.modelo}
+                  </td>
+                  <td className="py-2 px-3 text-slate-750 uppercase font-semibold">
+                    {s.modeloNegocio || 'SIN ASIGNAR'}
+                  </td>
+                  <td className="py-2 px-3 font-bold text-slate-800 uppercase truncate max-w-[200px]" title={s.razonSocial}>
+                    {s.razonSocial || 'SIN RAZÓN SOCIAL'}
+                  </td>
+                  <td className="py-2 px-3 text-slate-600 uppercase select-all">
+                    {s.rif || 'S/N'}
+                  </td>
+                  <td className="py-2 px-3 text-slate-700 uppercase">
+                    {s.ticket ? `${s.ticket}` : ''} {s.banco ? `(${s.banco})` : ''} {!s.ticket && !s.banco ? 'S/N' : ''}
+                  </td>
+                  <td className="py-2 px-3 text-center">
+                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-wider inline-block text-center ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
+                      {s.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const renderSIMCardsSummaryTable = (items: any[]) => {
+    return (
+      <div className="overflow-x-auto border border-slate-200 bg-white" style={{ borderRadius: '0px' }}>
+        <table className="w-full text-left min-w-[600px] border-collapse text-[11px] font-arial">
+          <thead>
+            <tr className="bg-slate-100 border-b border-slate-250 text-[9px] text-slate-550 font-bold uppercase tracking-wider">
+              <th className="py-2.5 px-3 text-center w-24">Fecha</th>
+              <th className="py-2.5 px-3 w-60">Serial SIM-Card</th>
+              <th className="py-2.5 px-3 w-60">Fuente / Guía</th>
+              <th className="py-2.5 px-3 text-center w-28">Estatus</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-150">
+            {items.map((s, idx) => {
+              return (
+                <tr key={s.id || idx} className="hover:bg-slate-50 transition-colors align-middle">
+                  <td className="py-2 px-3 text-center whitespace-nowrap text-slate-700">
+                    {s.date}
+                  </td>
+                  <td className="py-2 px-3 font-mono font-bold text-slate-900 select-all">
+                    {s.serial}
+                  </td>
+                  <td className="py-2 px-3 text-slate-700 uppercase">
+                    {s.source}
+                  </td>
+                  <td className="py-2 px-3 text-center">
+                    <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-wider inline-block text-center ${
+                      s.status === 'ANULADA'
+                        ? 'bg-red-100 text-red-800 border border-red-200'
+                        : ['DISPONIBLE', 'CANCELADO', 'RECUPERADO', 'N#A'].includes(s.status.toUpperCase())
+                          ? 'bg-green-100 text-green-800 border border-green-200'
+                          : 'bg-orange-100 text-orange-850 border border-orange-200'
+                    }`} style={{ borderRadius: '0px' }}>
+                      {s.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const getPOSItemHeaders = (type: string): string[] => {
+    if (type === 'cliente' || type === 'colaborador' || type === 'disponibles' || type === 'entregados' || type === 'periodo') {
+      return ['MODELO', 'SERIAL', 'STATUS'];
+    } else if (type === 'modeloNegocio' || type === 'modeloNegocioDates') {
+      return ['MODELO', 'SERIAL', 'GUIA', 'RAZON SOCIAL'];
+    } else if (type === 'manual_cruce') {
+      return ['MODELO', 'SERIAL', 'STATUS', 'REMITENTE'];
+    } else if (type === 'zoom') {
+      return ['MODELO', 'SERIAL', 'GUIA', 'RAZON SOCIAL', 'RIF', 'FECHA DE INGRESO'];
+    } else {
+      return ['MODELO', 'SERIAL'];
+    }
+  };
+
+  const getPOSItemFields = (s: POSItem, type: string) => {
+    const m = getTerminalModel(s.serial, modelosDB);
+    const headers = getPOSItemHeaders(type);
+    const values = headers.map(h => {
+      if (h === 'MODELO') return m.modelo || 'DESCONOCIDO';
+      if (h === 'SERIAL') return s.serial || '';
+      if (h === 'STATUS') return s.status || '';
+      if (h === 'GUIA') return s.source || 'S/N';
+      if (h === 'RAZON SOCIAL') return s.razonSocial || 'SIN RAZÓN SOCIAL';
+      if (h === 'REMITENTE') return s.remitente || 'DESCONOCIDO';
+      if (h === 'RIF') return s.rif || 'S/N';
+      if (h === 'FECHA DE INGRESO') return s.displayDate || s.date || '';
+      return '';
+    });
+    return { headers, values };
+  };
+
+  const renderPOSCustomTable = (items: any[], type: string) => {
+    const headers = getPOSItemHeaders(type);
+
+    return (
+      <div className="overflow-x-auto border border-slate-200 bg-white" style={{ borderRadius: '0px' }}>
+        <table className="w-full text-left min-w-[500px] border-collapse text-[12px] font-arial">
+          <thead>
+            <tr className="bg-slate-100 border-b border-slate-250 text-[10px] text-slate-550 font-bold uppercase tracking-wider">
+              {headers.map(h => (
+                <th key={h} className="py-2 px-3">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-150">
+            {items.map((s, idx) => {
+              const m = getTerminalModel(s.serial, modelosDB);
+              return (
+                <tr key={s.id || idx} className="hover:bg-slate-50 transition-colors align-middle">
+                  {headers.map(h => {
+                    if (h === 'MODELO') {
+                      return (
+                        <td key={h} className="py-2 px-3 text-slate-800 font-bold uppercase">
+                          {m.modelo || 'DESCONOCIDO'}
+                        </td>
+                      );
+                    }
+                    if (h === 'SERIAL') {
+                      return (
+                        <td key={h} className="py-2 px-3 font-mono font-bold text-slate-900 select-all">
+                          {s.serial}
+                        </td>
+                      );
+                    }
+                    if (h === 'STATUS') {
+                      return (
+                        <td key={h} className="py-2 px-3 font-semibold text-slate-700 uppercase">
+                          <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-wider inline-block text-center ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
+                            {s.status}
+                          </span>
+                        </td>
+                      );
+                    }
+                    if (h === 'GUIA') {
+                      return (
+                        <td key={h} className="py-2 px-3 text-slate-700 uppercase font-semibold">
+                          {s.source || 'S/N'}
+                        </td>
+                      );
+                    }
+                    if (h === 'RAZON SOCIAL') {
+                      return (
+                        <td key={h} className="py-2 px-3 text-slate-800 uppercase font-bold">
+                          {s.razonSocial || 'SIN RAZÓN SOCIAL'}
+                        </td>
+                      );
+                    }
+                    if (h === 'REMITENTE') {
+                      return (
+                        <td key={h} className="py-2 px-3 text-slate-700 uppercase">
+                          {s.remitente || 'DESCONOCIDO'}
+                        </td>
+                      );
+                    }
+                    if (h === 'RIF') {
+                      return (
+                        <td key={h} className="py-2 px-3 text-slate-605 font-mono select-all">
+                          {s.rif || 'S/N'}
+                        </td>
+                      );
+                    }
+                    if (h === 'FECHA DE INGRESO') {
+                      return (
+                        <td key={h} className="py-2 px-3 text-slate-600 font-mono">
+                          {s.displayDate || s.date}
+                        </td>
+                      );
+                    }
+                    return null;
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  const renderSIMOnlySerialsTable = (items: any[]) => {
+    return (
+      <div className="overflow-x-auto border border-slate-200 bg-white" style={{ borderRadius: '0px' }}>
+        <table className="w-full text-left min-w-[400px] border-collapse text-[12px] font-arial">
+          <thead>
+            <tr className="bg-slate-100 border-b border-slate-250 text-[10px] text-slate-550 font-bold uppercase tracking-wider">
+              <th className="py-2.5 px-3 w-1/3">SERIAL SIM</th>
+              <th className="py-2.5 px-3 w-1/3">LOTE</th>
+              <th className="py-2.5 px-3 w-1/3 text-center">ESTADO</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-150">
+            {items.map((s, idx) => (
+              <tr key={s.id || idx} className="hover:bg-slate-50 transition-colors align-middle">
+                <td className="py-2 px-3 font-mono font-bold text-slate-900 select-all">
+                  {s.serial}
+                </td>
+                <td className="py-2 px-3 text-slate-750 uppercase font-semibold">
+                  {s.source}
+                </td>
+                <td className="py-2 px-3 text-center">
+                  <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-wider inline-block text-center ${
+                    s.status === 'ANULADA'
+                      ? 'bg-red-100 text-red-800 border border-red-200'
+                      : ['DISPONIBLE', 'CANCELADO', 'RECUPERADO', 'N#A'].includes(s.status.toUpperCase())
+                        ? 'bg-green-100 text-green-800 border border-green-200'
+                        : 'bg-orange-100 text-orange-850 border border-orange-200'
+                  }`} style={{ borderRadius: '0px' }}>
+                    {s.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col gap-6 text-black pb-16 estadisticas-tab-container font-arial">
       
-      {/* SECCIÓN 1: CONTADORES TÉCNICOS (TOP KPI CARDS IN MOCKUP) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* COLUMNA 1: TOTAL RECIBIDOS & TOTAL SIM-CARDS */}
-        <div className="md:col-span-1 flex flex-col gap-4">
-          <div 
-            onClick={() => { setModalType('total'); setModalSearch(''); }}
-            className="bg-white text-black rounded-2xl p-6 hover:border-slate-350 transition-all cursor-pointer shadow-sm flex flex-col justify-between h-[216px] relative border border-slate-200"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-black" style={{ color: '#000000' }}>TOTAL RECIBIDOS</span>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" style={{ backgroundColor: '#ccfbf1' }}>
-                <Layers size={18} style={{ color: '#0f766e' }} />
+      {/* SECCIÓN 1: CONTADORES TÉCNICOS (GRID DE 3 FILAS, 2 COLUMNAS) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 border-b border-slate-200 pb-4">
+        {[
+          { id: 'total', label: 'EQUIPOS EN TOTAL', count: serials.length, icon: Layers },
+          { id: 'simcards', label: 'HISTORIAL DE LOTE DE SIM CARDS', count: totalSimCards, icon: CardSim },
+          { id: 'disponibles', label: 'EQUIPOS DISPONIBLES', count: serials.filter(s => ['DISPONIBLE', 'CANCELADO', 'RECUPERADO', 'N#A'].includes((s.status || '').toUpperCase().trim())).length, icon: Unlock },
+          { id: 'entregados', label: 'EQUIPOS ENTREGADOS', count: serials.filter(s => ['ENTREGADO', 'ACTIVO', 'SUSPENDIDO', 'PENDIENTE'].includes((s.status || '').toUpperCase().trim())).length, icon: Lock },
+          { id: 'linux', label: 'EQUIPOS LINUX', count: serials.filter(s => getTerminalModel(s.serial, modelosDB).so === 'LINUX').length, icon: Cpu },
+          { id: 'android', label: 'EQUIPOS ANDROID', count: serials.filter(s => getTerminalModel(s.serial, modelosDB).so === 'ANDROID').length, icon: Smartphone }
+        ].map(b => {
+          const Icon = b.icon;
+          return (
+            <button
+              key={b.id}
+              onClick={() => {
+                if (b.id === 'simcards') {
+                  setShowSimsModal(true);
+                  setSimsSearchQuery('');
+                  setModalDateDesde('');
+                  setModalDateHasta('');
+                } else {
+                  setModalType(b.id as any);
+                  setModalSelectedName(null);
+                  setModalSearch('');
+                  setModalDateDesde('');
+                  setModalDateHasta('');
+                  setModalCurrentPage(1);
+                }
+              }}
+              className="metric-btn sidebar-btn group flex items-center justify-between gap-3.5 px-4 py-3 text-xs font-bold uppercase tracking-wider transition-all border border-slate-200 bg-white text-black hover:bg-slate-800 hover:text-white cursor-pointer w-full"
+              style={{ borderRadius: '0px' }}
+            >
+              <div className="flex items-center gap-2">
+                <Icon size={18} className="text-black group-hover:text-white transition-colors" />
+                <span className="text-black group-hover:text-white transition-colors">{b.label}</span>
               </div>
-            </div>
-            <div className="flex-1 flex items-center justify-center my-2">
-              <div className="text-[5.5rem] font-black font-sans leading-none tracking-tighter text-black select-all" style={{ color: '#000000' }}>
-                {totalCount}
-              </div>
-            </div>
-            <div className="text-[10px] text-black font-bold" style={{ color: '#000000' }}>
-              +{serials.filter(s => s.date && (Math.floor((Date.now() - new Date(s.date).getTime()) / 86400000) <= 7)).length} últimos 7 días
-            </div>
-          </div>
-
-          {/* BOTÓN TOTAL SIM-CARDS HISTÓRICO */}
-          <button
-            onClick={() => { setShowSimsModal(true); setSimsSearchQuery(''); }}
-            className="w-full h-[80px] bg-white border border-slate-200 rounded-2xl shadow-sm hover:border-slate-350 transition-all flex items-center justify-between p-5 cursor-pointer stats-sims-btn"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" style={{ backgroundColor: '#eff6ff' }}>
-                <CardSim size={18} style={{ color: '#2563eb' }} />
-              </div>
-              <div className="text-left">
-                <div className="text-[12px] font-extrabold uppercase tracking-widest text-black" style={{ color: '#000000', fontFamily: 'Arial' }}>SIM-Cards</div>
-                <div className="text-[9px] text-black font-bold uppercase mt-0.5 font-mono" style={{ color: '#000000' }}>REGISTRADAS HISTÓRICAMENTE</div>
-              </div>
-            </div>
-            <div className="text-3xl font-black font-sans text-black" style={{ color: '#000000' }}>
-              {totalSimCards}
-            </div>
-          </button>
-        </div>
-
-        {/* COLUMNA 2: ANDROID (TOP) & ENTREGADOS (BOTTOM) */}
-        <div className="flex flex-col gap-6">
-          {/* CARD 2: ANDROID CARD */}
-          <div 
-            onClick={() => { setModalType('android'); setModalSearch(''); }}
-            className="bg-white text-black rounded-2xl p-6 hover:border-slate-350 transition-all cursor-pointer shadow-sm flex flex-col justify-between h-36 relative border border-slate-200"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-black" style={{ color: '#000000' }}>EQUIPOS ANDROID</span>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" style={{ backgroundColor: '#ccfbf1' }}>
-                <Smartphone size={18} style={{ color: '#0f766e' }} />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-3xl font-black font-sans leading-none tracking-tight text-black" style={{ color: '#000000' }}>{androidCount}</div>
-            </div>
-          </div>
-
-          {/* CARD 4: ENTREGADOS CARD */}
-          <div 
-            onClick={() => { setModalType('entregados'); setModalSearch(''); }}
-            className="bg-white text-black rounded-2xl p-6 hover:border-slate-350 transition-all cursor-pointer shadow-sm flex flex-col justify-between h-36 relative border border-slate-200"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-black" style={{ color: '#000000' }}>EQUIPOS ENTREGADOS</span>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" style={{ backgroundColor: '#ccfbf1' }}>
-                <PosLocked size={20} color="#0f766e" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-3xl font-black font-sans leading-none tracking-tight text-black" style={{ color: '#000000' }}>{entregadosCount}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* COLUMNA 3: LINUX (TOP) & DISPONIBLES (BOTTOM) */}
-        <div className="flex flex-col gap-6">
-          {/* CARD 3: LINUX CARD */}
-          <div 
-            onClick={() => { setModalType('linux'); setModalSearch(''); }}
-            className="bg-white text-black rounded-2xl p-6 hover:border-slate-350 transition-all cursor-pointer shadow-sm flex flex-col justify-between h-36 relative border border-slate-200"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-black" style={{ color: '#000000' }}>EQUIPOS LINUX</span>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" style={{ backgroundColor: '#ccfbf1' }}>
-                <svg className="w-[18px] h-[18px]" style={{ color: '#0f766e' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <line x1="10" y1="4" x2="14" y2="4" />
-                  <circle cx="8" cy="15" r="0.75" fill="currentColor" />
-                  <circle cx="12" cy="15" r="0.75" fill="currentColor" />
-                  <circle cx="16" cy="15" r="0.75" fill="currentColor" />
-                  <circle cx="8" cy="18" r="0.75" fill="currentColor" />
-                  <circle cx="12" cy="18" r="0.75" fill="currentColor" />
-                  <circle cx="16" cy="18" r="0.75" fill="currentColor" />
-                </svg>
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-3xl font-black font-sans leading-none tracking-tight text-black" style={{ color: '#000000' }}>{linuxCount}</div>
-            </div>
-          </div>
-
-          {/* CARD 5: DISPONIBLES CARD */}
-          <div 
-            onClick={() => { setModalType('disponibles'); setModalSearch(''); }}
-            className="bg-white text-black rounded-2xl p-6 hover:border-slate-350 transition-all cursor-pointer shadow-sm flex flex-col justify-between h-36 relative border border-slate-200"
-          >
-            <div className="flex justify-between items-start w-full">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-black" style={{ color: '#000000' }}>EQUIPOS DISPONIBLES</span>
-              <div className="w-9 h-9 rounded-full flex items-center justify-center shadow-sm" style={{ backgroundColor: '#ccfbf1' }}>
-                <PosUnlocked size={20} color="#0f766e" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-3xl font-black font-sans leading-none tracking-tight text-black" style={{ color: '#000000' }}>{disponiblesCount}</div>
-            </div>
-          </div>
-        </div>
-
+              <span className="font-mono text-sm font-bold text-black group-hover:text-white transition-colors">
+                {b.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* SECCIÓN 1.2: CANALES DE INGRESO DE EQUIPOS */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
-        <div className="border-b border-slate-100 pb-3">
-          <h4 className="font-bold text-xs tracking-widest uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
-            <Layers className="w-4.5 h-4.5" style={{ color: '#2563eb' }} />
-            Canales de Ingreso de Equipos (Filtro por Canal)
-          </h4>
-          <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5 font-mono">
-            BASE TOTAL: {totalCount} EQUIPOS
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* CANAL 1: CRUCE DE SERIALES / USUARIOS */}
-          <div 
-            onClick={() => { setModalType('manual_cruce'); setModalSearch(''); }}
-            className="bg-blue-50/40 p-4 rounded-xl border border-blue-100 flex flex-col justify-between gap-3 shadow-xs cursor-pointer hover:border-blue-300 transition-all"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[10px] text-blue-600 font-black uppercase tracking-wider">Cruce de Seriales (Usuarios Disglobal)</span>
-                <h5 className="text-2xl font-black text-slate-800 mt-1">
-                  {intakeStats.manual_cruce.total}{" "}
-                  <span className="text-xs font-semibold text-slate-500 font-mono">
-                    ({totalCount > 0 ? Math.round((intakeStats.manual_cruce.total / totalCount) * 100) : 0}%)
-                  </span>
-                </h5>
-              </div>
-              <span className="bg-blue-100 text-blue-800 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Usuarios</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* CANAL 1: CRUCE DE SERIALES / USUARIOS */}
+        <div 
+          onClick={() => { setModalType('manual_cruce'); setModalSearch(''); }}
+          className="bg-white border border-slate-200 flex flex-col justify-between p-4 cursor-pointer hover:border-slate-300 transition-all"
+          style={{ borderRadius: '0px' }}
+        >
+          <div className="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
+            <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Cruce de Seriales (Usuarios Disglobal)</span>
+            <span className="bg-slate-100 text-slate-800 text-[8px] font-bold px-2 py-0.5 uppercase tracking-wider border border-slate-250" style={{ borderRadius: '0px' }}>Usuarios</span>
+          </div>
+          <div>
+            <div className="text-3xl font-black text-black">
+              {intakeStats.manual_cruce.total}{" "}
+              <span className="text-sm font-semibold text-slate-500 font-mono">
+                ({totalCount > 0 ? Math.round((intakeStats.manual_cruce.total / totalCount) * 100) : 0}%)
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-1 border-t border-blue-100/50 pt-2 text-[10px] font-bold text-slate-650">
+            <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-100 text-[10px] font-bold text-slate-600">
               <div>
                 <span className="text-slate-400 block text-[8px] uppercase tracking-wider font-mono">Disponibles</span>
-                <span className="text-green-600 font-black text-xs">{intakeStats.manual_cruce.disponibles}</span>
+                <span className="text-black font-black text-sm">{intakeStats.manual_cruce.disponibles}</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[8px] uppercase tracking-wider font-mono">Entregados</span>
-                <span className="text-orange-500 font-black text-xs">{intakeStats.manual_cruce.entregados}</span>
+                <span className="text-black font-black text-sm">{intakeStats.manual_cruce.entregados}</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* CANAL 2: ENVÍOS VÍA ZOOM / CLIENTES */}
-          <div 
-            onClick={() => { setModalType('zoom'); setModalSearch(''); }}
-            className="bg-amber-50/40 p-4 rounded-xl border border-amber-100 flex flex-col justify-between gap-3 shadow-xs cursor-pointer hover:border-amber-300 transition-all"
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[10px] text-amber-700 font-black uppercase tracking-wider">Recibidos Vía Zoom (Clientes)</span>
-                <h5 className="text-2xl font-black text-slate-800 mt-1">
-                  {intakeStats.zoom.total}{" "}
-                  <span className="text-xs font-semibold text-slate-500 font-mono">
-                    ({totalCount > 0 ? Math.round((intakeStats.zoom.total / totalCount) * 100) : 0}%)
-                  </span>
-                </h5>
-              </div>
-              <span className="bg-amber-100 text-amber-800 text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">Clientes</span>
+        {/* CANAL 2: ENVÍOS VÍA ZOOM / CLIENTES */}
+        <div 
+          onClick={() => { setModalType('zoom'); setModalSearch(''); }}
+          className="bg-white border border-slate-200 flex flex-col justify-between p-4 cursor-pointer hover:border-slate-300 transition-all"
+          style={{ borderRadius: '0px' }}
+        >
+          <div className="flex justify-between items-center border-b border-slate-100 pb-2 mb-2">
+            <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Recibidos Vía Zoom (Clientes)</span>
+            <span className="bg-orange-105 text-orange-850 text-[8px] font-bold px-2 py-0.5 uppercase tracking-wider border border-orange-200" style={{ borderRadius: '0px' }}>Clientes</span>
+          </div>
+          <div>
+            <div className="text-3xl font-black text-black">
+              {intakeStats.zoom.total}{" "}
+              <span className="text-sm font-semibold text-slate-500 font-mono">
+                ({totalCount > 0 ? Math.round((intakeStats.zoom.total / totalCount) * 100) : 0}%)
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-1 border-t border-amber-100/50 pt-2 text-[10px] font-bold text-slate-650">
+            <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-100 text-[10px] font-bold text-slate-600">
               <div>
                 <span className="text-slate-400 block text-[8px] uppercase tracking-wider font-mono">Disponibles</span>
-                <span className="text-green-600 font-black text-xs">{intakeStats.zoom.disponibles}</span>
+                <span className="text-black font-black text-sm">{intakeStats.zoom.disponibles}</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[8px] uppercase tracking-wider font-mono">Entregados</span>
-                <span className="text-orange-500 font-black text-xs">{intakeStats.zoom.entregados}</span>
+                <span className="text-black font-black text-sm">{intakeStats.zoom.entregados}</span>
               </div>
             </div>
           </div>
@@ -1127,26 +1620,26 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       </div>
 
       {/* SECCIÓN 1.6: TOP 5 COLABORADORES */}
-      <div className="bg-white p-5 border border-slate-200 border-t-4 border-t-blue-500 shadow-sm flex flex-col gap-4" style={{ borderRadius: '0px' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
+      <div className="bg-white border border-slate-200 flex flex-col" style={{ borderRadius: '0px' }}>
+        <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h4 className="font-bold text-xs tracking-widest uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
-              <Users className="w-4.5 h-4.5" style={{ color: '#3b82f6' }} />
+            <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805 flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-black" />
               TOP 5 USUARIOS DISGLOBAL CON MAYOR ENTREGAS
             </h4>
-            <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5 font-mono">COLABORADORES QUE MÁS DISPOSITIVOS HAN INGRESADO/ENTREGADO</p>
+            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 font-mono">COLABORADORES QUE MÁS DISPOSITIVOS HAN INGRESADO/ENTREGADO</p>
           </div>
           <button
             onClick={() => setShowAllColaboradoresModal(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white-force text-xs font-extrabold uppercase transition-all shadow-md flex items-center gap-1.5 cursor-pointer border-none"
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-extrabold uppercase transition-all flex items-center gap-1.5 cursor-pointer border-none"
             style={{ borderRadius: '0px', color: '#fff' }}
           >
-            <Layers size={13} />
+            <Layers size={11} className="text-white" />
             <span>Ver Desglose Completo</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-5 gap-4">
           {top5Colaboradores.length === 0 ? (
             <div className="col-span-5 text-center py-6 text-slate-400 font-mono text-xs">No hay entregas registradas todavía para colaboradores.</div>
           ) : (
@@ -1154,19 +1647,19 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
               <div 
                 key={u.name} 
                 onClick={() => { setModalType('colaborador'); setModalSelectedName(u.name); setModalSearch(''); setDetailSelectedDate(null); }}
-                className="bg-slate-50 p-4 border border-slate-200 flex flex-col justify-between gap-2 hover:border-slate-350 cursor-pointer transition-all shadow-xs relative"
+                className="bg-white border border-slate-200 flex flex-col justify-between hover:border-slate-350 cursor-pointer transition-all relative"
                 style={{ borderRadius: '0px' }}
               >
-                <div className="absolute top-3 right-3 w-5 h-5 bg-slate-200/80 flex items-center justify-center text-[9px] font-black font-sans text-slate-600" style={{ borderRadius: '0px' }}>
-                  #{idx + 1}
+                <div className="border-b border-slate-100 px-3 py-2 flex justify-between items-center bg-slate-50">
+                  <span className="text-[8px] text-slate-400 font-bold uppercase font-mono">COLABORADOR</span>
+                  <span className="text-[9px] font-black text-slate-500 font-mono">#{idx + 1}</span>
                 </div>
-                <div className="pr-6">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase font-mono">COLABORADOR</div>
+                <div className="p-3">
                   <div className="text-xs font-black text-black truncate uppercase font-arial mt-0.5" style={{ color: '#000000' }} title={u.name}>{u.name}</div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase font-mono">TOTAL ENTREGAS</div>
-                  <div className="text-xl font-black font-sans text-blue-600" style={{ color: '#3b82f6' }}>{u.total}</div>
+                  <div className="mt-3 border-t border-slate-100 pt-2 flex flex-col">
+                    <span className="text-[8px] text-slate-400 font-bold uppercase font-mono leading-none">TOTAL ENTREGAS</span>
+                    <span className="text-2xl font-black text-black leading-tight mt-1">{u.total}</span>
+                  </div>
                 </div>
               </div>
             ))
@@ -1175,26 +1668,26 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       </div>
 
       {/* SECCIÓN 1.5: TOP 5 CLIENTES */}
-      <div className="bg-white p-5 border border-slate-200 border-t-4 border-t-green-500 shadow-sm flex flex-col gap-4" style={{ borderRadius: '0px' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-3">
+      <div className="bg-white border border-slate-200 flex flex-col" style={{ borderRadius: '0px' }}>
+        <div className="bg-slate-50 border-b border-slate-200 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h4 className="font-bold text-xs tracking-widest uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
-              <Users className="w-4.5 h-4.5" style={{ color: '#16a34a' }} />
+            <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805 flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-black" />
               TOP 5 CLIENTES CON MAYOR ENTREGAS
             </h4>
-            <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5 font-mono">CLIENTES QUE MÁS DISPOSITIVOS HAN INGRESADO/ENTREGADO</p>
+            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 font-mono">CLIENTES QUE MÁS DISPOSITIVOS HAN INGRESADO/ENTREGADO</p>
           </div>
           <button
             onClick={() => setShowAllClientesModal(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white-force text-xs font-extrabold uppercase transition-all shadow-md flex items-center gap-1.5 cursor-pointer border-none"
+            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-extrabold uppercase transition-all flex items-center gap-1.5 cursor-pointer border-none"
             style={{ borderRadius: '0px', color: '#fff' }}
           >
-            <Layers size={13} />
+            <Layers size={11} className="text-white" />
             <span>Ver Desglose Completo</span>
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-5 gap-4">
           {top5Clientes.length === 0 ? (
             <div className="col-span-5 text-center py-6 text-slate-400 font-mono text-xs">No hay entregas registradas todavía para clientes.</div>
           ) : (
@@ -1202,19 +1695,19 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
               <div 
                 key={u.name} 
                 onClick={() => { setModalType('cliente'); setModalSelectedName(u.name); setModalSearch(''); setDetailSelectedDate(null); }}
-                className="bg-slate-50 p-4 border border-slate-200 flex flex-col justify-between gap-2 hover:border-slate-350 cursor-pointer transition-all shadow-xs relative"
+                className="bg-white border border-slate-200 flex flex-col justify-between hover:border-slate-350 cursor-pointer transition-all relative"
                 style={{ borderRadius: '0px' }}
               >
-                <div className="absolute top-3 right-3 w-5 h-5 bg-slate-200/80 flex items-center justify-center text-[9px] font-black font-sans text-slate-600" style={{ borderRadius: '0px' }}>
-                  #{idx + 1}
+                <div className="border-b border-slate-100 px-3 py-2 flex justify-between items-center bg-slate-50">
+                  <span className="text-[8px] text-slate-400 font-bold uppercase font-mono">CLIENTE</span>
+                  <span className="text-[9px] font-black text-slate-500 font-mono">#{idx + 1}</span>
                 </div>
-                <div className="pr-6">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase font-mono">CLIENTE</div>
+                <div className="p-3">
                   <div className="text-xs font-black text-black truncate uppercase font-arial mt-0.5" style={{ color: '#000000' }} title={u.name}>{u.name}</div>
-                </div>
-                <div className="mt-2">
-                  <div className="text-[9px] text-slate-400 font-bold uppercase font-mono">TOTAL ENTREGAS</div>
-                  <div className="text-xl font-black font-sans text-emerald-600" style={{ color: '#16a34a' }}>{u.total}</div>
+                  <div className="mt-3 border-t border-slate-100 pt-2 flex flex-col">
+                    <span className="text-[8px] text-slate-400 font-bold uppercase font-mono leading-none">TOTAL ENTREGAS</span>
+                    <span className="text-2xl font-black text-black leading-tight mt-1">{u.total}</span>
+                  </div>
                 </div>
               </div>
             ))
@@ -1226,167 +1719,415 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* CHART WIDE: PERFORMANCE DE INGRESOS */}
-        <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between gap-4">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <div>
-              <h4 className="font-bold text-xs tracking-widest uppercase text-black" style={{ color: '#000000' }}>
-                Rendimiento de Ingresos (Flujo Mensual)
-              </h4>
-            </div>
+        <div className="lg:col-span-12 bg-white border border-slate-200 shadow-sm flex flex-col justify-between" style={{ borderRadius: '0px' }}>
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805">
+              Rendimiento de Ingresos (Flujo Mensual)
+            </h4>
           </div>
 
-          {/* SVG Line Chart representing curved smooth paths */}
-          <div className="w-full h-48 relative mt-2">
-            <svg viewBox="0 0 540 180" width="100%" height="100%" className="overflow-visible select-none">
-              {/* Horizontal grid lines */}
-              <line x1="40" y1="20" x2="520" y2="20" stroke="#f1f5f9" strokeDasharray="4 4" />
-              <line x1="40" y1="90" x2="520" y2="90" stroke="#f1f5f9" strokeDasharray="4 4" />
-              <line x1="40" y1="160" x2="520" y2="160" stroke="#e2e8f0" />
+          <div className="p-4 flex flex-col justify-between flex-1 gap-4">
+            {/* SVG Line Chart representing curved smooth paths */}
+            <div className="w-full h-48 relative mt-2">
+              <svg viewBox="0 0 540 180" width="100%" height="100%" className="overflow-visible select-none">
+                {/* Horizontal grid lines */}
+                <line x1="40" y1="20" x2="520" y2="20" stroke="#f1f5f9" strokeDasharray="4 4" />
+                <line x1="40" y1="90" x2="520" y2="90" stroke="#f1f5f9" strokeDasharray="4 4" />
+                <line x1="40" y1="160" x2="520" y2="160" stroke="#e2e8f0" />
 
-              {/* Month bottom labels */}
-              {chartData.map((d, i) => (
-                <text key={i} x={60 + i * 110} y="175" textAnchor="middle" className="text-[10px] font-bold uppercase tracking-wider" style={{ fill: '#000000' }}>
-                  {d.month}
-                </text>
-              ))}
+                {/* Month bottom labels */}
+                {chartData.map((d, i) => (
+                  <text key={i} x={60 + i * 110} y="175" textAnchor="middle" className="text-[10px] font-bold uppercase tracking-wider" style={{ fill: '#000000' }}>
+                    {d.month}
+                  </text>
+                ))}
 
-              {/* Curved paths styled with deep teal, cerulean blue, and purple */}
-              <path d={getCurvePath(totalPoints)} fill="none" stroke="#0d9488" strokeWidth="3" strokeLinecap="round" />
-              <path d={getCurvePath(androidPoints)} fill="none" stroke="#0ea5e9" strokeWidth="2.2" strokeLinecap="round" />
-              <path d={getCurvePath(linuxPoints)} fill="none" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round" />
+                {/* Curved paths styled with deep teal, cerulean blue, and purple */}
+                <path d={getCurvePath(totalPoints)} fill="none" stroke="#0d9488" strokeWidth="3" strokeLinecap="round" />
+                <path d={getCurvePath(androidPoints)} fill="none" stroke="#0ea5e9" strokeWidth="2.2" strokeLinecap="round" />
+                <path d={getCurvePath(linuxPoints)} fill="none" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round" />
 
-              {/* Dots and Tooltips */}
-              {totalPoints.map((p, i) => (
-                <g key={i} className="cursor-pointer group">
-                  <circle cx={p.x} cy={p.y} r="4" fill="#0d9488" stroke="white" strokeWidth="1.5" />
-                  <title>Total: {chartData[i].total}</title>
-                </g>
-              ))}
-              {androidPoints.map((p, i) => (
-                <g key={i} className="cursor-pointer group">
-                  <circle cx={p.x} cy={p.y} r="3.5" fill="#0ea5e9" stroke="white" strokeWidth="1.5" />
-                  <title>Android: {chartData[i].android}</title>
-                </g>
-              ))}
-              {linuxPoints.map((p, i) => (
-                <g key={i} className="cursor-pointer group">
-                  <circle cx={p.x} cy={p.y} r="3" fill="#8b5cf6" stroke="white" strokeWidth="1" />
-                  <title>Linux: {chartData[i].linux}</title>
-                </g>
-              ))}
-            </svg>
-          </div>
-
-          {/* Chart Legends */}
-          <div className="flex gap-4 justify-center items-center text-[10px] font-bold uppercase tracking-widest mt-2 border-t border-slate-100 pt-3" style={{ color: '#000000' }}>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded" style={{ backgroundColor: '#0d9488' }}></span>
-              <span>Total POS</span>
+                {/* Dots and Tooltips replaced with SQUARE markers */}
+                {totalPoints.map((p, i) => (
+                  <g key={i} className="cursor-pointer group">
+                    <rect x={p.x - 3.5} y={p.y - 3.5} width="7" height="7" fill="#0d9488" stroke="white" strokeWidth="1.5" />
+                    <title>Total: {chartData[i].total}</title>
+                  </g>
+                ))}
+                {androidPoints.map((p, i) => (
+                  <g key={i} className="cursor-pointer group">
+                    <rect x={p.x - 3} y={p.y - 3} width="6" height="6" fill="#0ea5e9" stroke="white" strokeWidth="1.2" />
+                    <title>Android: {chartData[i].android}</title>
+                  </g>
+                ))}
+                {linuxPoints.map((p, i) => (
+                  <g key={i} className="cursor-pointer group">
+                    <rect x={p.x - 2.5} y={p.y - 2.5} width="5" height="5" fill="#8b5cf6" stroke="white" strokeWidth="1" />
+                    <title>Linux: {chartData[i].linux}</title>
+                  </g>
+                ))}
+              </svg>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded" style={{ backgroundColor: '#0ea5e9' }}></span>
-              <span>Android</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded" style={{ backgroundColor: '#8b5cf6' }}></span>
-              <span>Linux</span>
+
+            {/* Chart Legends */}
+            <div className="flex gap-4 justify-center items-center text-[10px] font-bold uppercase tracking-widest mt-2 border-t border-slate-100 pt-3" style={{ color: '#000000' }}>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5" style={{ backgroundColor: '#0d9488', borderRadius: '0px' }}></span>
+                <span>Total POS</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5" style={{ backgroundColor: '#0ea5e9', borderRadius: '0px' }}></span>
+                <span>Android</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5" style={{ backgroundColor: '#8b5cf6', borderRadius: '0px' }}></span>
+                <span>Linux</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* DOUGHNUT NARROW: CATEGORIAS MAS POPULARES */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between gap-4">
-          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-            <h4 className="font-bold text-xs tracking-widest uppercase text-black" style={{ color: '#000000' }}>
+        <div className="lg:col-span-4 bg-white border border-slate-200 shadow-sm flex flex-col justify-between" style={{ borderRadius: '0px' }}>
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805">
               Distribución por SO
             </h4>
           </div>
 
-          {/* SVG Doughnut chart */}
-          <div className="flex-1 flex items-center justify-center py-2 relative">
-            <div className="relative">
-              <svg width="140" height="140" viewBox="0 0 100 100" className="mx-auto select-none overflow-visible">
-                {/* Circle background */}
-                <circle cx="50" cy="50" r="36" fill="transparent" stroke="#f8fafc" strokeWidth="12" />
-                
-                {/* Segment Android: Vibrant deep cerulean -> Vibrant Green */}
-                {strokeAndroid > 0 && (
-                  <circle 
-                     cx="50" 
-                     cy="50" 
-                     r="36" 
-                     fill="transparent" 
-                     stroke="#22c55e" 
-                     strokeWidth="12" 
-                     strokeDasharray={`${strokeAndroid} ${circ - strokeAndroid}`} 
-                     strokeDashoffset={offsetAndroid} 
-                     transform="rotate(-90 50 50)" 
-                     strokeLinecap="round"
-                  />
-                )}
+          <div className="p-4 flex flex-col justify-between flex-1 gap-4">
+            {/* SVG Doughnut chart */}
+            <div className="flex-1 flex items-center justify-center py-2 relative">
+              <div className="relative">
+                <svg width="140" height="140" viewBox="0 0 100 100" className="mx-auto select-none overflow-visible">
+                  {/* Circle background */}
+                  <circle cx="50" cy="50" r="36" fill="transparent" stroke="#f8fafc" strokeWidth="12" />
+                  
+                  {/* Segment Android: Vibrant deep cerulean -> Vibrant Green */}
+                  {strokeAndroid > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#22c55e" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeAndroid} ${circ - strokeAndroid}`} 
+                       strokeDashoffset={offsetAndroid} 
+                       transform="rotate(-90 50 50)" 
+                    />
+                  )}
 
-                {/* Segment Linux: Vibrant turquoise -> Dull Grey */}
-                {strokeLinux > 0 && (
-                  <circle 
-                     cx="50" 
-                     cy="50" 
-                     r="36" 
-                     fill="transparent" 
-                     stroke="#64748b" 
-                     strokeWidth="12" 
-                     strokeDasharray={`${strokeLinux} ${circ - strokeLinux}`} 
-                     strokeDashoffset={offsetLinux} 
-                     transform="rotate(-90 50 50)" 
-                     strokeLinecap="round"
-                  />
-                )}
+                  {/* Segment Linux: Vibrant turquoise -> Dull Grey */}
+                  {strokeLinux > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#64748b" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeLinux} ${circ - strokeLinux}`} 
+                       strokeDashoffset={offsetLinux} 
+                       transform="rotate(-90 50 50)" 
+                    />
+                  )}
 
-                {/* Segment Other: Light grey -> Black */}
-                {strokeOther > 0 && (
-                  <circle 
-                     cx="50" 
-                     cy="50" 
-                     r="36" 
-                     fill="transparent" 
-                     stroke="#000000" 
-                     strokeWidth="12" 
-                     strokeDasharray={`${strokeOther} ${circ - strokeOther}`} 
-                     strokeDashoffset={offsetOther} 
-                     transform="rotate(-90 50 50)" 
-                     strokeLinecap="round"
-                  />
-                )}
-              </svg>
-              {/* Doughnut center label */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center select-none mt-0.5">
-                <span className="text-[9px] uppercase tracking-wider font-bold leading-none" style={{ color: '#000000' }}>Total</span>
-                <span className="text-xl font-black font-sans tracking-tight" style={{ color: '#000000' }}>{totalCount}</span>
+                  {/* Segment Other: Light grey -> Black */}
+                  {strokeOther > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#000000" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeOther} ${circ - strokeOther}`} 
+                       strokeDashoffset={offsetOther} 
+                       transform="rotate(-90 50 50)" 
+                    />
+                  )}
+                </svg>
+                {/* Doughnut center label */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center select-none mt-0.5">
+                  <span className="text-[9px] uppercase tracking-wider font-bold leading-none" style={{ color: '#000000' }}>Total</span>
+                  <span className="text-xl font-black font-sans tracking-tight" style={{ color: '#000000' }}>{totalCount}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Doughnut Legends */}
+            <div className="flex flex-col gap-1.5 text-[14px] font-bold uppercase tracking-wider mt-1 border-t border-slate-100 pt-3" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#22c55e', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Android</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{androidCount} ({totalCount > 0 ? Math.round((androidCount / totalCount) * 100) : 0}%)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#64748b', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Linux</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{linuxCount} ({totalCount > 0 ? Math.round((linuxCount / totalCount) * 100) : 0}%)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#000000', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Desconocidos</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{totalCount - androidCount - linuxCount} ({totalCount > 0 ? Math.round(((totalCount - androidCount - linuxCount) / totalCount) * 100) : 0}%)</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Doughnut Legends */}
-          <div className="flex flex-col gap-1.5 text-[14px] font-bold uppercase tracking-wider mt-1 border-t border-slate-100 pt-3" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#22c55e' }}></span>
-                <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Android</span>
+        {/* DOUGHNUT NARROW: ENTREGA POR AREAS */}
+        <div className="lg:col-span-4 bg-white border border-slate-200 shadow-sm flex flex-col justify-between" style={{ borderRadius: '0px' }}>
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805">
+              Distribución por Área de Entrega
+            </h4>
+          </div>
+
+          <div className="p-4 flex flex-col justify-between flex-1 gap-4">
+            {/* SVG Doughnut chart */}
+            <div className="flex-1 flex items-center justify-center py-2 relative">
+              <div className="relative">
+                <svg width="140" height="140" viewBox="0 0 100 100" className="mx-auto select-none overflow-visible">
+                  {/* Circle background */}
+                  <circle cx="50" cy="50" r="36" fill="transparent" stroke="#f8fafc" strokeWidth="12" />
+                  
+                  {/* Segment ATC: Emerald */}
+                  {strokeATC > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#10b981" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeATC} ${circ - strokeATC}`} 
+                       strokeDashoffset={offsetATC} 
+                       transform="rotate(-90 50 50)" 
+                       className="cursor-pointer hover:opacity-80 transition-opacity"
+                       onClick={() => { setModalType('departamento'); setModalSelectedName('ATC'); setModalSearch(''); }}
+                    />
+                  )}
+
+                  {/* Segment VENTAS: Indigo */}
+                  {strokeVentas > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#6366f1" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeVentas} ${circ - strokeVentas}`} 
+                       strokeDashoffset={offsetVentas} 
+                       transform="rotate(-90 50 50)" 
+                       className="cursor-pointer hover:opacity-80 transition-opacity"
+                       onClick={() => { setModalType('departamento'); setModalSelectedName('VENTAS'); setModalSearch(''); }}
+                    />
+                  )}
+
+                  {/* Segment POSTVENTA: Purple */}
+                  {strokePostventa > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#8b5cf6" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokePostventa} ${circ - strokePostventa}`} 
+                       strokeDashoffset={offsetPostventa} 
+                       transform="rotate(-90 50 50)" 
+                       className="cursor-pointer hover:opacity-80 transition-opacity"
+                       onClick={() => { setModalType('departamento'); setModalSelectedName('POSTVENTA'); setModalSearch(''); }}
+                    />
+                  )}
+
+                  {/* Segment ZOOM: Orange */}
+                  {strokeZoom > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#ea580c" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeZoom} ${circ - strokeZoom}`} 
+                       strokeDashoffset={offsetZoom} 
+                       transform="rotate(-90 50 50)" 
+                       className="cursor-pointer hover:opacity-80 transition-opacity"
+                       onClick={() => { setModalType('zoom'); setModalSearch(''); }}
+                    />
+                  )}
+                </svg>
+                {/* Doughnut center label */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center select-none mt-0.5">
+                  <span className="text-[9px] uppercase tracking-wider font-bold leading-none" style={{ color: '#000000' }}>Total</span>
+                  <span className="text-xl font-black font-sans tracking-tight" style={{ color: '#000000' }}>{totalAreaCount}</span>
+                </div>
               </div>
-              <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{androidCount} ({totalCount > 0 ? Math.round((androidCount / totalCount) * 100) : 0}%)</span>
             </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#64748b' }}></span>
-                <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Linux</span>
+
+            {/* Doughnut Legends */}
+            <div className="flex flex-col gap-1.5 text-[14px] font-bold uppercase tracking-wider mt-1 border-t border-slate-100 pt-3" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>
+              <div 
+                className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-0.5"
+                onClick={() => { setModalType('departamento'); setModalSelectedName('ATC'); setModalSearch(''); }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#10b981', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>ATC</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{areaDeliveryStats.atc} ({totalAreaDoughnut > 0 ? Math.round((areaDeliveryStats.atc / totalAreaDoughnut) * 100) : 0}%)</span>
               </div>
-              <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{linuxCount} ({totalCount > 0 ? Math.round((linuxCount / totalCount) * 100) : 0}%)</span>
+              
+              <div 
+                className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-0.5"
+                onClick={() => { setModalType('departamento'); setModalSelectedName('VENTAS'); setModalSearch(''); }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#6366f1', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>VENTAS</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{areaDeliveryStats.ventas} ({totalAreaDoughnut > 0 ? Math.round((areaDeliveryStats.ventas / totalAreaDoughnut) * 100) : 0}%)</span>
+              </div>
+
+              <div 
+                className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-0.5"
+                onClick={() => { setModalType('departamento'); setModalSelectedName('POSTVENTA'); setModalSearch(''); }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#8b5cf6', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>POSTVENTA</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{areaDeliveryStats.postventa} ({totalAreaDoughnut > 0 ? Math.round((areaDeliveryStats.postventa / totalAreaDoughnut) * 100) : 0}%)</span>
+              </div>
+
+              <div 
+                className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-0.5"
+                onClick={() => { setModalType('zoom'); setModalSearch(''); }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#ea580c', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>ZOOM</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{areaDeliveryStats.zoom} ({totalAreaDoughnut > 0 ? Math.round((areaDeliveryStats.zoom / totalAreaDoughnut) * 100) : 0}%)</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#000000' }}></span>
-                <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Desconocidos</span>
+          </div>
+        </div>
+
+        {/* DOUGHNUT NARROW: DISTRIBUCIÓN POR ESTATUS */}
+        <div className="lg:col-span-4 bg-white border border-slate-200 shadow-sm flex flex-col justify-between" style={{ borderRadius: '0px' }}>
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805">
+              Distribución por Estatus
+            </h4>
+          </div>
+
+          <div className="p-4 flex flex-col justify-between flex-1 gap-4">
+            {/* SVG Doughnut chart */}
+            <div className="flex-1 flex items-center justify-center py-2 relative">
+              <div className="relative">
+                <svg width="140" height="140" viewBox="0 0 100 100" className="mx-auto select-none overflow-visible">
+                  {/* Circle background */}
+                  <circle cx="50" cy="50" r="36" fill="transparent" stroke="#f8fafc" strokeWidth="12" />
+                  
+                  {/* Segment Disponibles: Vibrant green */}
+                  {strokeDisponibles > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#22c55e" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeDisponibles} ${circ - strokeDisponibles}`} 
+                       strokeDashoffset={offsetDisponibles} 
+                       transform="rotate(-90 50 50)" 
+                       className="cursor-pointer hover:opacity-80 transition-opacity"
+                       onClick={() => { setModalType('disponibles'); setModalSelectedName(null); setModalSearch(''); }}
+                    />
+                  )}
+
+                  {/* Segment Entregados: Vibrant orange */}
+                  {strokeEntregados > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#ea580c" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeEntregados} ${circ - strokeEntregados}`} 
+                       strokeDashoffset={offsetEntregados} 
+                       transform="rotate(-90 50 50)" 
+                       className="cursor-pointer hover:opacity-80 transition-opacity"
+                       onClick={() => { setModalType('entregados'); setModalSelectedName(null); setModalSearch(''); }}
+                    />
+                  )}
+
+                  {/* Segment Otros / S.A.: Slate */}
+                  {strokeOtrosStatus > 0 && (
+                    <circle 
+                       cx="50" 
+                       cy="50" 
+                       r="36" 
+                       fill="transparent" 
+                       stroke="#64748b" 
+                       strokeWidth="12" 
+                       strokeDasharray={`${strokeOtrosStatus} ${circ - strokeOtrosStatus}`} 
+                       strokeDashoffset={offsetOtrosStatus} 
+                       transform="rotate(-90 50 50)" 
+                    />
+                  )}
+                </svg>
+                {/* Doughnut center label */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center select-none mt-0.5">
+                  <span className="text-[9px] uppercase tracking-wider font-bold leading-none" style={{ color: '#000000' }}>Total</span>
+                  <span className="text-xl font-black font-sans tracking-tight" style={{ color: '#000000' }}>{totalCount}</span>
+                </div>
               </div>
-              <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{totalCount - androidCount - linuxCount} ({totalCount > 0 ? Math.round(((totalCount - androidCount - linuxCount) / totalCount) * 100) : 0}%)</span>
+            </div>
+
+            {/* Doughnut Legends */}
+            <div className="flex flex-col gap-1.5 text-[14px] font-bold uppercase tracking-wider mt-1 border-t border-slate-100 pt-3" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>
+              <div 
+                className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-0.5"
+                onClick={() => { setModalType('disponibles'); setModalSelectedName(null); setModalSearch(''); }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#22c55e', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Disponibles</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{disponiblesCount} ({totalCount > 0 ? Math.round((disponiblesCount / totalCount) * 100) : 0}%)</span>
+              </div>
+              
+              <div 
+                className="flex justify-between items-center cursor-pointer hover:bg-slate-50 p-0.5"
+                onClick={() => { setModalType('entregados'); setModalSelectedName(null); setModalSearch(''); }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#ea580c', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Entregados</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{entregadosCount} ({totalCount > 0 ? Math.round((entregadosCount / totalCount) * 100) : 0}%)</span>
+              </div>
+
+              <div className="flex justify-between items-center p-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5" style={{ backgroundColor: '#64748b', borderRadius: '0px' }}></span>
+                  <span style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>Otros / S.A.</span>
+                </div>
+                <span className="font-mono text-[14px]" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>{totalCount - disponiblesCount - entregadosCount} ({totalCount > 0 ? Math.round(((totalCount - disponiblesCount - entregadosCount) / totalCount) * 100) : 0}%)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1394,10 +2135,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       </div>
 
       {/* SECCIÓN 3: CONTROL DE HISTÓRICOS Y PERIODOS */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col gap-5 shadow-sm">
-        <div className="flex items-center flex-wrap gap-4 border-b border-slate-100 pb-3">
-          <h4 className="font-bold text-xs tracking-widest uppercase text-black flex items-center gap-1.5 shrink-0" style={{ color: '#000000' }}>
-            <Calendar className="w-4.5 h-4.5" style={{ color: '#0d9488' }} />
+      <div className="bg-white border border-slate-200 flex flex-col shadow-sm" style={{ borderRadius: '0px' }}>
+        <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex items-center flex-wrap gap-4 justify-between">
+          <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805 flex items-center gap-1.5 shrink-0">
+            <Calendar className="w-4 h-4 text-black" />
             Control de Históricos y Periodos
           </h4>
           <div className="flex items-center gap-2">
@@ -1408,7 +2149,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 setExportCasilleroFilter(e.target.value as any);
                 setCurrentPage(1); // Reset page on filter change
               }}
-              className="text-xs p-1 bg-slate-50 border border-slate-250 rounded-lg text-slate-700 font-bold focus:outline-none focus:ring-1 focus:ring-slate-500 cursor-pointer font-arial"
+              className="text-xs p-1.5 bg-white border border-slate-300 text-slate-850 font-bold focus:outline-none focus:ring-1 focus:ring-slate-500 cursor-pointer font-arial"
+              style={{ borderRadius: '0px' }}
             >
               <option value="all">TODOS LOS EQUIPOS (CON CASILLERO)</option>
               <option value="no-casillero">SOLO GESTIÓN GENERAL (SIN CASILLERO)</option>
@@ -1417,19 +2159,19 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="p-4 grid grid-cols-1 xl:grid-cols-3 gap-4">
           {/* PANEL: INGRESOS ENTREGADOS */}
-          <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 flex flex-col gap-4">
+          <div className="bg-slate-50/50 p-4 border border-slate-200 flex flex-col gap-4" style={{ borderRadius: '0px' }}>
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <h5 className="font-bold text-[11px] tracking-wider uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
-                <Users className="w-3.5 h-3.5 text-orange-500" />
+              <h5 className="font-bold text-[11px] tracking-wider uppercase text-slate-800 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-black" />
                 Historial Entregados
               </h5>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
               {(['hoy', 'semana', 'quincena', 'mes', 'trimestre', 'anual'] as const).map(p => (
-                <div key={p} className="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col items-center justify-between gap-1.5 text-center group transition-all hover:border-slate-350">
+                <div key={p} className="bg-white p-2.5 border border-slate-200 flex flex-col items-center justify-between gap-1.5 text-center group transition-all hover:border-slate-350" style={{ borderRadius: '0px' }}>
                   <span className="text-[9px] text-slate-400 font-extrabold tracking-wider uppercase">{p}</span>
                   <span 
                     onClick={() => setPeriodModalConfig({ period: p, statusGroup: 'entregados' })}
@@ -1440,7 +2182,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   </span>
                   <button
                     onClick={() => handleExportPeriod(p, 'entregados')}
-                    className="w-full mt-2 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded border border-orange-600 text-[9px] font-extrabold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    className="w-full mt-2 py-1 bg-orange-500 hover:bg-orange-600 text-white border border-orange-600 text-[9px] font-extrabold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    style={{ borderRadius: '0px' }}
                   >
                     <FileDown size={10} />
                     <span>EXP</span>
@@ -1451,17 +2194,17 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           </div>
 
           {/* PANEL: INGRESOS DISPONIBLES */}
-          <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 flex flex-col gap-4">
+          <div className="bg-slate-50/50 p-4 border border-slate-200 flex flex-col gap-4" style={{ borderRadius: '0px' }}>
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <h5 className="font-bold text-[11px] tracking-wider uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
-                <Smartphone className="w-3.5 h-3.5 text-green-600" />
+              <h5 className="font-bold text-[11px] tracking-wider uppercase text-slate-800 flex items-center gap-1.5">
+                <Smartphone className="w-3.5 h-3.5 text-black" />
                 Historial Disponibles
               </h5>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
               {(['hoy', 'semana', 'quincena', 'mes', 'trimestre', 'anual'] as const).map(p => (
-                <div key={p} className="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col items-center justify-between gap-1.5 text-center group transition-all hover:border-slate-350">
+                <div key={p} className="bg-white p-2.5 border border-slate-200 flex flex-col items-center justify-between gap-1.5 text-center group transition-all hover:border-slate-350" style={{ borderRadius: '0px' }}>
                   <span className="text-[9px] text-slate-400 font-extrabold tracking-wider uppercase">{p}</span>
                   <span 
                     onClick={() => setPeriodModalConfig({ period: p, statusGroup: 'disponibles' })}
@@ -1472,7 +2215,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   </span>
                   <button
                     onClick={() => handleExportPeriod(p, 'disponibles')}
-                    className="w-full mt-2 py-1 bg-green-600 hover:bg-green-700 text-white rounded border border-green-700 text-[9px] font-extrabold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    className="w-full mt-2 py-1 bg-green-600 hover:bg-green-700 text-white border border-green-700 text-[9px] font-extrabold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    style={{ borderRadius: '0px' }}
                   >
                     <FileDown size={10} />
                     <span>EXP</span>
@@ -1483,17 +2227,17 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           </div>
 
           {/* PANEL: INGRESOS TOTALES */}
-          <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 flex flex-col gap-4">
+          <div className="bg-slate-50/50 p-4 border border-slate-200 flex flex-col gap-4" style={{ borderRadius: '0px' }}>
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <h5 className="font-bold text-[11px] tracking-wider uppercase text-black flex items-center gap-1.5" style={{ color: '#000000' }}>
-                <Layers className="w-3.5 h-3.5 text-blue-600" />
+              <h5 className="font-bold text-[11px] tracking-wider uppercase text-slate-800 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-black" />
                 Historial Totales
               </h5>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
               {(['hoy', 'semana', 'quincena', 'mes', 'trimestre', 'anual'] as const).map(p => (
-                <div key={p} className="bg-white p-2.5 rounded-lg border border-slate-200 flex flex-col items-center justify-between gap-1.5 text-center group transition-all hover:border-slate-350">
+                <div key={p} className="bg-white p-2.5 border border-slate-200 flex flex-col items-center justify-between gap-1.5 text-center group transition-all hover:border-slate-350" style={{ borderRadius: '0px' }}>
                   <span className="text-[9px] text-slate-400 font-extrabold tracking-wider uppercase">{p}</span>
                   <span 
                     onClick={() => setPeriodModalConfig({ period: p, statusGroup: 'total' })}
@@ -1504,7 +2248,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   </span>
                   <button
                     onClick={() => handleExportPeriod(p, 'total')}
-                    className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded border border-blue-700 text-[9px] font-extrabold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    className="w-full mt-2 py-1 bg-blue-600 hover:bg-blue-700 text-white border border-blue-700 text-[9px] font-extrabold flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                    style={{ borderRadius: '0px' }}
                   >
                     <FileDown size={10} />
                     <span>EXP</span>
@@ -1520,20 +2265,21 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Modelos Fisicos Card */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
-          <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
-            <h4 className="font-bold uppercase text-black text-[16px] font-arial" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '16px' }}>
+        <div className="bg-white border border-slate-200 shadow-sm flex flex-col" style={{ borderRadius: '0px' }}>
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h4 className="font-bold uppercase text-slate-805 text-[12px] font-arial">
               Distribución por Modelo Físico
             </h4>
             <button
               onClick={() => { setShowModelDatesModal(true); setModelSearchQuery(''); }}
-              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-extrabold uppercase transition-colors border border-slate-200 cursor-pointer shadow-sm flex items-center gap-1"
+              className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-white text-[9px] font-extrabold uppercase transition-colors border border-transparent cursor-pointer flex items-center gap-1"
+              style={{ borderRadius: '0px', color: '#fff' }}
             >
-              <Calendar size={11} />
+              <Calendar size={10} />
               <span>Ver por Fechas</span>
             </button>
           </div>
-          <div className="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+          <div className="p-3 space-y-0.5 max-h-[220px] overflow-y-auto pr-1">
             {(() => {
               const modelCounts: Record<string, number> = {};
               serials.forEach(s => {
@@ -1548,10 +2294,11 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   <div 
                     key={name} 
                     onClick={() => { setModalType('modeloFisico'); setModalSelectedName(name); setModalSearch(''); }}
-                    className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 hover:border-slate-350 transition-colors cursor-pointer"
+                    className="bg-white border border-slate-200 border-t-0 first:border-t p-2 flex items-center justify-between gap-2 hover:bg-slate-50 cursor-pointer transition-colors"
+                    style={{ borderRadius: '0px' }}
                   >
-                    <span className="text-[14px] font-bold text-black truncate uppercase font-arial" style={{ fontSize: '14px', fontFamily: 'Arial', color: '#000000' }}>{name}</span>
-                    <span className="text-[14px] bg-slate-200 text-black font-mono px-2 py-0.5 rounded-lg flex-shrink-0 font-bold font-arial" style={{ fontSize: '14px', fontFamily: 'Arial', color: '#000000' }}>{count}</span>
+                    <span className="text-[11px] font-extrabold text-slate-800 uppercase font-arial">{name}</span>
+                    <span className="text-[11px] bg-slate-100 text-slate-800 border border-slate-200 font-mono px-2 py-0.5 font-bold font-arial" style={{ borderRadius: '0px' }}>{count}</span>
                   </div>
                 ));
             })()}
@@ -1559,20 +2306,21 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         </div>
 
         {/* Modelos de Negocio Card */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
-          <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
-            <h4 className="font-bold uppercase text-black text-[16px] font-arial" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '16px' }}>
+        <div className="bg-white border border-slate-200 shadow-sm flex flex-col" style={{ borderRadius: '0px' }}>
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h4 className="font-bold uppercase text-slate-805 text-[12px] font-arial">
               Distribución por Modelo de Negocio
             </h4>
             <button
               onClick={() => { setShowBizModelDatesModal(true); setBizModelSearchQuery(''); }}
-              className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-extrabold uppercase transition-colors border border-slate-200 cursor-pointer shadow-sm flex items-center gap-1"
+              className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-white text-[9px] font-extrabold uppercase transition-colors border border-transparent cursor-pointer flex items-center gap-1"
+              style={{ borderRadius: '0px', color: '#fff' }}
             >
-              <Calendar size={11} />
+              <Calendar size={10} />
               <span>Ver por Fechas</span>
             </button>
           </div>
-          <div className="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+          <div className="p-3 space-y-0.5 max-h-[220px] overflow-y-auto pr-1">
             {[
               { label: 'BÁSICO', count: serials.filter(s => s.modeloNegocio === 'BASICO').length },
               { label: 'COMODATO', count: serials.filter(s => s.modeloNegocio === 'COMODATO').length },
@@ -1581,126 +2329,130 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
               <div 
                 key={label} 
                 onClick={() => { setModalType('modeloNegocio'); setModalSelectedName(label); setModalSearch(''); }}
-                className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 flex items-center justify-between gap-2 hover:border-slate-350 transition-colors cursor-pointer"
+                className="bg-white border border-slate-200 border-t-0 first:border-t p-2 flex items-center justify-between gap-2 hover:bg-slate-50 cursor-pointer transition-colors"
+                style={{ borderRadius: '0px' }}
               >
-                <span className="text-[14px] font-bold text-black truncate uppercase font-arial" style={{ fontSize: '14px', fontFamily: 'Arial', color: '#000000' }}>{label}</span>
-                <span className="text-[14px] bg-slate-200 text-black font-mono px-2 py-0.5 rounded-lg flex-shrink-0 font-bold font-arial" style={{ fontSize: '14px', fontFamily: 'Arial', color: '#000000' }}>{count}</span>
+                <span className="text-[11px] font-extrabold text-slate-800 uppercase font-arial">{label}</span>
+                <span className="text-[11px] bg-slate-100 text-slate-800 border border-slate-200 font-mono px-2 py-0.5 font-bold font-arial" style={{ borderRadius: '0px' }}>{count}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Distribución por Departamento (Usuarios) Card */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-4">
-          <div className="border-b border-slate-100 pb-3 flex justify-between items-center">
-            <h4 className="font-bold uppercase text-black text-[16px] font-arial" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '16px' }}>
+        <div className="bg-white border border-slate-200 shadow-sm flex flex-col" style={{ borderRadius: '0px' }}>
+          <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
+            <h4 className="font-bold uppercase text-slate-805 text-[12px] font-arial">
               Distribución por Departamento (Usuarios)
             </h4>
           </div>
 
-          {areaCounts.length === 0 ? (
-            <div className="text-center py-12 text-slate-400 font-mono text-xs uppercase font-bold flex-1 flex items-center justify-center">
-              No hay registros de departamentos.
-            </div>
-          ) : (
-            <>
-              {/* SVG Doughnut chart */}
-              <div className="flex items-center justify-center py-1 relative">
-                <div className="relative">
-                  <svg width="120" height="120" viewBox="0 0 100 100" className="mx-auto select-none overflow-visible">
-                    {/* Circle background */}
-                    <circle cx="50" cy="50" r="36" fill="transparent" stroke="#f8fafc" strokeWidth="12" />
-                    
-                    {/* Segments */}
-                    {(() => {
-                      const circ = 226.195;
-                      const totalAreaCount = areaCounts.reduce((acc, curr) => acc + curr[1], 0);
-                      let accumulatedLength = 0;
+          <div className="p-3 flex-1 flex flex-col justify-between gap-2">
+            {areaCounts.length === 0 ? (
+              <div className="text-center py-12 text-slate-400 font-mono text-xs uppercase font-bold flex-1 flex items-center justify-center">
+                No hay registros de departamentos.
+              </div>
+            ) : (
+              <>
+                {/* SVG Doughnut chart */}
+                <div className="flex items-center justify-center py-1 relative">
+                  <div className="relative">
+                    <svg width="110" height="110" viewBox="0 0 100 100" className="mx-auto select-none overflow-visible">
+                      {/* Circle background */}
+                      <circle cx="50" cy="50" r="36" fill="transparent" stroke="#f8fafc" strokeWidth="12" />
                       
-                      return areaCounts.map(([label, count], index) => {
-                        const percentage = totalAreaCount > 0 ? (count / totalAreaCount) : 0;
-                        const strokeLength = percentage * circ;
-                        const strokeOffset = -accumulatedLength;
-                        accumulatedLength += strokeLength;
-                        const color = DEPARTMENT_COLORS[index % DEPARTMENT_COLORS.length];
-
-                        if (strokeLength <= 0) return null;
+                      {/* Segments */}
+                      {(() => {
+                        const circ = 226.195;
+                        const totalAreaCount = areaCounts.reduce((acc, curr) => acc + curr[1], 0);
+                        let accumulatedLength = 0;
                         
-                        return (
-                          <circle 
-                            key={label}
-                            cx="50" 
-                            cy="50" 
-                            r="36" 
-                            fill="transparent" 
-                            stroke={color} 
-                            strokeWidth="12" 
-                            strokeDasharray={`${strokeLength} ${circ - strokeLength}`} 
-                            strokeDashoffset={strokeOffset} 
-                            transform="rotate(-90 50 50)" 
-                            strokeLinecap="round"
-                            className="cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => { setModalType('departamento'); setModalSelectedName(label); setModalSearch(''); }}
-                            title={`${label}: ${count}`}
-                          />
-                        );
-                      });
-                    })()}
-                  </svg>
-                  {/* Doughnut center label */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center select-none mt-0.5">
-                    <span className="text-[9px] uppercase tracking-wider font-bold leading-none" style={{ color: '#000000' }}>Total</span>
-                    <span className="text-lg font-black font-sans tracking-tight" style={{ color: '#000000' }}>
-                      {areaCounts.reduce((acc, curr) => acc + curr[1], 0)}
-                    </span>
+                        return areaCounts.map(([label, count], index) => {
+                          const percentage = totalAreaCount > 0 ? (count / totalAreaCount) : 0;
+                          const strokeLength = percentage * circ;
+                          const strokeOffset = -accumulatedLength;
+                          accumulatedLength += strokeLength;
+                          const color = DEPARTMENT_COLORS[index % DEPARTMENT_COLORS.length];
+
+                          if (strokeLength <= 0) return null;
+                          
+                          return (
+                            <circle 
+                              key={label}
+                              cx="50" 
+                              cy="50" 
+                              r="36" 
+                              fill="transparent" 
+                              stroke={color} 
+                              strokeWidth="12" 
+                              strokeDasharray={`${strokeLength} ${circ - strokeLength}`} 
+                              strokeDashoffset={strokeOffset} 
+                              transform="rotate(-90 50 50)" 
+                              className="cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => { setModalType('departamento'); setModalSelectedName(label); setModalSearch(''); }}
+                              title={`${label}: ${count}`}
+                            />
+                          );
+                        });
+                      })()}
+                    </svg>
+                    {/* Doughnut center label */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center select-none mt-0.5">
+                      <span className="text-[8px] uppercase tracking-wider font-bold leading-none text-slate-400">Total</span>
+                      <span className="text-base font-black font-sans tracking-tight text-slate-800">
+                        {areaCounts.reduce((acc, curr) => acc + curr[1], 0)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Doughnut Legends */}
-              <div className="flex flex-col gap-1.5 text-[14px] font-bold uppercase tracking-wider mt-1 border-t border-slate-100 pt-3 max-h-[120px] overflow-y-auto pr-1" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>
-                {(() => {
-                  const totalAreaCount = areaCounts.reduce((acc, curr) => acc + curr[1], 0);
-                  return areaCounts.map(([label, count], index) => {
-                    const color = DEPARTMENT_COLORS[index % DEPARTMENT_COLORS.length];
-                    const percentage = totalAreaCount > 0 ? Math.round((count / totalAreaCount) * 100) : 0;
-                    return (
-                      <div 
-                        key={label} 
-                        onClick={() => { setModalType('departamento'); setModalSelectedName(label); setModalSearch(''); }}
-                        className="flex justify-between items-center hover:bg-slate-50 hover:border-slate-100 border border-transparent rounded-lg p-1.5 px-2 cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-1.5 truncate pr-2">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }}></span>
-                          <span className="truncate" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }} title={label}>{label}</span>
+                {/* Doughnut Legends */}
+                <div className="flex flex-col gap-0.5 text-[11px] font-bold uppercase tracking-wider mt-1 border-t border-slate-100 pt-2 max-h-[110px] overflow-y-auto pr-1" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '11px' }}>
+                  {(() => {
+                    const totalAreaCount = areaCounts.reduce((acc, curr) => acc + curr[1], 0);
+                    return areaCounts.map(([label, count], index) => {
+                      const color = DEPARTMENT_COLORS[index % DEPARTMENT_COLORS.length];
+                      const percentage = totalAreaCount > 0 ? Math.round((count / totalAreaCount) * 100) : 0;
+                      return (
+                        <div 
+                          key={label} 
+                          onClick={() => { setModalType('departamento'); setModalSelectedName(label); setModalSearch(''); }}
+                          className="flex justify-between items-center hover:bg-slate-50 border border-slate-200 border-t-0 first:border-t p-1.5 px-2 cursor-pointer transition-colors"
+                          style={{ borderRadius: '0px' }}
+                        >
+                          <div className="flex items-center gap-1.5 truncate pr-2">
+                            <span className="w-2 h-2 shrink-0" style={{ backgroundColor: color, borderRadius: '0px' }}></span>
+                            <span className="truncate text-slate-700" style={{ fontFamily: 'Arial' }} title={label}>{label}</span>
+                          </div>
+                          <span className="font-mono text-slate-800 shrink-0">
+                            {count} ({percentage}%)
+                          </span>
                         </div>
-                        <span className="font-mono text-[14px] shrink-0" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '14px' }}>
-                          {count} ({percentage}%)
-                        </span>
-                      </div>
-                    );
-                  });
-                })()}
-              </div>
-            </>
-          )}
+                      );
+                    });
+                  })()}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
       </div>
 
       {/* SECCIÓN 5: RECENT CUSTOMERS / REGISTRO COMPLETO TABULAR */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div className="bg-white border border-slate-200 overflow-hidden shadow-sm flex flex-col" style={{ borderRadius: '0px' }}>
         <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-          <h4 className="font-black text-xs text-black uppercase tracking-widest flex items-center gap-1.5" style={{ color: '#000000' }}>
-            <BarChart3 className="w-4.5 h-4.5" style={{ color: '#0d9488' }} />
-            Tabla General de Registro y Control
+          <h4 className="font-black text-xs text-slate-805 uppercase tracking-widest flex items-center gap-1.5" style={{ fontFamily: 'Arial' }}>
+            <BarChart3 className="w-4.5 h-4.5 text-black" />
+            Historial de Registros (Consola del Sistema)
           </h4>
 
           <div className="flex items-center gap-2">
             <button 
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              className="p-1 px-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 border border-slate-200 text-[10px] font-bold rounded-lg cursor-pointer text-slate-700 transition-colors pagination-btn"
+              className="p-1 px-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 border border-slate-200 text-[10px] font-bold cursor-pointer text-slate-700 transition-colors pagination-btn"
+              style={{ borderRadius: '0px' }}
             >
               ATRÁS
             </button>
@@ -1708,65 +2460,93 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             <button 
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              className="p-1 px-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 border border-slate-200 text-[10px] font-bold rounded-lg cursor-pointer text-slate-700 transition-colors pagination-btn"
+              className="p-1 px-2.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-30 border border-slate-200 text-[10px] font-bold cursor-pointer text-slate-700 transition-colors pagination-btn"
+              style={{ borderRadius: '0px' }}
             >
               SIGUIENTE
             </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto text-[11px] font-mono">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-200 text-[9px] text-slate-400 font-black tracking-widest uppercase">
-                <th className="py-3 px-4">Serial Terminal</th>
-                <th className="py-3 px-4">Modelo POS</th>
-                <th className="py-3 px-4 w-36">Estado Actual</th>
-                <th className="py-3 px-4">Remitente Origen</th>
-                <th className="py-3 px-4 w-32">Destino</th>
-                <th className="py-3 px-4 w-32">Fecha Ingreso</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-150">
-              {paginatedAll.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-400 font-mono">No hay seriales en la base de datos local.</td>
-                </tr>
-              ) : (
-                paginatedAll.map(s => {
-                  const m = getTerminalModel(s.serial, modelosDB);
-                  return (
-                    <tr key={s.id} className="hover:bg-slate-50 text-black">
-                      <td className="py-3 px-4 font-bold select-all tracking-wider text-black">
-                        {s.serial}
-                      </td>
-                      <td className="py-3 px-4 uppercase font-sans text-black">
-                        {m.modelo}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider block text-center w-28 ${getStatusStyle(s.status)}`}>
+        {/* Logs container with the app style */}
+        <div className="bg-slate-50/30 border-t border-slate-100 overflow-y-auto min-h-[350px] max-h-[500px] flex flex-col divide-y divide-slate-100">
+          {paginatedAll.length === 0 ? (
+            <div className="text-slate-400 italic py-8 px-4 font-mono text-xs">
+              No se encontraron registros de seriales cargados en la base de datos local.
+            </div>
+          ) : (
+            paginatedAll.map(s => {
+              const m = getTerminalModel(s.serial, modelosDB);
+              const timeStr = s.date ? s.date.split('-').reverse().join('/') : 'S/F';
+              const remitenteText = s.remitente ? s.remitente.toUpperCase() : 'DESCONOCIDO';
+              
+              return (
+                <div key={s.id} className="py-3.5 px-4 hover:bg-slate-50/80 transition-colors flex flex-col gap-1 text-xs text-slate-700 font-sans">
+                  <div className="flex items-start gap-3">
+                    {/* Clean text bullet indicator */}
+                    <span className="text-teal-600 font-bold shrink-0 select-none">→</span>
+                    
+                    <div className="flex-1 leading-relaxed">
+                      <span className="text-slate-400 font-mono font-bold mr-2">[{timeStr}]</span>
+                      
+                      {s.isCasillero ? (
+                        <>
+                          Se ha añadido a <span className="font-extrabold text-slate-900">Casillero</span> el serial{" "}
+                          <span className="font-mono bg-slate-100 border border-slate-200 px-1.5 py-0.5 font-bold select-all text-slate-900">{s.serial}</span>{" "}
+                          ({m.modelo}) con razón social <span className="font-bold text-slate-900 uppercase">[{s.razonSocial || 'SIN RAZÓN SOCIAL'}]</span>{" "}
+                          y su RIF <span className="font-bold text-slate-900">[{s.rif || 'SIN RIF'}]</span>, enviado por{" "}
+                          <span 
+                            className="text-teal-600 hover:text-teal-800 font-extrabold uppercase cursor-pointer hover:underline"
+                            onClick={() => onUserClick(s.remitente)}
+                          >
+                            {remitenteText}
+                          </span>.
+                        </>
+                      ) : (
+                        <>
+                          Se ha añadido el serial{" "}
+                          <span className="font-mono bg-slate-100 border border-slate-200 px-1.5 py-0.5 font-bold select-all text-slate-900">{s.serial}</span>{" "}
+                          ({m.modelo}) enviado por{" "}
+                          <span 
+                            className="text-teal-600 hover:text-teal-800 font-extrabold uppercase cursor-pointer hover:underline"
+                            onClick={() => onUserClick(s.remitente)}
+                          >
+                            {remitenteText}
+                          </span>.
+                        </>
+                      )}
+                      
+                      <span className="ml-2 inline-flex items-center gap-1">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase">Estado:</span>
+                        <span className={`px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider font-sans ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
                           {s.status}
                         </span>
-                      </td>
-                      <td className="py-3 px-4 uppercase font-sans text-black font-semibold">
-                        <span 
-                          onClick={() => onUserClick(s.remitente)}
-                          className="cursor-pointer hover:text-black hover:underline flex items-center gap-1"
-                        >
-                          {s.remitente}
-                          {usersProfiles[s.remitente] && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-350" title="Perfil asociado"></span>
-                          )}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 uppercase font-sans text-black">{s.destino || '-'}</td>
-                      <td className="py-3 px-4 text-black">{s.displayDate}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {s.history && s.history.length > 0 && (
+                    <div className="ml-6 pl-3.5 border-l-2 border-slate-200 text-slate-500 font-sans text-[11px] flex flex-col gap-1.5 mt-1">
+                      {s.history.map((hLine, hIdx) => {
+                        const parts = hLine.split(' | ');
+                        const timePart = parts[0];
+                        const changePart = parts[1] || '';
+                        
+                        return (
+                          <div key={hIdx} className="flex items-start sm:items-center gap-2">
+                            <span className="text-slate-400 font-mono font-semibold select-none">↳</span>
+                            <span className="text-slate-400 font-mono whitespace-nowrap">[{timePart}]</span>
+                            <span className="font-semibold text-slate-500 uppercase tracking-tight text-[9px] bg-slate-100 px-1 py-0.5 border border-slate-200/55 shrink-0 select-none">MODIFICACIÓN:</span>
+                            <span className="text-slate-605 font-medium">{changePart}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -1777,7 +2557,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className={`bg-white border border-slate-200 w-full ${(modalType === 'cliente' || modalType === 'colaborador') ? 'max-w-5xl' : 'max-w-2xl'} p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in font-arial`}
+            className={`bg-white border border-slate-200 w-full ${(modalType === 'cliente' || modalType === 'colaborador') ? 'max-w-5xl' : 'max-w-6xl'} p-6 flex flex-col gap-4 shadow-xl max-h-[85vh] overflow-hidden animate-fade-in font-arial`}
             style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
@@ -1797,7 +2577,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                            modalType === 'modeloNegocio' ? `EQUIPOS - MODELO DE NEGOCIO: ${modalSelectedName}` :
                            modalType === 'departamento' ? `EQUIPOS - DEPARTAMENTO: ${modalSelectedName}` : ''}
                 </h3>
-                <p className="text-[11px] text-slate-450 mt-1 font-mono">
+                <p className="text-[11px] text-slate-455 mt-1 font-mono">
                   Encontrados: {modalList.length} registros para este enfoque.
                 </p>
               </div>
@@ -1809,12 +2589,13 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         ? modalList.filter(s => s.date === detailSelectedDate)
                         : modalList;
                       if (itemsToExport.length === 0) { alert("No hay datos para exportar."); return; }
-                      const header = "sep=;\nSERIAL;MODELO;SO;ESTATUS;REMITENTE;CLIENTE_RAZON_SOCIAL;RIF;TICKET;GUIA_ENTRADA;DESTINO;SIN_COSTO;FECHA_INGRESO";
+                      const { headers } = getPOSItemFields(itemsToExport[0], modalType || '');
+                      const header = "sep=;\n" + headers.join(";") + "\n";
                       const rows = itemsToExport.map(s => {
-                        const m = getTerminalModel(s.serial, modelosDB);
-                        return [s.serial, m.modelo, m.so, s.status || 'SIN ESTATUS', s.remitente || '', s.razonSocial || '', s.rif || '', s.ticket || '', s.source || '', s.destino || '', s.sinCosto ? 'TRUE' : 'FALSE', s.displayDate || s.date || ''].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
+                        const { values } = getPOSItemFields(s, modalType || '');
+                        return values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
                       });
-                      const csvContent = [header, ...rows].join("\n");
+                      const csvContent = header + rows.join("\n");
                       downloadCSV(csvContent, `Detalle_${modalType}_${modalSelectedName}_${detailSelectedDate || 'TODOS'}_${new Date().toISOString().split('T')[0]}.csv`);
                     }}
                     className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
@@ -1854,79 +2635,53 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 return (
                   <div className="flex flex-1 overflow-hidden gap-0 border border-slate-200" style={{ borderRadius: '0px' }}>
                     {/* LEFT SIDEBAR: Dates */}
-                    <div className="w-52 flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50 overflow-y-auto">
+                    <div className="w-52 flex-shrink-0 border-r border-slate-200 flex flex-col bg-slate-50 overflow-y-auto select-none">
                       <div className="px-3 py-2.5 bg-slate-100 border-b border-slate-200 sticky top-0 z-10 flex-shrink-0">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600" style={{ fontFamily: 'Arial' }}>FECHA DE ENTREGAS</span>
                       </div>
-                      <button
+                      <div
                         onClick={() => setDetailSelectedDate(null)}
                         className={`w-full text-left px-3 py-3 text-[11px] font-bold uppercase border-b border-slate-250 cursor-pointer transition-colors ${!detailSelectedDate ? (modalType === 'colaborador' ? 'bg-blue-600 text-white font-black' : 'bg-green-600 text-white font-black') : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}
                         style={{ borderRadius: '0px', fontFamily: 'Arial', fontWeight: 'bold' }}
                       >
                         MOSTRAR TODOS ({modalList.length})
-                      </button>
+                      </div>
                       <div className="h-2 bg-slate-200 border-b border-slate-250 flex-shrink-0"></div>
                       {uniqueDates.map(date => {
                         const count = modalList.filter(s => s.date === date).length;
                         const isSelected = detailSelectedDate === date;
                         return (
-                          <button
+                           <div
                             key={date}
                             onClick={() => setDetailSelectedDate(date)}
-                            className={`w-full text-left px-3 py-2.5 text-[11px] font-bold border-b border-slate-100 cursor-pointer transition-colors ${isSelected ? (modalType === 'colaborador' ? 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500 font-bold' : 'bg-green-50 text-green-700 border-l-2 border-l-green-500 font-bold') : 'text-slate-600 hover:bg-slate-100'}`}
+                            className={`w-full text-left px-3 py-2.5 text-[11px] font-bold border-b border-slate-100 cursor-pointer transition-colors ${isSelected ? (modalType === 'colaborador' ? 'bg-blue-50 text-blue-700 border-l-2 border-l-blue-500 font-bold' : 'bg-green-50 text-green-700 border-l-2 border-l-green-500 font-bold') : 'text-slate-650 hover:bg-slate-100 bg-white'}`}
                             style={{ borderRadius: '0px', fontFamily: 'Arial', fontWeight: 'bold' }}
                           >
                             {date} <span className="text-slate-400 text-[9px] ml-1">({count})</span>
-                          </button>
+                          </div>
                         );
                       })}
                     </div>
-                    {/* RIGHT PANEL: 4-column serial grid */}
-                    <div className="flex-1 overflow-y-auto bg-white p-4">
-                      <div className="px-1 pb-2 mb-3 border-b border-slate-100">
+                    {/* RIGHT PANEL: simple read-only table like Casillero */}
+                    <div className="flex-1 overflow-y-auto bg-white p-4 flex flex-col gap-2">
+                      <div className="px-1 pb-2 border-b border-slate-100 flex-shrink-0">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500" style={{ fontFamily: 'Arial' }}>
                           {detailSelectedDate ? `SERIALES DEL ${detailSelectedDate}` : 'TODOS LOS SERIALES'} — {serialsForDate.length} equipos
                         </span>
                       </div>
-                      {serialsForDate.length === 0 ? (
-                        <div className="text-center py-10 text-slate-400 text-xs font-bold uppercase" style={{ fontFamily: 'Arial' }}>No hay seriales para esta fecha.</div>
-                      ) : (
-                        <div className="grid grid-cols-4 gap-2">
-                          {serialsForDate.map((s, idx) => {
-                            const m = getTerminalModel(s.serial, modelosDB);
-                            return (
-                              <div 
-                                key={s.id} 
-                                className="border border-slate-200 p-2.5 hover:bg-slate-50 transition-colors cursor-pointer flex flex-col gap-1"
-                                style={{ borderRadius: '0px' }}
-                                onClick={() => handleCopyText(s.serial, `split-serial-${s.id}`)}
-                                title="Click para copiar serial"
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[11px] font-bold text-slate-900 select-all tracking-wider" style={{ fontFamily: 'Arial' }}>
-                                    {s.serial}
-                                  </span>
-                                  {copiedKey === `split-serial-${s.id}` && (
-                                    <span className="inline-flex items-center justify-center bg-emerald-600 p-0.5 animate-fade-in shrink-0" style={{ borderRadius: '0px' }}>
-                                      <Check className="w-2.5 h-2.5 text-white" />
-                                    </span>
-                                  )}
-                                </div>
-                                <span className={`px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-center ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
-                                  {s.status}
-                                </span>
-                                <span className="text-[8px] text-slate-400 font-bold uppercase truncate" style={{ fontFamily: 'Arial' }}>{m.modelo}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+                      <div className="flex-1 overflow-y-auto font-arial">
+                        {serialsForDate.length === 0 ? (
+                          <div className="text-center py-10 text-slate-450 uppercase font-bold text-[11px]">No hay seriales para esta fecha.</div>
+                        ) : (
+                          renderPOSCustomTable(serialsForDate, modalType || '')
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })()
             ) : (
-              /* STANDARD LIST VIEW for other modal types */
+              /* STANDARD LIST VIEW for other modal types using custom read-only table layout */
               <>
                 {/* Date filter container */}
                 {renderDateRangeFilter()}
@@ -1936,52 +2691,57 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   <input
                     type="text"
                     value={modalSearch}
-                    onChange={e => setModalSearch(e.target.value)}
+                    onChange={e => { setModalSearch(e.target.value); setModalCurrentPage(1); }}
                     placeholder="Filtrar por serial, remitente, cliente RIF..."
-                    className="w-full text-xs p-2.5 pl-8 bg-white border border-slate-350 text-slate-800 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500"
+                    className="w-full text-xs p-2.5 pl-8 bg-white border border-slate-350 text-slate-800 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 font-bold"
                     style={{ borderRadius: '0px' }}
                   />
-                  <Search size={14} className="absolute left-2.5 top-3.5" style={{ color: '#0d9488' }} />
+                  <Search size={14} className="absolute left-2.5 top-3.5 text-black" />
                 </div>
 
-                <div className="overflow-y-auto pr-1 flex-1 font-arial text-[13px] flex flex-col gap-2">
+                <div className="overflow-y-auto pr-1 flex-1 font-arial">
                   {modalList.length === 0 ? (
-                    <div className="text-center py-10 text-slate-450">Ningún registro coincide con el filtro del modal.</div>
+                    <div className="text-center py-10 text-slate-450 font-bold uppercase text-xs">Ningún registro coincide con el filtro del modal.</div>
                   ) : (
-                    modalList.map(s => {
-                      const m = getTerminalModel(s.serial, modelosDB);
+                    (() => {
+                      const itemsPerPageModal = 20;
+                      const totalModalPages = Math.ceil(modalList.length / itemsPerPageModal);
+                      const startIndex = (modalCurrentPage - 1) * itemsPerPageModal;
+                      const endIndex = startIndex + itemsPerPageModal;
+                      const paginatedItems = modalList.slice(startIndex, endIndex);
+
                       return (
-                        <div key={s.id} className="py-3 px-4 hover:bg-slate-100/70 bg-slate-50/50 border border-slate-200/60 flex justify-between items-center gap-4 transition-all" style={{ borderRadius: '0px' }}>
-                          <div className="flex flex-col gap-1">
-                            <span 
-                              className="text-[14px] font-extrabold text-slate-900 select-all tracking-wider font-arial cursor-pointer hover:text-slate-600 transition-colors flex items-center gap-1"
-                              onClick={(e) => { e.stopPropagation(); handleCopyText(s.serial, `modal-serial-${s.id}`); }}
-                              title="Click para copiar"
-                            >
-                              {s.serial}
-                              {copiedKey === `modal-serial-${s.id}` && (
-                                <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 p-0.5 ml-1 transition-all animate-fade-in shrink-0" style={{ borderRadius: '0px' }}>
-                                  <Check className="w-3 h-3 text-white" />
-                                </span>
-                              )}
-                            </span>
-                            <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-600 font-medium font-arial">
-                              <span className="bg-slate-200/70 text-slate-800 px-1.5 py-0.5 font-bold uppercase" style={{ borderRadius: '0px' }}>{m.modelo}</span>
-                              {s.razonSocial && (
-                                <span className="text-slate-700">Cliente: <span className="font-bold">{s.razonSocial}</span></span>
-                              )}
-                            </div>
-                          </div>
+                        <div className="flex flex-col gap-4">
+                          {renderPOSCustomTable(paginatedItems, modalType || '')}
                           
-                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                            <span className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider block text-center ${getStatusStyle(s.status)}`} style={{ borderRadius: '0px' }}>
-                              {s.status}
-                            </span>
-                            <span className="text-[11px] font-bold text-slate-500 font-arial">Ingreso: {s.displayDate}</span>
-                          </div>
+                          {totalModalPages > 1 && (
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 flex-shrink-0">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase">
+                                Página {modalCurrentPage} de {totalModalPages}
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  disabled={modalCurrentPage === 1}
+                                  onClick={() => setModalCurrentPage(p => Math.max(1, p - 1))}
+                                  className="px-2 py-1 bg-white hover:bg-slate-100 disabled:opacity-30 border border-slate-200 text-xs cursor-pointer font-bold uppercase animate-none"
+                                  style={{ borderRadius: '0px' }}
+                                >
+                                  Anterior
+                                </button>
+                                <button
+                                  disabled={modalCurrentPage === totalModalPages}
+                                  onClick={() => setModalCurrentPage(p => Math.min(totalModalPages, p + 1))}
+                                  className="px-2 py-1 bg-white hover:bg-slate-100 disabled:opacity-30 border border-slate-200 text-xs cursor-pointer font-bold uppercase animate-none"
+                                  style={{ borderRadius: '0px' }}
+                                >
+                                  Siguiente
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
-                    })
+                    })()
                   )}
                 </div>
               </>
@@ -1990,7 +2750,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         </div>,
         document.body
       )}
-      
+
       {/* DETALLE PERIOD MODAL OVERLAY */}
       {periodModalConfig && createPortal(
         <div 
@@ -1998,7 +2758,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in"
+            className="bg-white border border-slate-200 w-full max-w-6xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in"
+            style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
@@ -2006,24 +2767,57 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider">
                   {periodModalConfig.statusGroup === 'entregados' 
                     ? 'HISTORIAL DE EQUIPOS ENTREGADOS' 
-                    : 'HISTORIAL DE EQUIPOS DISPONIBLES'}
+                    : periodModalConfig.statusGroup === 'disponibles'
+                    ? 'HISTORIAL DE EQUIPOS DISPONIBLES'
+                    : 'HISTORIAL DE TODOS LOS EQUIPOS'}
                 </h3>
-                <p className="text-[10px] text-slate-450 mt-1 uppercase font-mono">
+                <p className="text-[10px] text-slate-455 mt-1 uppercase font-mono">
                   Rango: {periodModalConfig.period}
                 </p>
               </div>
-              <button 
-                onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 rounded text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
-              >
-                Cerrar ✕
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    let list = obtenerPeriodoItems(periodModalConfig.period, periodModalConfig.statusGroup);
+                    if (modalDateDesde) {
+                      list = list.filter(s => s.date >= modalDateDesde);
+                    }
+                    if (modalDateHasta) {
+                      list = list.filter(s => s.date <= modalDateHasta);
+                    }
+                    if (list.length === 0) {
+                      alert("No hay datos para exportar.");
+                      return;
+                    }
+                    const { headers } = getPOSItemFields(list[0], 'periodo');
+                    const header = "sep=;\n" + headers.join(";") + "\n";
+                    const rows = list.map(s => {
+                      const { values } = getPOSItemFields(s, 'periodo');
+                      return values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
+                    });
+                    const csvContent = header + rows.join("\n");
+                    downloadCSV(csvContent, `Periodo_${periodModalConfig.statusGroup}_${periodModalConfig.period}_${new Date().toISOString().split('T')[0]}.csv`);
+                  }}
+                  className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                  style={{ borderRadius: '0px' }}
+                >
+                  <FileDown size={14} />
+                  Exportar a Excel
+                </button>
+                <button 
+                  onClick={closeAllModals}
+                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                  style={{ borderRadius: '0px' }}
+                >
+                  Cerrar ✕
+                </button>
+              </div>
             </div>
 
             {/* Date filter container */}
             {renderDateRangeFilter()}
 
-            <div className="overflow-y-auto pr-1 flex-1 font-arial text-[13px] flex flex-col gap-2">
+            <div className="overflow-y-auto pr-1 flex-1 font-arial">
               {(() => {
                 let list = obtenerPeriodoItems(periodModalConfig.period, periodModalConfig.statusGroup);
                 if (modalDateDesde) {
@@ -2035,35 +2829,14 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 if (list.length === 0) {
                   return <div className="text-center py-10 text-slate-450">Ningún registro en este periodo con las fechas seleccionadas.</div>;
                 }
-                return list.map(s => {
-                  const m = getTerminalModel(s.serial, modelosDB);
-                  return (
-                    <div key={s.id} className="py-3 px-4 hover:bg-slate-100/70 bg-slate-50/50 border border-slate-200/60 rounded-xl flex justify-between items-center gap-4 transition-all">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[14px] font-extrabold text-slate-900 select-all tracking-wider font-arial">{s.serial}</span>
-                        <div className="flex flex-wrap items-center gap-2 text-[12px] text-slate-600 font-medium font-arial">
-                          <span className="bg-slate-200/70 text-slate-800 px-1.5 py-0.5 rounded font-bold uppercase">{m.modelo}</span>
-                          {s.remitente && (
-                            <span className="text-slate-700">Remitente: <span className="font-bold">{s.remitente}</span></span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider block text-center ${getStatusStyle(s.status)}`}>
-                          {s.status}
-                        </span>
-                        <span className="text-[11px] font-bold text-slate-500 font-arial">{s.displayDate}</span>
-                      </div>
-                    </div>
-                  );
-                });
+                return renderPOSCustomTable(list, 'periodo');
               })()}
             </div>
           </div>
         </div>,
         document.body
       )}
-
+      
        {/* HISTORIAL GENERAL DE SIM-CARDS REGISTRADAS (PORTAL MODAL) */}
       {showSimsModal && createPortal(
         <div 
@@ -2071,25 +2844,37 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in font-arial"
+            className="bg-white border border-slate-200 w-full max-w-xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in font-arial"
+            style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
                 <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <CardSim size={18} className="text-blue-600 animate-pulse" />
+                  <CardSim size={18} className="text-black" />
                   Historial de SIM-Cards Registradas
                 </h3>
-                <p className="text-[10px] text-slate-450 mt-1 uppercase font-mono">
+                <p className="text-[10px] text-slate-455 mt-1 uppercase font-mono">
                   Historial de Equipos + SIM-Cards Anuladas
                 </p>
               </div>
-              <button 
-                onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 rounded text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
-              >
-                Cerrar ✕
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={handleExportSims}
+                  className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                  style={{ borderRadius: '0px' }}
+                >
+                  <FileDown size={14} />
+                  Exportar CSV
+                </button>
+                <button 
+                  onClick={closeAllModals}
+                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                  style={{ borderRadius: '0px' }}
+                >
+                  Cerrar ✕
+                </button>
+              </div>
             </div>
 
             {/* Date filter container */}
@@ -2102,9 +2887,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 value={simsSearchQuery}
                 onChange={e => setSimsSearchQuery(e.target.value)}
                 placeholder="BUSCAR POR SERIAL DE SIM-CARD O FUENTE"
-                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-905 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                style={{ borderRadius: '0px' }}
               />
-              <Search size={13} className="absolute left-2.5 top-3.5 text-slate-455" />
+              <Search size={13} className="absolute left-2.5 top-3.5 text-black" />
               {simsSearchQuery && (
                 <button
                   onClick={() => setSimsSearchQuery('')}
@@ -2116,7 +2902,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             </div>
 
             {/* TABLA LISTADO DE SIMS */}
-            <div className="overflow-y-auto pr-1 flex-1 font-arial text-[13px] bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2">
+            <div className="overflow-y-auto pr-1 flex-1 font-arial">
               {(() => {
                 const query = simsSearchQuery.toUpperCase().trim();
                 let filteredSims = allSimsList.filter(s => 
@@ -2132,29 +2918,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 }
 
                 if (filteredSims.length === 0) {
-                  return <div className="text-center py-10 text-slate-450 uppercase font-bold text-[11px] font-arial">No se encontraron seriales de SIM-Card.</div>;
+                  return <div className="text-center py-10 text-slate-455 uppercase font-bold text-[11px] font-arial">No se encontraron seriales de SIM-Card.</div>;
                 }
 
-                return filteredSims.map((s, idx) => (
-                  <div key={s.id} className="py-3 px-4 hover:bg-slate-100/70 bg-white border border-slate-200/60 rounded-xl flex justify-between items-center gap-4 transition-all">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[14px] font-extrabold text-slate-900 select-all tracking-wider font-arial">{s.serial}</span>
-                      <span className="text-[12px] text-slate-600 font-medium font-arial uppercase">{s.source}</span>
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider block text-center ${
-                        s.status === 'ANULADA'
-                          ? 'bg-red-100 text-red-800 border border-red-200'
-                          : ['DISPONIBLE', 'CANCELADO', 'RECUPERADO', 'N#A'].includes(s.status.toUpperCase())
-                            ? 'bg-green-100 text-green-800 border border-green-200'
-                            : 'bg-orange-100 text-orange-850 border border-orange-200'
-                      }`}>
-                        {s.status}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-500 font-arial">{s.date}</span>
-                    </div>
-                  </div>
-                ));
+                return renderSIMOnlySerialsTable(filteredSims);
               })()}
             </div>
           </div>
@@ -2176,7 +2943,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
                 <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Arial' }}>
-                  <Users size={18} className="text-emerald-600" style={{ color: '#16a34a' }} />
+                  <Users size={18} className="text-black" />
                   Desglose de Entregas por Clientes
                 </h3>
                 <p className="text-[10px] text-slate-450 mt-1 uppercase font-mono">
@@ -2222,10 +2989,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 value={clientesSearchQuery}
                 onChange={e => setClientesSearchQuery(e.target.value)}
                 placeholder="BUSCAR CLIENTE / REMITENTE..."
-                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-900 uppercase placeholder-slate-400 font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-905 uppercase placeholder-slate-450 font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
                 style={{ borderRadius: '0px' }}
               />
-              <Search size={13} className="absolute left-2.5 top-3.5 text-slate-455" />
+              <Search size={13} className="absolute left-2.5 top-3.5 text-black" />
               {clientesSearchQuery && (
                 <button
                   onClick={() => setClientesSearchQuery('')}
@@ -2270,7 +3037,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                           setDetailSelectedDate(null);
                           setShowAllClientesModal(false);
                         }}
-                        className="hover:bg-slate-50 text-slate-800 transition-colors cursor-pointer"
+                        className="hover:bg-slate-50 text-slate-805 transition-colors cursor-pointer"
                       >
                         <td className="py-3.5 px-4 font-extrabold select-all tracking-wider text-slate-900 flex items-center gap-2 text-[13px] font-arial">
                           <span className="text-[10px] text-slate-400 font-sans">#{idx + 1}</span>
@@ -2302,7 +3069,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
                 <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2" style={{ fontFamily: 'Arial' }}>
-                  <Users size={18} className="text-slate-900" style={{ color: '#0f172a' }} />
+                  <Users size={18} className="text-black" />
                   Desglose de Entregas por Usuarios Disglobal
                 </h3>
                 <p className="text-[10px] text-slate-455 mt-1 uppercase font-mono">
@@ -2348,10 +3115,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 value={colaboradoresSearchQuery}
                 onChange={e => setColaboradoresSearchQuery(e.target.value)}
                 placeholder="BUSCAR USUARIO DISGLOBAL / REMITENTE..."
-                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-900 uppercase placeholder-slate-400 font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-905 uppercase placeholder-slate-400 font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
                 style={{ borderRadius: '0px' }}
               />
-              <Search size={13} className="absolute left-2.5 top-3.5 text-slate-455" />
+              <Search size={13} className="absolute left-2.5 top-3.5 text-black" />
               {colaboradoresSearchQuery && (
                 <button
                   onClick={() => setColaboradoresSearchQuery('')}
@@ -2396,7 +3163,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                           setDetailSelectedDate(null);
                           setShowAllColaboradoresModal(false);
                         }}
-                        className="hover:bg-slate-50 text-slate-800 transition-colors cursor-pointer"
+                        className="hover:bg-slate-50 text-slate-805 transition-colors cursor-pointer"
                       >
                         <td className="py-3.5 px-4 font-extrabold select-all tracking-wider text-slate-900 flex items-center gap-2 text-[13px] font-arial">
                           <span className="text-[10px] text-slate-400 font-sans">#{idx + 1}</span>
@@ -2421,25 +3188,55 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in font-arial"
+            className="bg-white border border-slate-200 w-full max-w-6xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in font-arial"
+            style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
                 <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <Smartphone size={18} className="text-blue-600" />
+                  <Smartphone size={18} className="text-black" />
                   Historial de Arribo por Modelos Físicos
                 </h3>
                 <p className="text-[10px] text-slate-455 mt-1 uppercase font-mono">
                   Listado cronológico de ingresos agrupados por modelo físico
                 </p>
               </div>
-              <button 
-                onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 rounded text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
-              >
-                Cerrar ✕
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    const query = modelSearchQuery.toUpperCase().trim();
+                    let filtered = physicalModelsArrivals.filter(s => 
+                      s.serial.includes(query) ||
+                      s.modeloName.toUpperCase().includes(query) ||
+                      (s.remitente && s.remitente.toUpperCase().includes(query))
+                    );
+                    if (modalDateDesde) filtered = filtered.filter(s => s.date >= modalDateDesde);
+                    if (modalDateHasta) filtered = filtered.filter(s => s.date <= modalDateHasta);
+                    if (filtered.length === 0) { alert("No hay datos para exportar."); return; }
+                    const { headers } = getPOSItemFields(filtered[0], 'modeloFisicoDates');
+                    const header = "sep=;\n" + headers.join(";") + "\n";
+                    const rows = filtered.map(s => {
+                      const { values } = getPOSItemFields(s, 'modeloFisicoDates');
+                      return values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
+                    });
+                    const csvContent = header + rows.join("\n");
+                    downloadCSV(csvContent, `Historial_ModelosFisicos_${new Date().toISOString().split('T')[0]}.csv`);
+                  }}
+                  className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                  style={{ borderRadius: '0px' }}
+                >
+                  <FileDown size={14} />
+                  Exportar CSV
+                </button>
+                <button 
+                  onClick={closeAllModals}
+                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                  style={{ borderRadius: '0px' }}
+                >
+                  Cerrar ✕
+                </button>
+              </div>
             </div>
 
             {/* Date filter container */}
@@ -2452,9 +3249,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 value={modelSearchQuery}
                 onChange={e => setModelSearchQuery(e.target.value)}
                 placeholder="BUSCAR POR MODELO, SERIAL O REMITENTE..."
-                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-905 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                style={{ borderRadius: '0px' }}
               />
-              <Search size={13} className="absolute left-2.5 top-3.5 text-slate-455" />
+              <Search size={13} className="absolute left-2.5 top-3.5 text-black" />
               {modelSearchQuery && (
                 <button
                   onClick={() => setModelSearchQuery('')}
@@ -2466,7 +3264,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             </div>
 
             {/* Listado / Tabla */}
-            <div className="overflow-y-auto pr-1 flex-1 font-arial text-[13px] bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2">
+            <div className="overflow-y-auto pr-1 flex-1 font-arial">
               {(() => {
                 const query = modelSearchQuery.toUpperCase().trim();
                 let filtered = physicalModelsArrivals.filter(s => 
@@ -2486,26 +3284,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   return <div className="text-center py-10 text-slate-450 uppercase font-bold text-[11px] font-arial">No se encontraron registros.</div>;
                 }
 
-                return filtered.map(s => (
-                  <div key={s.id} className="py-3 px-4 hover:bg-slate-100/70 bg-white border border-slate-200/60 rounded-xl flex justify-between items-center gap-4 transition-all">
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[14px] font-extrabold text-slate-900 select-all tracking-wider font-arial">{s.serial}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-sans uppercase font-bold leading-none">{s.modeloName}</span>
-                        <span className="text-[10px] bg-slate-200/80 text-slate-500 px-1.5 py-0.5 rounded font-sans uppercase leading-none">{s.so}</span>
-                      </div>
-                      {s.remitente && (
-                        <span className="text-[12px] text-slate-600 font-arial mt-0.5">Remitente: <span className="font-bold uppercase">{s.remitente}</span></span>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider block text-center ${getStatusStyle(s.status)}`}>
-                        {s.status}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-500 font-arial">{s.displayDate}</span>
-                    </div>
-                  </div>
-                ));
+                return renderPOSCustomTable(filtered, 'modeloFisicoDates');
               })()}
             </div>
           </div>
@@ -2520,25 +3299,55 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           onClick={closeAllModals}
         >
           <div 
-            className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in font-arial"
+            className="bg-white border border-slate-200 w-full max-w-6xl p-6 flex flex-col gap-4 shadow-xl max-h-[80vh] overflow-hidden animate-fade-in font-arial"
+            style={{ borderRadius: '0px' }}
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 flex-shrink-0">
               <div>
                 <h3 className="font-bold text-base text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                  <Layers size={18} className="text-blue-600" />
+                  <Layers size={18} className="text-black" />
                   Historial de Arribo por Modelos de Negocio
                 </h3>
                 <p className="text-[10px] text-slate-455 mt-1 uppercase font-mono">
                   Listado cronológico de ingresos agrupados por modelo de negocio
                 </p>
               </div>
-              <button 
-                onClick={closeAllModals}
-                className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 rounded text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
-              >
-                Cerrar ✕
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    const query = bizModelSearchQuery.toUpperCase().trim();
+                    let filtered = bizModelsArrivals.filter(s => 
+                      s.serial.includes(query) ||
+                      s.bizModelName.toUpperCase().includes(query) ||
+                      (s.remitente && s.remitente.toUpperCase().includes(query))
+                    );
+                    if (modalDateDesde) filtered = filtered.filter(s => s.date >= modalDateDesde);
+                    if (modalDateHasta) filtered = filtered.filter(s => s.date <= modalDateHasta);
+                    if (filtered.length === 0) { alert("No hay datos para exportar."); return; }
+                    const { headers } = getPOSItemFields(filtered[0], 'modeloNegocioDates');
+                    const header = "sep=;\n" + headers.join(";") + "\n";
+                    const rows = filtered.map(s => {
+                      const { values } = getPOSItemFields(s, 'modeloNegocioDates');
+                      return values.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";");
+                    });
+                    const csvContent = header + rows.join("\n");
+                    downloadCSV(csvContent, `Historial_ModelosNegocio_${new Date().toISOString().split('T')[0]}.csv`);
+                  }}
+                  className="text-white font-bold bg-green-600 hover:bg-green-700 px-2.5 py-1 text-xs cursor-pointer transition-colors flex items-center gap-1.5 shadow-sm border border-green-700"
+                  style={{ borderRadius: '0px' }}
+                >
+                  <FileDown size={14} />
+                  Exportar CSV
+                </button>
+                <button 
+                  onClick={closeAllModals}
+                  className="text-slate-700 font-bold p-1 bg-slate-100 hover:bg-slate-200 text-xs px-2.5 py-1 border border-slate-200 cursor-pointer"
+                  style={{ borderRadius: '0px' }}
+                >
+                  Cerrar ✕
+                </button>
+              </div>
             </div>
 
             {/* Date filter container */}
@@ -2551,9 +3360,10 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 value={bizModelSearchQuery}
                 onChange={e => setBizModelSearchQuery(e.target.value)}
                 placeholder="BUSCAR POR MODELO DE NEGOCIO, SERIAL O REMITENTE..."
-                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                className="w-full text-xs p-2.5 pl-8 bg-slate-100 border border-transparent text-slate-905 uppercase placeholder-slate-400 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono"
+                style={{ borderRadius: '0px' }}
               />
-              <Search size={13} className="absolute left-2.5 top-3.5 text-slate-455" />
+              <Search size={13} className="absolute left-2.5 top-3.5 text-black" />
               {bizModelSearchQuery && (
                 <button
                   onClick={() => setBizModelSearchQuery('')}
@@ -2565,7 +3375,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             </div>
 
             {/* Listado / Tabla */}
-            <div className="overflow-y-auto pr-1 flex-1 font-arial text-[13px] bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2">
+            <div className="overflow-y-auto pr-1 flex-1 font-arial">
               {(() => {
                 const query = bizModelSearchQuery.toUpperCase().trim();
                 let filtered = bizModelsArrivals.filter(s => 
@@ -2585,25 +3395,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   return <div className="text-center py-10 text-slate-450 uppercase font-bold text-[11px] font-arial">No se encontraron registros.</div>;
                 }
 
-                return filtered.map(s => (
-                  <div key={s.id} className="py-3 px-4 hover:bg-slate-100/70 bg-white border border-slate-200/60 rounded-xl flex justify-between items-center gap-4 transition-all">
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-[14px] font-extrabold text-slate-900 select-all tracking-wider font-arial">{s.serial}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-sans uppercase font-bold leading-none">{s.bizModelName}</span>
-                      </div>
-                      {s.remitente && (
-                        <span className="text-[12px] text-slate-600 font-arial mt-0.5">Remitente: <span className="font-bold uppercase">{s.remitente}</span></span>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider block text-center ${getStatusStyle(s.status)}`}>
-                        {s.status}
-                      </span>
-                      <span className="text-[11px] font-bold text-slate-500 font-arial">{s.displayDate}</span>
-                    </div>
-                  </div>
-                ));
+                return renderPOSCustomTable(filtered, 'modeloNegocioDates');
               })()}
             </div>
           </div>

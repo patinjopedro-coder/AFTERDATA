@@ -5,11 +5,13 @@ import { Clock, Plus, Trash2, Search, CheckCircle, AlertCircle, FileSpreadsheet 
 interface StandByProps {
   standbyList: StandbyItem[];
   setStandbyList: React.Dispatch<React.SetStateAction<StandbyItem[]>>;
+  serials: import('../types').POSItem[];
 }
 
 export const StandBy: React.FC<StandByProps> = ({
   standbyList,
-  setStandbyList
+  setStandbyList,
+  serials
 }) => {
   const [serialsInput, setSerialsInput] = useState('');
   const [guiasInput, setGuiasInput] = useState('');
@@ -79,10 +81,37 @@ export const StandBy: React.FC<StandByProps> = ({
     }
   };
 
+  // Derive locker items requiring attention
+  const derivedCasilleroItems = useMemo(() => {
+    if (!serials) return [];
+    return serials
+      .filter(s => s.isCasillero && (!s.fechaConfirmada || (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida))))
+      .map(s => {
+        let reason = 'PENDIENTE CONFIRMACIÓN SALIDA';
+        if (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida)) {
+          reason = 'SUSTITUCIÓN INCOMPLETA';
+        }
+        return {
+          id: `CAS-${s.id}`,
+          serial: s.serial,
+          guia: s.source || undefined,
+          date: s.date,
+          comentario: `CASILLERO · ${s.razonSocial || 'SIN CLIENTE'} · ${reason}`.toUpperCase(),
+          status: 'PENDIENTE' as const,
+          isDerived: true
+        };
+      });
+  }, [serials]);
+
+  // Combine stateful and derived items
+  const allItems = useMemo(() => {
+    return [...standbyList, ...derivedCasilleroItems];
+  }, [standbyList, derivedCasilleroItems]);
+
   // Filtrado
   const filteredItems = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    return standbyList.filter(item => {
+    return allItems.filter(item => {
       const matchSearch = !query ||
         (item.serial && item.serial.toLowerCase().includes(query)) ||
         (item.guia && item.guia.toLowerCase().includes(query)) ||
@@ -93,7 +122,7 @@ export const StandBy: React.FC<StandByProps> = ({
 
       return matchSearch && matchStatus;
     });
-  }, [standbyList, searchQuery, statusFilter]);
+  }, [allItems, searchQuery, statusFilter]);
 
   const handleExportCSV = () => {
     if (filteredItems.length === 0) {
@@ -101,9 +130,16 @@ export const StandBy: React.FC<StandByProps> = ({
       return;
     }
 
-    let csv = "FECHA_STANDBY,SERIAL,GUIA_CAMINO,COMENTARIO,ESTADO,FECHA_LLEGADA\n";
+    let csv = "sep=;\nFECHA_STANDBY;SERIAL;GUIA_CAMINO;COMENTARIO;ESTADO;FECHA_LLEGADA\n";
     filteredItems.forEach(item => {
-      csv += `"${item.date}","${item.serial || ''}","${item.guia || ''}","${item.comentario || ''}","${item.status}","${item.processedDate || ''}"\n`;
+      csv += [
+        item.date,
+        item.serial || '',
+        item.guia || '',
+        item.comentario || '',
+        item.status,
+        item.processedDate || ''
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -294,13 +330,19 @@ export const StandBy: React.FC<StandByProps> = ({
                           {item.processedDate ? item.processedDate.split('-').reverse().join('/') : '-'}
                         </td>
                         <td className="py-3.5 px-4 text-center">
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-slate-450 hover:text-red-600 transition-colors p-1.5 cursor-pointer rounded hover:bg-slate-100"
-                            title="Eliminar de stand-by"
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {(item as any).isDerived ? (
+                            <span className="bg-slate-900 text-white text-[8px] px-2 py-0.5 font-bold rounded-none uppercase font-mono inline-block">
+                              CASILLERO
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              className="text-slate-450 hover:text-red-600 transition-colors p-1.5 cursor-pointer rounded hover:bg-slate-100"
+                              title="Eliminar de stand-by"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

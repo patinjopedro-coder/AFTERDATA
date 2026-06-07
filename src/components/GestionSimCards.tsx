@@ -68,9 +68,12 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
   // Export Batch CSV
   const handleExportBatch = (batch: SimBatch, e: React.MouseEvent) => {
     e.stopPropagation();
-    let csv = "Nro,SERIAL_SIM_CARD\n";
+    let csv = "sep=;\nNro;SERIAL_SIM_CARD\n";
     batch.serials.forEach((serial, idx) => {
-      csv += `"${idx + 1}","${serial}"\n`;
+      csv += [
+        idx + 1,
+        serial
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

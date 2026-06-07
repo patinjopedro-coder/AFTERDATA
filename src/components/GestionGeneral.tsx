@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { POSItem, POSStatus, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
-import { formatRif } from '../utils';
+import { formatRif, trackAndLogChanges } from '../utils';
 import { 
   FileText, CheckSquare, Square, Search, Layers, 
   Trash2, Filter, ChevronLeft, ChevronRight, User, 
@@ -64,12 +64,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     if (!editingItem) return;
     setSerials(prev => prev.map(s => {
       if (s.id !== editingItem.id) return s;
-      const updated = { ...s, ...editDraft };
-      // Keep displayDate in sync if date changed
+      const draft = { ...editDraft };
       if (editDraft.date && editDraft.date !== s.date) {
-        updated.displayDate = editDraft.date.split('-').reverse().join('/');
+        draft.displayDate = editDraft.date.split('-').reverse().join('/');
       }
-      return updated;
+      return trackAndLogChanges(s, draft);
     }));
     setEditingItem(null);
     setEditDraft({});
@@ -101,22 +100,85 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             </button>
           </div>
           <div className="p-5 grid grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
-            {fields.map(f => {
-              const isDisabled = !!editDraft.sinCosto && (f.key === 'banco' || f.key === 'bsf' || f.key === 'usdt');
+            {/* Campos principales (excepto costo, observaciones, fecha) */}
+            {fields.filter(f => f.key !== 'bsf' && f.key !== 'usdt' && f.key !== 'observaciones' && f.key !== 'date').map(f => {
               return (
                 <div key={f.key} className="flex flex-col gap-1">
                   <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{f.label}</label>
                   <input
-                    type={f.type || 'text'}
+                    type="text"
                     value={(editDraft[f.key] as string) || ''}
-                    disabled={isDisabled}
                     onChange={e => setEditDraft(d => ({ ...d, [f.key]: e.target.value.toUpperCase() }))}
+                    className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                    style={{ borderRadius: '4px' }}
+                  />
+                </div>
+              );
+            })}
+
+            {/* Sin Costo Checkbox - col-span-2 */}
+            <div className="flex items-center gap-2 mt-3 col-span-2 bg-slate-50 p-2.5 border border-slate-100" style={{ borderRadius: '0px' }}>
+              <input
+                type="checkbox"
+                id="editSinCosto"
+                checked={!!editDraft.sinCosto}
+                onChange={e => {
+                  const checked = e.target.checked;
+                  setEditDraft(d => ({
+                    ...d,
+                    sinCosto: checked,
+                    bsf: checked ? '' : d.bsf,
+                    usdt: checked ? '' : d.usdt
+                  }));
+                }}
+                className="rounded text-green-600 bg-white border-slate-300 focus:ring-0 cursor-pointer"
+              />
+              <label htmlFor="editSinCosto" className="text-xs font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
+                Sin Costo
+              </label>
+            </div>
+
+            {/* Campos de Costo */}
+            {['bsf', 'usdt'].map(key => {
+              const label = key === 'bsf' ? 'Monto BsF' : 'Monto USDT';
+              const isDisabled = !!editDraft.sinCosto;
+              return (
+                <div key={key} className="flex flex-col gap-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{label}</label>
+                  <input
+                    type="text"
+                    value={(editDraft[key as keyof POSItem] as string) || ''}
+                    disabled={isDisabled}
+                    onChange={e => setEditDraft(d => ({ ...d, [key]: e.target.value.toUpperCase() }))}
                     className={`w-full text-xs p-2 bg-${isDisabled ? 'slate-200' : 'slate-100'} border border-${isDisabled ? 'slate-350' : 'transparent'} text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     style={{ borderRadius: '4px' }}
                   />
                 </div>
               );
             })}
+
+            <div className="flex flex-col gap-1 col-span-2">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Observaciones</label>
+              <input
+                type="text"
+                value={editDraft.observaciones || ''}
+                onChange={e => setEditDraft(d => ({ ...d, observaciones: e.target.value.toUpperCase() }))}
+                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                style={{ borderRadius: '4px' }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Fecha Ingreso (YYYY-MM-DD)</label>
+              <input
+                type="date"
+                value={editDraft.date || ''}
+                onChange={e => setEditDraft(d => ({ ...d, date: e.target.value }))}
+                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                style={{ borderRadius: '4px' }}
+              />
+            </div>
+
             <div className="flex flex-col gap-1">
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Estado</label>
               <select
@@ -146,27 +208,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <option value="BASICO">BÁSICO</option>
                 <option value="COMODATO">COMODATO</option>
               </select>
-            </div>
-            <div className="flex items-center gap-2 mt-3 col-span-2 bg-slate-50 p-2.5 border border-slate-100" style={{ borderRadius: '0px' }}>
-              <input
-                type="checkbox"
-                id="editSinCosto"
-                checked={!!editDraft.sinCosto}
-                onChange={e => {
-                  const checked = e.target.checked;
-                  setEditDraft(d => ({
-                    ...d,
-                    sinCosto: checked,
-                    bsf: checked ? '' : d.bsf,
-                    usdt: checked ? '' : d.usdt,
-                    banco: checked ? '' : d.banco
-                  }));
-                }}
-                className="rounded text-green-600 bg-white border-slate-300 focus:ring-0 cursor-pointer"
-              />
-              <label htmlFor="editSinCosto" className="text-xs font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
-                Sin Costo
-              </label>
             </div>
           </div>
           <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
@@ -370,8 +411,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
       // Con o sin casillero
       const hasFiltersActive = globalSearch !== '' || dateFrom !== '' || dateTo !== '' || statusFilter !== 'TODOS' || includeCasillero;
-      if (!hasFiltersActive && s.isCasillero) return false;
-      if (hasFiltersActive && !includeCasillero && s.isCasillero) return false;
+      if (!hasFiltersActive && s.isCasillero && s.status !== 'RECUPERADO') return false;
+      if (hasFiltersActive && !includeCasillero && s.isCasillero && s.status !== 'RECUPERADO') return false;
 
       return inSearch && matchStatus && matchDateFrom && matchDateTo;
     });
@@ -456,7 +497,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   };
 
   const handleUpdateStatus = (id: number, status: POSStatus) => {
-    setSerials(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+    setSerials(prev => prev.map(s => s.id === id ? trackAndLogChanges(s, { status }) : s));
   };
 
   const handleUpdateDateText = (id: number, textVal: string) => {
@@ -471,11 +512,10 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     }
     setSerials(prev => prev.map(s => {
       if (s.id === id) {
-        return {
-          ...s,
+        return trackAndLogChanges(s, {
           displayDate: displayVal,
           date: internalDate || s.date
-        };
+        });
       }
       return s;
     }));
@@ -483,7 +523,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
   const applyBulkStatusToPage = () => {
     const pageIds = new Set(paginatedSerials.map(s => s.id));
-    setSerials(prev => prev.map(s => pageIds.has(s.id) ? { ...s, status: bulkStatus } : s));
+    setSerials(prev => prev.map(s => pageIds.has(s.id) ? trackAndLogChanges(s, { status: bulkStatus }) : s));
     alert(`Se actualizó el estatus a ${bulkStatus} para los equipos de la página actual.`);
   };
 
@@ -493,7 +533,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       alert('NO HAY EQUIPOS SELECCIONADOS');
       return;
     }
-    setSerials(prev => prev.map(s => s.selected ? { ...s, status: bulkStatus } : s));
+    setSerials(prev => prev.map(s => s.selected ? trackAndLogChanges(s, { status: bulkStatus }) : s));
     alert(`Se actualizó el estatus a ${bulkStatus} para ${selectedCount} equipos seleccionados.`);
   };
 
@@ -759,6 +799,25 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
         {/* COSTO & BANCO FIELDS */}
         <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mt-1 flex flex-col gap-3">
+          <div className="flex items-center gap-2 bg-white p-2 border border-slate-200 mt-1" style={{ borderRadius: '0px' }}>
+            <input
+              type="checkbox"
+              id="formSinCosto"
+              checked={sinCosto}
+              onChange={e => {
+                setSinCosto(e.target.checked);
+                if (e.target.checked) {
+                  setCostoBsf('');
+                  setCostoUsdt('');
+                }
+              }}
+              className="rounded text-green-600 bg-white border-slate-300 focus:ring-0 cursor-pointer"
+            />
+            <label htmlFor="formSinCosto" className="text-xs font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
+              Marcar Sin Costo
+            </label>
+          </div>
+
           <div className="grid grid-cols-2 gap-3.5">
             <div className="flex flex-col gap-1">
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo (BsF)</label>
@@ -784,35 +843,14 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-white p-2 border border-slate-200 mt-1" style={{ borderRadius: '0px' }}>
-            <input
-              type="checkbox"
-              id="formSinCosto"
-              checked={sinCosto}
-              onChange={e => {
-                setSinCosto(e.target.checked);
-                if (e.target.checked) {
-                  setCostoBsf('');
-                  setCostoUsdt('');
-                  setBanco('');
-                }
-              }}
-              className="rounded text-green-600 bg-white border-slate-300 focus:ring-0 cursor-pointer"
-            />
-            <label htmlFor="formSinCosto" className="text-xs font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
-              Marcar Sin Costo
-            </label>
-          </div>
-
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Banco</label>
             <input
               type="text"
               value={banco}
               onChange={e => setBanco(e.target.value)}
-              disabled={sinCosto}
               placeholder=""
-              className={`w-full text-sm p-2.5 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
             />
           </div>
         </div>
@@ -835,7 +873,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
           {/* Fila 1: Acciones Masivas */}
           <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-slate-100 w-full">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider min-w-[110px]">Acciones en lote:</span>
-            <div className="flex flex-wrap gap-1.5 items-center flex-1">
+            <div className="flex flex-wrap gap-1.5 items-center flex-1 justify-end">
               <select
                 value={bulkStatus}
                 onChange={e => setBulkStatus(e.target.value as POSStatus)}
@@ -1020,7 +1058,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                             <span 
                               data-serial={s.serial}
                               className="text-sm cursor-help hover:text-slate-900 select-all font-bold tracking-wider transition-colors flex items-center gap-1.5 text-slate-800 font-arial"
-                              onMouseEnter={(e) => onShowHistory(s.serial, e.currentTarget)}
+                              onMouseEnter={(e) => {
+                                if (serials.filter(o => o.serial === s.serial).length > 1) {
+                                  onShowHistory(s.serial, e.currentTarget);
+                                }
+                              }}
                               onMouseLeave={onHideHistory}
                               onClick={async (e) => {
                                   e.stopPropagation();

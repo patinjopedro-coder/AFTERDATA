@@ -46,6 +46,7 @@ export interface POSItem {
   usdt?: string;
   cruceBatchId?: string;
   sinCosto?: boolean;
+  history?: string[];
 }
 
 export interface EnvioExterno {

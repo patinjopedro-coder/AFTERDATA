@@ -100,96 +100,96 @@ aside h1, aside h2, aside .text-white {
   color: #34495e !important;
 }
 
-/* Logo toggle button — styled opaque gray like nav items */
+/* Logo toggle button — fondo blanco, logo negro, borde negro */
 aside > div > div:first-child button {
-  background-color: #3f3f46 !important;
-  color: #ffffff !important;
-  border: none !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
   border-radius: 0px !important;
   width: 100% !important;
 }
 
 aside > div > div:first-child button:hover {
-  background-color: #27272a !important;
+  background-color: #f1f5f9 !important;
 }
 
 aside > div > div:first-child button h1,
 aside > div > div:first-child button span,
 aside > div > div:first-child button svg,
 aside > div > div:first-child button svg * {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
 }
 
-/* Sidebar top-left container where hamburger button resides: Refined to #2c3e50 background */
+/* Sidebar top-left container where hamburger button resides: Refined to #f1f5f9 background */
 aside div[class*="bg-[#2c3e50]"] {
   background-color: #f1f5f9 !important;
   border-bottom: 1px solid rgba(203, 213, 225, 0.8) !important;
 }
 
 aside div[class*="bg-[#2c3e50]"] button {
-  background-color: #e2e8f0 !important;
-  border-color: rgba(203, 213, 225, 0.8) !important;
-  color: #34495e !important;
+  background-color: #ffffff !important;
+  border-color: #000000 !important;
+  color: #000000 !important;
 }
 
 aside div[class*="bg-[#2c3e50]"] button:hover {
-  background-color: #cbd5e1 !important;
+  background-color: #f1f5f9 !important;
 }
 
 aside div[class*="bg-[#2c3e50]"] button svg,
 aside div[class*="bg-[#2c3e50]"] button svg * {
-  color: #34495e !important;
-  stroke: #34495e !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
 }
 
 /* Sidebar navigation buttons */
 aside nav button {
-  background-color: transparent !important;
-  color: #64748b !important;
-  border: 1px solid transparent !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
   border-radius: 0px !important;
 }
 
 aside nav button:hover {
   background-color: #f1f5f9 !important;
-  color: #0f172a !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
 }
 
-aside nav button:not(.active-tab):not(:hover) {
-  color: #ffffff !important;
-}
-
-aside nav button:not(.active-tab):not(:hover) *,
-aside nav button:not(.active-tab):not(:hover) svg,
-aside nav button:not(.active-tab):not(:hover) svg * {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-/* Active sidebar button */
-aside nav button[class*="bg-white"],
-aside nav button.active-tab {
+/* Repose state (inactive button text and icon are black) */
+aside nav button:not(.active-tab) {
+  color: #000000 !important;
   background-color: #ffffff !important;
-  color: #0f172a !important;
-  border-color: rgba(226, 232, 240, 0.8) !important;
-  box-shadow: 0 2px 6px rgba(148, 163, 184, 0.1) !important;
+  border: 1px solid #000000 !important;
+}
+
+aside nav button:not(.active-tab) *,
+aside nav button:not(.active-tab) svg,
+aside nav button:not(.active-tab) svg * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Active sidebar button — color gris oscuro */
+aside nav button.active-tab {
+  background-color: #1f2937 !important; /* slate-800 / gray-800 equivalent */
+  color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
   font-weight: 700 !important;
   border-radius: 0px !important;
 }
 
-aside nav button[class*="bg-white"] *,
-aside nav button.active-tab * {
-  color: #0f172a !important;
+aside nav button.active-tab:hover {
+  background-color: #111827 !important;
 }
 
-/* Active tab text / svg in sidebar active mode */
+aside nav button.active-tab *,
 aside nav button.active-tab svg,
-aside nav button.active-tab svg *,
-aside nav button[class*="bg-white"] svg,
-aside nav button[class*="bg-white"] svg * {
-  color: #34495e !important;
-  stroke: #34495e !important;
+aside nav button.active-tab svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 /* Header Bar: Pure White with very soft shadow */
@@ -397,7 +397,7 @@ select:focus {
 
 /* 5. Buttons and Actions */
 /* Default Zinc/Secondary Button and all general buttons: Opaque gray background, white text */
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) {
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):not(.sidebar-btn):not(.header-action-btn):not(.metric-btn) {
   background-color: #3f3f46 !important;
   border: 1px solid #3f3f46 !important;
   color: #ffffff !important;
@@ -406,14 +406,14 @@ button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.st
   transition: all 0.2s ease !important;
 }
 
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):hover {
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):not(.sidebar-btn):not(.header-action-btn):not(.metric-btn):hover {
   background-color: #27272a !important;
   border-color: #27272a !important;
   color: #ffffff !important;
 }
 
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg,
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn) svg * {
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):not(.sidebar-btn):not(.header-action-btn):not(.metric-btn) svg,
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.btn-blue):not(.btn-green):not(.btn-red):not(.btn-orange):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.custom-entregado-btn):not(.sidebar-btn):not(.header-action-btn):not(.metric-btn) svg * {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
@@ -421,8 +421,14 @@ button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.st
 /* Specific contrast style definitions for light/white buttons */
 .active-tab svg,
 .active-tab svg * {
-  color: #1e293b !important;
-  stroke: #1e293b !important;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.header-action-btn svg,
+.header-action-btn svg * {
+  color: #000000 !important;
+  stroke: #000000 !important;
 }
 
 
@@ -727,12 +733,12 @@ html body select.status-select-green {
 /* Metrics and Statistics specific text styles to ensure high contrast dark black */
 .estadisticas-tab-container h3,
 .estadisticas-tab-container h4,
-.estadisticas-tab-container span,
-.estadisticas-tab-container div,
-.estadisticas-tab-container p,
+.estadisticas-tab-container span:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]),
+.estadisticas-tab-container div:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]):not(.active-tab),
+.estadisticas-tab-container p:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]),
 .estadisticas-tab-container label,
 .estadisticas-tab-container text,
-.estadisticas-tab-container tr td,
+.estadisticas-tab-container tr td:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]),
 .estadisticas-tab-container tr th {
   color: #000000 !important;
 }
@@ -751,57 +757,58 @@ html body select.status-select-green {
 .estadisticas-tab-container .bg-orange-500 *:not(option),
 .estadisticas-tab-container .bg-green-600,
 .estadisticas-tab-container .bg-green-600 *:not(option),
-.estadisticas-tab-container button:not(.stats-sims-btn),
-.estadisticas-tab-container button:not(.stats-sims-btn) *:not(option),
+.estadisticas-tab-container button:not(.stats-sims-btn):not(.metric-btn),
+.estadisticas-tab-container button:not(.stats-sims-btn):not(.metric-btn) *:not(option),
 .estadisticas-tab-container .text-white-force,
-.estadisticas-tab-container .text-white-force *:not(option) {
+.estadisticas-tab-container .text-white-force *:not(option),
+.estadisticas-tab-container .bg-teal-600,
+.estadisticas-tab-container .bg-teal-600 * {
   color: #ffffff !important;
 }
 
-/* Intensified box shadows and border colors for premium separation in the Statistics & Metrics tab */
-.estadisticas-tab-container .bg-white.rounded-2xl {
-  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.08), 0 10px 10px rgba(0, 0, 0, 0.06) !important;
-  border: 1px solid rgba(148, 163, 184, 0.35) !important;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+/* Explicit styling for top metric buttons in Estadísticas tab to match sidebar aesthetics */
+.estadisticas-tab-container button.metric-btn {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  transition: all 0.2s ease !important;
 }
 
-.estadisticas-tab-container .bg-white.rounded-2xl:hover {
-  box-shadow: 0 25px 45px -10px rgba(0, 0, 0, 0.16), 0 16px 20px -8px rgba(0, 0, 0, 0.1) !important;
-  border-color: rgba(100, 116, 139, 0.55) !important;
-  transform: translateY(-2px) !important;
+.estadisticas-tab-container button.metric-btn * {
+  color: #000000 !important;
+  stroke: #000000 !important;
 }
 
-.estadisticas-tab-container .bg-slate-50.rounded-xl,
-.estadisticas-tab-container .bg-blue-50\/40.rounded-xl,
-.estadisticas-tab-container .bg-amber-50\/40.rounded-xl {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.02) !important;
-  border: 1.5px solid rgba(203, 213, 225, 0.7) !important;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+.estadisticas-tab-container button.metric-btn:hover {
+  background-color: #1f2937 !important; /* Match active-tab background */
+  color: #ffffff !important;
+  border-color: #1f2937 !important;
 }
 
-.estadisticas-tab-container .bg-slate-50.rounded-xl:hover,
-.estadisticas-tab-container .bg-blue-50\/40.rounded-xl:hover,
-.estadisticas-tab-container .bg-amber-50\/40.rounded-xl:hover {
-  box-shadow: 0 10px 18px -4px rgba(0, 0, 0, 0.08), 0 5px 8px -3px rgba(0, 0, 0, 0.04) !important;
-  border-color: rgba(148, 163, 184, 0.8) !important;
-  transform: scale(1.02) !important;
+.estadisticas-tab-container button.metric-btn:hover * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
-.estadisticas-tab-container button.stats-sims-btn {
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06), 0 6px 10px rgba(0, 0, 0, 0.04) !important;
-  border: 1.5px solid rgba(148, 163, 184, 0.35) !important;
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+/* Specific styling for the badge inside metric buttons: remove framing boxes and make numbers larger */
+.estadisticas-tab-container button.metric-btn span.font-mono {
+  background-color: transparent !important;
+  border: none !important;
+  color: #000000 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
 }
 
-.estadisticas-tab-container button.stats-sims-btn:hover {
-  box-shadow: 0 20px 32px -5px rgba(0, 0, 0, 0.12), 0 10px 15px -4px rgba(0, 0, 0, 0.08) !important;
-  border-color: rgba(100, 116, 139, 0.6) !important;
-  transform: translateY(-2px) !important;
+.estadisticas-tab-container button.metric-btn:hover span.font-mono {
+  background-color: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
 }
 
-.estadisticas-tab-container .rounded-full.shadow-sm {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03) !important;
-}
+/* Roundness, box-shadows, and elevation overrides for Estadisticas tab have been removed to align with the flat grid Casillero style */
+
 
 /* Force black text for options inside dropdown selects to prevent invisible white text on white bg */
 body select option,
@@ -1075,8 +1082,8 @@ button.bg-orange-600,
 button.bg-orange-600 *,
 button.bg-orange-500,
 button.bg-orange-500 *,
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn),
-button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn) * {
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.sidebar-btn):not(.header-action-btn):not(.metric-btn),
+button:not(.action-btn-edit):not(.action-btn-delete):not(.status-orange):not(.status-green):not(.accessory-btn):not(.user-btn):not(.active-tab):not(.pagination-btn):not(.filter-btn):not(.bulk-btn):not(.stats-sims-btn):not(.status-filter-btn):not(.usuarios-tab-btn):not(.sidebar-btn):not(.header-action-btn):not(.metric-btn) * {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
@@ -1420,31 +1427,49 @@ span.w-2\.5.h-2\.5.rounded-full {
   border-radius: 9999px !important;
 }
 
-/* 2. Remove all hover animations, translations, transitions, and scaling effects */
-*:hover,
-*:focus,
-button,
-div,
-span,
-tr,
-input,
-select,
-textarea {
+/* 2. Remove all hover animations, translations, transitions, and scaling effects on static elements only */
+*:hover:not(button):not(a):not(.group):not([class*="hover:"]),
+*:focus:not(button):not(input):not(select):not(textarea),
+div:not(button):not(.animate-fade-in):not(.animate-fade-in-overlay):not(.animate-logo-entrance):not(.animate-logo-float):not(.pos-screen-glow):not(.login-screen-anim):not(.login-checkmark-anim):not(.logo-d-path):not(.connection-line-path):not(.checkmark-group),
+span:not(button):not([class*="transition"]):not(.animate-fade-in),
+tr:not(button):not([class*="transition"]),
+input:not(:focus):not([class*="transition"]),
+select:not(:focus):not([class*="transition"]),
+textarea:not(:focus):not([class*="transition"]) {
   transform: none !important;
   transition: none !important;
   animation-duration: 0s !important;
   animation-delay: 0s !important;
 }
 
-/* Ensure no scale transitions on active filters or buttons */
-button.status-filter-btn.active-filter,
-button.status-filter-btn:not(.active-filter),
-.estadisticas-tab-container .bg-white.rounded-2xl:hover,
-.estadisticas-tab-container .bg-slate-50.rounded-xl:hover,
-.estadisticas-tab-container .bg-blue-50\/40.rounded-xl:hover,
-.estadisticas-tab-container .bg-amber-50\/40.rounded-xl:hover,
-button.stats-sims-btn:hover {
-  transform: none !important;
+/* Premium dynamic button animations */
+button,
+.sidebar-btn,
+.metric-btn,
+.pagination-btn,
+.filter-btn,
+.bulk-btn,
+.status-filter-btn,
+.accessory-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+button:hover:not(:disabled):not(.active-tab):not(.toggle-active),
+.sidebar-btn:hover:not(.active-tab),
+.metric-btn:hover,
+.pagination-btn:hover:not(:disabled),
+.filter-btn:hover:not(.active-filter),
+.bulk-btn:hover,
+.status-filter-btn:hover:not(.active-filter),
+.accessory-btn:hover:not(.active) {
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
+}
+
+button:active:not(:disabled),
+.sidebar-btn:active,
+.metric-btn:active {
+  transform: translateY(0px) scale(0.97) !important;
 }
 
 /* 3. Strip soft shadows for a clean flat mathematical grid layout */
@@ -1649,6 +1674,84 @@ button.btn-transparent * {
   outline: none !important;
   padding: 0 !important;
   margin: 0 !important;
+}
+
+/* ==========================================================================
+   METRIC BUTTONS ULTIMATE OVERRIDES (ESTADISTICAS TAB)
+   ========================================================================== */
+
+/* Resting state (white background, soft border, black text & icons) */
+html body .estadisticas-tab-container button.metric-btn {
+  background-color: #ffffff !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  color: #000000 !important;
+}
+
+html body .estadisticas-tab-container button.metric-btn * {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+/* Hover state (dark gray background, soft border, white text & icons) */
+html body .estadisticas-tab-container button.metric-btn:hover {
+  background-color: #1f2937 !important;
+  border-color: #1f2937 !important;
+  color: #ffffff !important;
+}
+
+html body .estadisticas-tab-container button.metric-btn:hover * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Number badge (transparent background, no borders, larger bold font) */
+html body .estadisticas-tab-container button.metric-btn span.font-mono {
+  background-color: transparent !important;
+  border: none !important;
+  color: #000000 !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+html body .estadisticas-tab-container button.metric-btn:hover span.font-mono {
+  background-color: transparent !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   SHADOWS AND HOVER EFFECTS (ESTADISTICAS TAB)
+   ========================================================================== */
+
+/* Apply soft shadows to metric buttons */
+.estadisticas-tab-container button.metric-btn {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.estadisticas-tab-container button.metric-btn:hover {
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Soft premium shadows for all charts and containers in stats */
+.estadisticas-tab-container .bg-white:not(button):not(input):not(select) {
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* Lifting animation and deepened shadow on hover for clickable cards */
+.estadisticas-tab-container div[onClick],
+.estadisticas-tab-container div[class*="cursor-pointer"] {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.estadisticas-tab-container div[onClick]:hover,
+.estadisticas-tab-container div[class*="cursor-pointer"]:hover {
+  box-shadow: 0 12px 24px -5px rgba(0, 0, 0, 0.08), 0 8px 16px -6px rgba(0, 0, 0, 0.04) !important;
+  transform: translateY(-2px) !important;
 }
 
 

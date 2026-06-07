@@ -440,38 +440,350 @@ export default function App() {
 
   const handleExportCSV = () => {
     const searchLow = globalSearch.toLowerCase();
+
+    // 1. Tab General
+    if (currentTab === 'general') {
+      const filtered = serials.filter(s => {
+        if (!includeCasillero && s.isCasillero) return false;
+        if (dateFrom && s.date < dateFrom) return false;
+        if (dateTo && s.date > dateTo) return false;
+        if (globalSearch) {
+          const matches =
+            s.serial.toLowerCase().includes(searchLow) ||
+            s.remitente.toLowerCase().includes(searchLow) ||
+            (s.rif && s.rif.toLowerCase().includes(searchLow)) ||
+            (s.razonSocial && s.razonSocial.toLowerCase().includes(searchLow)) ||
+            (s.source && s.source.toLowerCase().includes(searchLow)) ||
+            (s.destino && s.destino.toLowerCase().includes(searchLow)) ||
+            (s.ticket && s.ticket.toLowerCase().includes(searchLow));
+          if (!matches) return false;
+        }
+        return true;
+      });
+
+      let csv = "sep=;\nSERIAL;ESTADO;REMITENTE;RIF;RAZON_SOCIAL;TICKET;GUIA_ENTRADA;DESTINO;FECHA_INGRESO\n";
+      filtered.forEach(s => {
+        csv += [
+          s.serial,
+          s.status,
+          s.remitente,
+          s.rif || '',
+          s.razonSocial || '',
+          s.ticket || '',
+          s.source || '',
+          s.destino || '',
+          s.date
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const filename = includeCasillero ? `disglobal_tracking_report_${localDate}.csv` : `disglobal_tracking_report_sin_casillero_${localDate}.csv`;
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // 2. Tab Casillero
+    if (currentTab === 'casillero') {
+      const filtered = serials.filter(s => {
+        if (!s.isCasillero) return false;
+        if (dateFrom && s.date < dateFrom) return false;
+        if (dateTo && s.date > dateTo) return false;
+        if (globalSearch) {
+          const matches =
+            s.serial.toLowerCase().includes(searchLow) ||
+            s.remitente.toLowerCase().includes(searchLow) ||
+            (s.rif && s.rif.toLowerCase().includes(searchLow)) ||
+            (s.razonSocial && s.razonSocial.toLowerCase().includes(searchLow)) ||
+            (s.source && s.source.toLowerCase().includes(searchLow)) ||
+            (s.destino && s.destino.toLowerCase().includes(searchLow)) ||
+            (s.ticket && s.ticket.toLowerCase().includes(searchLow));
+          if (!matches) return false;
+        }
+        return true;
+      });
+
+      let csv = "sep=;\nFECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;MODELO_NEGOCIO;TICKET\n";
+      filtered.forEach(s => {
+        csv += [
+          s.displayDate || s.date || '',
+          s.serial,
+          s.status,
+          s.remitente,
+          s.source || '',
+          s.rif || '',
+          s.razonSocial || '',
+          s.destino || '',
+          s.observaciones || '',
+          s.responsable || '',
+          s.forro ? 'SI' : 'NO',
+          s.bateria ? 'SI' : 'NO',
+          s.cargador ? 'SI' : 'NO',
+          s.caja ? 'SI' : 'NO',
+          s.sim ? 'SI' : 'NO',
+          s.simNumber || '',
+          s.modeloNegocio || '',
+          s.ticket || ''
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const filename = `casillero_report_${localDate}.csv`;
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // 3. Tab Stand-by (includes stateful + derived items)
+    if (currentTab === 'standby') {
+      const derived = serials
+        .filter(s => s.isCasillero && (!s.fechaConfirmada || (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida))))
+        .map(s => {
+          let reason = 'PENDIENTE CONFIRMACIÓN SALIDA';
+          if (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida)) {
+            reason = 'SUSTITUCIÓN INCOMPLETA';
+          }
+          return {
+            date: s.date,
+            serial: s.serial,
+            guia: s.source || '',
+            comentario: `CASILLERO · ${s.razonSocial || 'SIN CLIENTE'} · ${reason}`.toUpperCase(),
+            status: 'PENDIENTE',
+            processedDate: ''
+          };
+        });
+
+      const combined = [
+        ...standbyList.map(item => ({
+          date: item.date,
+          serial: item.serial || '',
+          guia: item.guia || '',
+          comentario: item.comentario || '',
+          status: item.status,
+          processedDate: item.processedDate || ''
+        })),
+        ...derived
+      ];
+
+      const filtered = combined.filter(item => {
+        if (!globalSearch) return true;
+        return (
+          item.serial.toLowerCase().includes(searchLow) ||
+          item.guia.toLowerCase().includes(searchLow) ||
+          item.comentario.toLowerCase().includes(searchLow)
+        );
+      });
+
+      let csv = "sep=;\nFECHA_STANDBY;SERIAL;GUIA_CAMINO;COMENTARIO;ESTADO;FECHA_LLEGADA\n";
+      filtered.forEach(item => {
+        csv += [
+          item.date,
+          item.serial,
+          item.guia,
+          item.comentario,
+          item.status,
+          item.processedDate
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const filename = `standby_report_${localDate}.csv`;
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // 4. Tab Envios
+    if (currentTab === 'envios') {
+      const filtered = enviosExternos.filter(e => {
+        if (dateFrom && e.fecha < dateFrom) return false;
+        if (dateTo && e.fecha > dateTo) return false;
+        if (globalSearch) {
+          const matches =
+            e.serial.toLowerCase().includes(searchLow) ||
+            e.guia.toLowerCase().includes(searchLow) ||
+            (e.rif && e.rif.toLowerCase().includes(searchLow)) ||
+            (e.razonSocial && e.razonSocial.toLowerCase().includes(searchLow)) ||
+            (e.destino && e.destino.toLowerCase().includes(searchLow)) ||
+            (e.ticket && e.ticket.toLowerCase().includes(searchLow)) ||
+            (e.solicitante && e.solicitante.toLowerCase().includes(searchLow));
+          if (!matches) return false;
+        }
+        return true;
+      });
+
+      let csv = "sep=;\nFECHA_ENVIO;GUIA;SERIAL;RIF;RAZON_SOCIAL;DESTINO;TICKET;SOLICITANTE\n";
+      filtered.forEach(e => {
+        csv += [
+          e.fecha,
+          e.guia,
+          e.serial,
+          e.rif || '',
+          e.razonSocial || '',
+          e.destino || '',
+          e.ticket || '',
+          e.solicitante || ''
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const filename = `envios_externos_report_${localDate}.csv`;
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // 5. Tab Simcards
+    if (currentTab === 'simcards') {
+      const annulledSims = (simCardBatches || []).flatMap(b => 
+        (b.serials || []).map((s: string) => ({
+          serial: s,
+          source: `Lote: ${b.title}`,
+          status: 'ANULADA',
+          date: b.date
+        }))
+      );
+
+      const filtered = annulledSims.filter(s => {
+        if (!globalSearch) return true;
+        return s.serial.toLowerCase().includes(searchLow) || s.source.toLowerCase().includes(searchLow);
+      });
+
+      let csv = "sep=;\nSERIAL_SIM;LOTE_REGISTRO;ESTADO;FECHA\n";
+      filtered.forEach(s => {
+        csv += [
+          s.serial,
+          s.source,
+          s.status,
+          s.date
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const filename = `simcards_anuladas_report_${localDate}.csv`;
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // 6. Tab Usuarios
+    if (currentTab === 'usuarios') {
+      const allUserKeys = Array.from(new Set([
+        ...Object.keys(usersProfiles),
+        ...serials.map(s => s.remitente).filter(Boolean)
+      ]));
+
+      const matrix = allUserKeys.map(key => {
+        const p = usersProfiles[key];
+        const isCliente = p ? !!p.isCliente : serials.some(s => s.remitente === key && (s.rif || s.razonSocial));
+        const type = isCliente ? 'CLIENTE' : 'USUARIO';
+        const department = p?.area || '';
+        const rif = p?.rif || '';
+        const razonSocial = p?.razonSocial || key;
+        const ubicacion = p?.ubicacion || '';
+        const telefono = p?.telefono || '';
+        const count = serials.filter(s => s.remitente === key).length;
+
+        return { key, type, department, rif, razonSocial, ubicacion, telefono, count };
+      }).filter(u => {
+        if (!globalSearch) return true;
+        return (
+          u.key.toLowerCase().includes(searchLow) ||
+          u.type.toLowerCase().includes(searchLow) ||
+          u.department.toLowerCase().includes(searchLow) ||
+          u.rif.toLowerCase().includes(searchLow) ||
+          u.razonSocial.toLowerCase().includes(searchLow)
+        );
+      });
+
+      let csv = "sep=;\nREMITENTE;TIPO;DEPARTAMENTO;RIF;RAZON_SOCIAL;UBICACION;TELEFONO;TOTAL_EQUIPOS\n";
+      matrix.forEach(u => {
+        csv += [
+          u.key,
+          u.type,
+          u.department,
+          u.rif,
+          u.razonSocial,
+          u.ubicacion,
+          u.telefono,
+          u.count
+        ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
+      });
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const d = new Date();
+      const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const filename = `usuarios_directorio_report_${localDate}.csv`;
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    // Default fallback
     const filtered = serials.filter(s => {
-      if (!includeCasillero && s.isCasillero) return false;
       if (dateFrom && s.date < dateFrom) return false;
       if (dateTo && s.date > dateTo) return false;
       if (globalSearch) {
         const matches =
           s.serial.toLowerCase().includes(searchLow) ||
-          s.remitente.toLowerCase().includes(searchLow) ||
-          (s.rif && s.rif.toLowerCase().includes(searchLow)) ||
-          (s.razonSocial && s.razonSocial.toLowerCase().includes(searchLow)) ||
-          (s.source && s.source.toLowerCase().includes(searchLow)) ||
-          (s.destino && s.destino.toLowerCase().includes(searchLow)) ||
-          (s.ticket && s.ticket.toLowerCase().includes(searchLow));
+          s.remitente.toLowerCase().includes(searchLow);
         if (!matches) return false;
       }
       return true;
     });
 
-    let csv = "sep=,\nSERIAL,ESTADO,REMITENTE,RIF,RAZON_SOCIAL,TICKET,GUIA_ENTRADA,DESTINO,FECHA_INGRESO\n";
+    let csv = "sep=;\nSERIAL;ESTADO;REMITENTE;FECHA_INGRESO\n";
     filtered.forEach(s => {
-      csv += `"${s.serial}","${s.status}","${s.remitente}","${s.rif || ''}","${s.razonSocial || ''}","${s.ticket || ''}","${s.source || ''}","${s.destino || ''}","${s.date}"\n`;
+      csv += [s.serial, s.status, s.remitente, s.date].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const d = new Date();
     const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const filename = includeCasillero ? `disglobal_tracking_report_${localDate}.csv` : `disglobal_tracking_report_sin_casillero_${localDate}.csv`;
-
     const link = document.createElement("a");
     link.href = url;
-    link.download = filename;
+    link.download = `report_${localDate}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -694,11 +1006,12 @@ export default function App() {
             <button
               onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
               title="Colapsar / Expandir menú"
-              className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} w-full cursor-pointer transition-all border border-transparent`}
+              className={`sidebar-btn flex items-center ${isSidebarCollapsed ? 'justify-center p-2' : 'gap-3.5 px-4 py-2'} w-full cursor-pointer transition-all border border-black bg-white`}
+              style={{ borderRadius: '0px' }}
             >
-              <LogoIcon className="w-[18px] h-[18px] shrink-0" color="#ffffff" />
+              <LogoIcon className="w-10 h-10 shrink-0" color="#000000" />
               {!isSidebarCollapsed && (
-                <h1 className="text-xs font-black uppercase tracking-wider leading-none text-white">
+                <h1 className="text-xs font-black uppercase tracking-wider leading-none text-black">
                   TRACKING
                 </h1>
               )}
@@ -726,13 +1039,14 @@ export default function App() {
                   key={t.id}
                   onClick={() => setCurrentTab(t.id)}
                   title={t.label}
-                  className={`flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider rounded-xl transition-all border cursor-pointer text-left w-full ${
+                  className={`sidebar-btn flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer text-left w-full ${
                     isActive
-                      ? 'bg-white text-slate-800 border-slate-200 shadow-sm font-black active-tab'
-                      : 'bg-transparent text-slate-500 hover:bg-slate-200/50 hover:text-slate-900 border-transparent'
+                      ? 'bg-slate-800 text-white border-black shadow-sm font-black active-tab'
+                      : 'bg-white text-black hover:bg-slate-100 border-black'
                   }`}
+                  style={{ borderRadius: '0px' }}
                 >
-                  <Icon size={18} className={isActive ? 'text-slate-800' : 'text-slate-500'} />
+                  <Icon size={18} className={isActive ? 'text-white' : 'text-black'} />
                   {!isSidebarCollapsed && <span className="truncate">{t.label}</span>}
                 </button>
               );
@@ -787,34 +1101,38 @@ export default function App() {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={handleImportCSVData}
-                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                className="p-2 bg-white text-black hover:bg-slate-100 border border-black flex items-center justify-center transition-all cursor-pointer header-action-btn"
+                style={{ borderRadius: '0px' }}
                 title="Importar CSV"
               >
-                <FileSpreadsheet size={15} />
+                <FileSpreadsheet size={15} className="text-black" />
               </button>
 
               <button
                 onClick={handleExportCSV}
-                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                className="p-2 bg-white text-black hover:bg-slate-100 border border-black flex items-center justify-center transition-all cursor-pointer header-action-btn"
+                style={{ borderRadius: '0px' }}
                 title="Exportar CSV"
               >
-                <Download size={15} />
+                <Download size={15} className="text-black" />
               </button>
 
               <button
                 onClick={handleExportJSON}
-                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                className="p-2 bg-white text-black hover:bg-slate-100 border border-black flex items-center justify-center transition-all cursor-pointer header-action-btn"
+                style={{ borderRadius: '0px' }}
                 title="Exportar JSON"
               >
-                <Terminal size={15} />
+                <Terminal size={15} className="text-black" />
               </button>
 
               <button
                 onClick={handleExportFullCSVBackup}
-                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-650 rounded-lg flex items-center justify-center transition-all cursor-pointer border border-slate-200 header-action-btn"
+                className="p-2 bg-white text-black hover:bg-slate-100 border border-black flex items-center justify-center transition-all cursor-pointer header-action-btn"
+                style={{ borderRadius: '0px' }}
                 title="Respaldar Base de Datos (Full CSV)"
               >
-                <Database size={15} />
+                <Database size={15} className="text-black" />
               </button>
             </div>
 
@@ -1064,6 +1382,7 @@ export default function App() {
             <StandBy
               standbyList={standbyList}
               setStandbyList={setStandbyList}
+              serials={serials}
             />
           </div>
 
@@ -1119,38 +1438,39 @@ export default function App() {
       {/* FLOATING RETRACED HISTORY OVERLAY POPUP */}
       {historyTooltip && (
         <div
-          className="absolute z-50 bg-[#0f0f11] border border-[#3f3f46] rounded-lg p-3.5 shadow-2xl min-w-[270px] max-w-[340px] pointer-events-none mt-2 font-mono text-[11px] animate-fade-in text-white-force uppercase font-bold"
+          className="absolute z-50 bg-[#0f0f11] border border-[#3f3f46] rounded-lg p-3.5 shadow-2xl min-w-[270px] max-w-[340px] pointer-events-none mt-2 font-mono text-[11px] animate-fade-in uppercase font-bold"
           style={{
             left: historyTooltip.clientX,
-            top: historyTooltip.clientY
+            top: historyTooltip.clientY,
+            color: '#ffffff'
           }}
         >
-          <div className="font-bold text-[11px] text-white-force border-b border-[#3f3f46] pb-1.5 mb-1.5 uppercase font-sans tracking-wider">
+          <div className="font-bold text-[11px] border-b border-[#3f3f46] pb-1.5 mb-1.5 uppercase font-sans tracking-wider" style={{ color: '#ffffff' }}>
             RECIBO DE HISTORIAL
           </div>
-          <div className="text-white-force font-sans tracking-wide uppercase">
-            SERIAL: <span className="font-mono text-white-force text-xs font-black uppercase">{historyTooltip.serial}</span>
+          <div className="font-sans tracking-wide uppercase" style={{ color: '#ffffff' }}>
+            SERIAL: <span className="font-mono text-xs font-black uppercase" style={{ color: '#ffffff' }}>{historyTooltip.serial}</span>
           </div>
 
-          <div className="mt-2 text-[10px] space-y-1.5 uppercase text-white-force">
+          <div className="mt-2 text-[10px] space-y-1.5 uppercase" style={{ color: '#ffffff' }}>
             {getSerialHistoryLogs(historyTooltip.serial).length === 0 ? (
-              <div className="text-white-force uppercase">NO HAY LOGS PREVIOS EN LA BASE GENERAL.</div>
+              <div className="uppercase" style={{ color: '#ffffff' }}>NO HAY LOGS PREVIOS EN LA BASE GENERAL.</div>
             ) : (
               getSerialHistoryLogs(historyTooltip.serial).map((log, i) => (
-                <div key={i} className="flex justify-between items-center border-b border-[#27272a] pb-1 text-white-force uppercase">
-                  <div className="text-white-force uppercase">
-                    <div className="font-bold text-white-force uppercase">{log.displayDate}</div>
-                    <div className="text-[9px] text-white-force uppercase">{log.remitente}</div>
+                <div key={i} className="flex justify-between items-center border-b border-[#27272a] pb-1 uppercase" style={{ color: '#ffffff' }}>
+                  <div className="uppercase" style={{ color: '#ffffff' }}>
+                    <div className="font-bold uppercase" style={{ color: '#ffffff' }}>{log.displayDate}</div>
+                    <div className="text-[9px] uppercase" style={{ color: '#a1a1aa' }}>{log.remitente}</div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider text-white ${
                     ['CANCELADO', 'N#A', 'RECUPERADO'].includes(log.status)
-                      ? 'bg-green-600 text-white-force'
+                      ? 'bg-green-600 text-white'
                       : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(log.status)
-                        ? 'bg-orange-500 text-white-force'
+                        ? 'bg-orange-500 text-white'
                         : log.status === 'SIN ESTATUS'
-                          ? 'bg-black text-white-force border border-zinc-700'
-                          : 'bg-zinc-800 text-white-force'
-                    }`}>
+                          ? 'bg-black text-white border border-zinc-700'
+                          : 'bg-zinc-800 text-white'
+                    }`} style={{ color: '#ffffff' }}>
                     {log.status}
                   </span>
                 </div>
