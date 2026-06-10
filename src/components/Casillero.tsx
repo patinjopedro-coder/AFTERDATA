@@ -152,6 +152,71 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 <option value="COMODATO">COMODATO</option>
               </select>
             </div>
+            <div className="col-span-2 flex items-center gap-2 py-1">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!editDraft.esSustitucion}
+                  onChange={e => setEditDraft(d => ({
+                    ...d,
+                    esSustitucion: e.target.checked,
+                    serialSustituto: e.target.checked ? d.serialSustituto : '',
+                    modeloSustituto: e.target.checked ? d.modeloSustituto : '',
+                    fechaSalida: e.target.checked ? d.fechaSalida : ''
+                  }))}
+                  className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                />
+                <span>Sustitución</span>
+              </label>
+            </div>
+            {editDraft.esSustitucion && (
+              <>
+                <div className="flex flex-col gap-1 col-span-2 sm:col-span-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Prefijo de Modelo</label>
+                  <select
+                    value={editDraft.modeloSustituto || ''}
+                    onChange={e => setEditDraft(d => ({ ...d, modeloSustituto: e.target.value }))}
+                    className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                    style={{ borderRadius: '4px' }}
+                  >
+                    <option value="">SELECCIONAR MODELO</option>
+                    {Object.keys(modelosDB).sort().map(key => (
+                      <option key={key} value={key}>
+                        {key} - {modelosDB[key].modelo}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1 col-span-2 sm:col-span-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial Sustituto</label>
+                  <input
+                    type="text"
+                    value={editDraft.serialSustituto || ''}
+                    onChange={e => {
+                      const text = e.target.value.toUpperCase();
+                      const autoModel = detectModelFromSerial(text);
+                      setEditDraft(d => ({
+                        ...d,
+                        serialSustituto: text,
+                        modeloSustituto: autoModel || (text ? d.modeloSustituto : '')
+                      }));
+                    }}
+                    className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                    style={{ borderRadius: '4px' }}
+                  />
+                </div>
+                <div className="flex flex-col gap-1 col-span-2 sm:col-span-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Fecha Salida</label>
+                  <input
+                    type="date"
+                    value={editDraft.fechaSalida || ''}
+                    onChange={e => setEditDraft(d => ({ ...d, fechaSalida: e.target.value }))}
+                    className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                    style={{ borderRadius: '4px' }}
+                  />
+                </div>
+              </>
+            )}
           </div>
           <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
             <button
@@ -986,7 +1051,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {s.esSustitucion && (
                             <div className="space-y-1.5 bg-slate-50 p-2 rounded border border-slate-100">
                               <div>
-                                <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Modelo Sustituto</label>
+                                <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Prefijo de Modelo</label>
                                 <select
                                   disabled={isRecuperado}
                                   value={s.modeloSustituto || ''}
