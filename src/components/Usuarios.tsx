@@ -3,7 +3,68 @@ import { createPortal } from 'react-dom';
 import { POSItem, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
 import { formatRif } from '../utils';
-import { Users, ChevronDown, ChevronUp, Calendar, Copy, Box, Check } from 'lucide-react';
+import { Users, ChevronDown, ChevronUp, Calendar, Copy, Box, Check, Trophy, TrendingUp, User, MoreVertical, Award, Activity, Briefcase, Building } from 'lucide-react';
+
+const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="48" fill="#eff6ff" stroke="#dbeafe" strokeWidth="2" />
+    <mask id="male-mask-list">
+      <circle cx="50" cy="50" r="48" fill="#ffffff" />
+    </mask>
+    <g mask="url(#male-mask-list)">
+      {/* Body Silhouette */}
+      <path d="M20 85 C20 68, 32 62, 50 62 C68 62, 80 68, 80 85 Z" fill="#64748b" />
+      {/* Neck */}
+      <path d="M44 62 L44 52 C44 52, 50 50, 56 52 L56 62 Z" fill="#94a3b8" />
+      {/* Head */}
+      <circle cx="50" cy="36" r="14" fill="#94a3b8" />
+      {/* Hairstyle Silhouette */}
+      <path d="M34 38 C34 22, 42 20, 50 22 C58 20, 66 22, 66 38 C63 36, 60 34, 50 34 C40 34, 37 36, 34 38 Z" fill="#334155" />
+    </g>
+  </svg>
+);
+
+const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="48" fill="#fdf2f8" stroke="#fce7f3" strokeWidth="2" />
+    <mask id="female-mask-list">
+      <circle cx="50" cy="50" r="48" fill="#ffffff" />
+    </mask>
+    <g mask="url(#female-mask-list)">
+      {/* Body Silhouette */}
+      <path d="M22 85 C22 70, 32 64, 50 64 C68 64, 78 70, 78 85 Z" fill="#db2777" />
+      {/* Neck */}
+      <path d="M45 64 L45 54 C45 54, 50 52, 55 54 L55 64 Z" fill="#f472b6" />
+      {/* Head */}
+      <circle cx="50" cy="38" r="13" fill="#f472b6" />
+      {/* Hairstyle Silhouette */}
+      <path d="M34 42 C34 26, 66 26, 66 42 C68 54, 64 62, 64 62 C64 62, 59 46, 50 46 C41 46, 36 62, 36 62 C36 62, 32 54, 34 42 Z" fill="#831843" />
+    </g>
+  </svg>
+);
+
+const NeutralAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="48" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
+    <mask id="neutral-mask-list">
+      <circle cx="50" cy="50" r="48" fill="#ffffff" />
+    </mask>
+    <g mask="url(#neutral-mask-list)">
+      {/* Body Silhouette */}
+      <path d="M22 85 C22 70, 32 64, 50 64 C68 64, 78 70, 78 85 Z" fill="#94a3b8" />
+      {/* Neck */}
+      <path d="M45 64 L45 54 C45 54, 50 52, 55 54 L55 64 Z" fill="#cbd5e1" />
+      {/* Head */}
+      <circle cx="50" cy="38" r="13.5" fill="#cbd5e1" />
+    </g>
+  </svg>
+);
+
+const renderAvatarHelper = (genero?: 'MASCULINO' | 'FEMENINO' | '', className?: string) => {
+  if (genero === 'MASCULINO') return <MaleAvatar className={className} />;
+  if (genero === 'FEMENINO') return <FemaleAvatar className={className} />;
+  return <NeutralAvatar className={className} />;
+};
 
 interface UsuariosProps {
   serials: POSItem[];
@@ -30,7 +91,8 @@ export const Usuarios: React.FC<UsuariosProps> = ({
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
-  const [activeTab, setActiveTab] = useState<'clientes' | 'usuarios'>('clientes');
+  const [activeTab, setActiveTab] = useState<'clientes' | 'usuarios' | 'ranking'>('clientes');
+  const [rankingFilter, setRankingFilter] = useState<'all' | 'colaboradores' | 'clientes'>('all');
 
   const remitenteSerialsMap = useMemo(() => {
     const map = new Map<string, POSItem[]>();
@@ -41,6 +103,109 @@ export const Usuarios: React.FC<UsuariosProps> = ({
     });
     return map;
   }, [serials]);
+
+  const getProfileWithFallback = (remName: string) => {
+    const p = usersProfiles[remName];
+    
+    // Find fallback from serials
+    const associatedSerials = remitenteSerialsMap.get(remName.toUpperCase().trim()) || [];
+    const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
+    const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
+    const fallbackUbicacion = associatedSerials.find(s => s.destino)?.destino || '';
+    const isClienteBySerials = !!(fallbackRif || fallbackRazonSocial || associatedSerials.some(s => s.isCasillero));
+
+    return {
+      remitenteId: remName,
+      nombreCompleto: p?.nombreCompleto || fallbackRazonSocial || remName.toUpperCase(),
+      isUsuario: p?.isUsuario !== undefined ? p.isUsuario : !isClienteBySerials,
+      isCliente: p?.isCliente !== undefined ? p.isCliente : isClienteBySerials,
+      area: p?.area || '',
+      cargo: p?.cargo || '',
+      rif: p?.rif || fallbackRif,
+      razonSocial: p?.razonSocial || fallbackRazonSocial || remName.toUpperCase(),
+      ubicacion: p?.ubicacion || fallbackUbicacion,
+      telefono: p?.telefono || '',
+      genero: p?.genero || ''
+    };
+  };
+
+  const rankingList = useMemo(() => {
+    const list: {
+      remName: string;
+      profile: ReturnType<typeof getProfileWithFallback>;
+      total: number;
+      activeCount: number;
+      availableCount: number;
+      lastArrivalDate: string;
+      operadoras: Record<string, number>;
+    }[] = [];
+
+    remitenteSerialsMap.forEach((userSerials, remName) => {
+      if (remName === 'S/R (SIN REMITENTE)') return; // Skip no sender
+      
+      const profile = getProfileWithFallback(remName);
+      
+      let activeCount = 0;
+      let availableCount = 0;
+      let lastArrivalDate = '';
+      const operadoras: Record<string, number> = {};
+
+      userSerials.forEach(s => {
+        const st = (s.status || '').toUpperCase().trim();
+        if (['ENTREGADO', 'ACTIVO', 'SUSPENDIDO', 'PENDIENTE'].includes(st)) {
+          activeCount++;
+        } else if (['DISPONIBLE', 'CANCELADO', 'RECUPERADO', 'N#A', 'SIN ESTATUS'].includes(st)) {
+          availableCount++;
+        }
+        
+        if (s.date && (!lastArrivalDate || s.date > lastArrivalDate)) {
+          lastArrivalDate = s.date;
+        }
+
+        if (s.operadora) {
+          const op = s.operadora.toUpperCase().trim();
+          if (op) {
+            operadoras[op] = (operadoras[op] || 0) + 1;
+          }
+        }
+      });
+
+      list.push({
+        remName,
+        profile,
+        total: userSerials.length,
+        activeCount,
+        availableCount,
+        lastArrivalDate,
+        operadoras
+      });
+    });
+
+    // Sort by total equipment processed (descending)
+    return list.sort((a, b) => b.total - a.total);
+  }, [remitenteSerialsMap, usersProfiles]);
+
+  const filteredRankingList = useMemo(() => {
+    return rankingList.filter(item => {
+      // 1. Filter by category
+      if (rankingFilter === 'colaboradores' && !item.profile.isUsuario) return false;
+      if (rankingFilter === 'clientes' && !item.profile.isCliente) return false;
+
+      // 2. Filter by search query
+      if (globalSearch) {
+        const query = globalSearch.toLowerCase();
+        return (
+          item.remName.toLowerCase().includes(query) ||
+          item.profile.nombreCompleto.toLowerCase().includes(query) ||
+          (item.profile.cargo && item.profile.cargo.toLowerCase().includes(query)) ||
+          (item.profile.area && item.profile.area.toLowerCase().includes(query)) ||
+          (item.profile.rif && item.profile.rif.toLowerCase().includes(query)) ||
+          (item.profile.razonSocial && item.profile.razonSocial.toLowerCase().includes(query))
+        );
+      }
+      return true;
+    });
+  }, [rankingList, rankingFilter, globalSearch]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -57,6 +222,7 @@ export const Usuarios: React.FC<UsuariosProps> = ({
   const [tempRazonSocial, setTempRazonSocial] = useState('');
   const [tempUbicacion, setTempUbicacion] = useState('');
   const [tempTelefono, setTempTelefono] = useState('');
+  const [tempGenero, setTempGenero] = useState<'MASCULINO' | 'FEMENINO' | ''>('');
 
   // Handle ESC key press locally to close editing modal in Usuarios
   useEffect(() => {
@@ -94,6 +260,7 @@ export const Usuarios: React.FC<UsuariosProps> = ({
     setTempRazonSocial(p?.razonSocial || fallbackRazonSocial || '');
     setTempUbicacion(p?.ubicacion || fallbackUbicacion || '');
     setTempTelefono(p?.telefono || '');
+    setTempGenero(p?.genero || '');
   };
 
   const saveProfile = () => {
@@ -110,7 +277,8 @@ export const Usuarios: React.FC<UsuariosProps> = ({
         rif: tempIsCliente ? formatRif(tempRif) : '',
         razonSocial: tempIsCliente ? tempRazonSocial.toUpperCase().trim() : '',
         ubicacion: tempIsCliente ? tempUbicacion.toUpperCase().trim() : '',
-        telefono: tempIsCliente ? tempTelefono.toUpperCase().trim() : ''
+        telefono: tempIsCliente ? tempTelefono.toUpperCase().trim() : '',
+        genero: tempGenero
       }
     }));
     setEditingProfile(null);
@@ -181,7 +349,7 @@ export const Usuarios: React.FC<UsuariosProps> = ({
     return { clients, users };
   }, [sortedRemitentes, usersProfiles, remitenteSerialsMap]);
 
-  const activeRemitentes = activeTab === 'clientes' ? categorizedRemitentes.clients : categorizedRemitentes.users;
+  const activeRemitentes = activeTab === 'clientes' ? categorizedRemitentes.clients : activeTab === 'usuarios' ? categorizedRemitentes.users : [];
   const totalPages = Math.ceil(activeRemitentes.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedRemitentes = activeRemitentes.slice(startIndex, startIndex + itemsPerPage);
@@ -252,149 +420,481 @@ export const Usuarios: React.FC<UsuariosProps> = ({
         >
           Usuarios Disglobal
         </button>
+        <button
+          onClick={() => { setActiveTab('ranking'); setCurrentPage(1); }}
+          className={`usuarios-tab-btn flex-1 py-2.5 text-xs font-extrabold uppercase rounded-lg transition-all cursor-pointer border-none ${
+            activeTab === 'ranking'
+              ? 'bg-[#ea580c] text-white-force shadow-sm font-black'
+              : 'bg-transparent text-slate-500 hover:text-slate-750 hover:bg-slate-200/50'
+          }`}
+        >
+          Top Destacados
+        </button>
       </div>
 
-      <div className="flex flex-col gap-3 font-sans">
-        {paginatedRemitentes.length === 0 ? (
-          <div className="text-center py-10 bg-white border border-slate-100 rounded-2xl text-slate-400 text-xs font-arial shadow-sm uppercase font-bold">
-            No se encontraron {activeTab === 'clientes' ? 'clientes' : 'usuarios'} registrados.
-          </div>
-        ) : (
-          paginatedRemitentes.map(remName => {
-            const datesMap = remitentesMap.get(remName)!;
-            const datesSorted = Array.from(datesMap.keys()).sort().reverse();
-            const totalPOSCount = Array.from(datesMap.values()).reduce((sum, list) => sum + list.length, 0);
-            const isExpanded = expandedUsers.has(remName) || !!globalSearch;
-
-            const p = usersProfiles[remName];
-            const isCliente = activeTab === 'clientes';
-            
-            const associatedSerials = remitenteSerialsMap.get(remName.toUpperCase().trim()) || [];
-            const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
-            const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
-            
-            const rif = p?.rif || fallbackRif || '';
-            const cargo = p?.cargo || '';
-            const area = p?.area || '';
-
-            return (
-              <div 
-                key={remName} 
-                className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden text-slate-800 hover:border-slate-350 transition-all animate-fade-in"
+      {activeTab === 'ranking' ? (
+        <div className="flex flex-col gap-6 font-sans">
+          {/* Sub-tabs for Ranking Type */}
+          <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-500" />
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Filtrar Ranking:</span>
+            </div>
+            <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 gap-1.5">
+              <button
+                onClick={() => setRankingFilter('all')}
+                className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md cursor-pointer border-none transition-all ${
+                  rankingFilter === 'all'
+                    ? 'bg-slate-800 text-white-force shadow-sm font-black'
+                    : 'bg-transparent text-slate-500 hover:text-slate-750'
+                }`}
               >
-                {/* ACCORDION HEADER */}
-                <div 
-                  onClick={() => toggleExpandUser(remName)}
-                  className="bg-white hover:bg-slate-50/50 p-4 flex justify-between items-center cursor-pointer select-none transition-colors border-b border-transparent hover:border-slate-100"
-                >
-                  <div className="flex items-center gap-3">
-                    <div 
-                      onClick={(e) => openProfileEditor(remName, e)}
-                      className="w-8 h-8 rounded-xl bg-white user-btn flex items-center justify-center hover:scale-105 transition-all shadow-sm border border-slate-200"
-                      title="Editar Perfil"
-                    >
-                      <Users size={16} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm tracking-wide text-slate-800 uppercase flex items-center flex-wrap gap-1.5 leading-tight">
-                        <span>{remName}</span>
-                        {isCliente ? (
-                          rif && (
-                            <span className="bg-blue-50 text-blue-700 border border-blue-100 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider">
-                              RIF: {rif}
-                            </span>
-                          )
-                        ) : (
-                          (cargo || area) && (
-                            <span className="bg-slate-100 text-slate-750 border border-slate-250 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider normal-case font-arial">
-                              {cargo ? `${cargo}` : 'Sin Cargo'} {area ? ` | Departamento: ${area}` : ''}
-                            </span>
-                          )
-                        )}
-                      </h4>
-                      <p className="text-[10px] text-slate-500 font-arial mt-0.5">
-                        {isCliente 
-                          ? `Razón Social: ${p?.razonSocial || fallbackRazonSocial || 'No Registrada'}`
-                          : `Colaborador Disglobal`
+                General
+              </button>
+              <button
+                onClick={() => setRankingFilter('colaboradores')}
+                className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md cursor-pointer border-none transition-all ${
+                  rankingFilter === 'colaboradores'
+                    ? 'bg-slate-800 text-white-force shadow-sm font-black'
+                    : 'bg-transparent text-slate-500 hover:text-slate-750'
+                }`}
+              >
+                Colaboradores
+              </button>
+              <button
+                onClick={() => setRankingFilter('clientes')}
+                className={`px-3 py-1.5 text-[10px] font-bold uppercase rounded-md cursor-pointer border-none transition-all ${
+                  rankingFilter === 'clientes'
+                    ? 'bg-slate-800 text-white-force shadow-sm font-black'
+                    : 'bg-transparent text-slate-500 hover:text-slate-750'
+                }`}
+              >
+                Clientes
+              </button>
+            </div>
+          </div>
+
+          {filteredRankingList.length === 0 ? (
+            <div className="text-center py-10 bg-white border border-slate-100 rounded-2xl text-slate-400 text-xs font-arial shadow-sm uppercase font-bold">
+              No se encontraron remitentes en el ranking.
+            </div>
+          ) : (
+            <>
+              {/* PODIUM SECTION (TOP 3) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end pt-4">
+                {/* 2ND PLACE */}
+                {filteredRankingList[1] && (
+                  <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col items-center text-center relative hover:scale-[1.02] transition-transform order-2 md:order-1 min-h-[200px] justify-between">
+                    <div className="absolute top-3 left-3 bg-slate-200 text-slate-855 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black">2</div>
+                    <div className="flex flex-col items-center">
+                      <div className="relative mb-3">
+                        <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-200 bg-slate-50 p-0.5">
+                          {renderAvatarHelper(filteredRankingList[1].profile.genero, "w-full h-full")}
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-xs text-slate-850 uppercase tracking-wide leading-tight line-clamp-1">{filteredRankingList[1].profile.nombreCompleto}</h4>
+                      <p className="text-[9px] text-slate-500 mt-1 line-clamp-1">
+                        {filteredRankingList[1].profile.isUsuario
+                          ? `${filteredRankingList[1].profile.cargo || 'Colaborador'}`
+                          : `${filteredRankingList[1].profile.razonSocial || 'Cliente'}`
                         }
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs font-arial font-bold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-xl">
-                      {totalPOSCount} Equipos | {datesSorted.length} Ingresos
-                    </span>
-                    {isExpanded ? (
-                      <ChevronUp size={16} className="text-slate-400" />
-                    ) : (
-                      <ChevronDown size={16} className="text-slate-400" />
-                    )}
-                  </div>
-                </div>
-
-                {/* ACCORDION EXPANSION ITEMS */}
-                {isExpanded && (
-                  <div className="divide-y divide-slate-100 bg-slate-50/50 font-arial text-[11px] text-slate-700">
-                    {datesSorted.map(dateStr => {
-                      const items = datesMap.get(dateStr)!;
-                      const displayDate = dateStr.split('-').reverse().join('/');
-
-                      return (
-                        <div key={dateStr} className="p-4 flex flex-col sm:flex-row sm:items-start gap-4">
-                          
-                          <div className="sm:w-44 flex-shrink-0 flex items-center gap-1.5 text-slate-850 font-bold tracking-wide py-0.5 text-xs">
-                            <Calendar size={13} className="text-slate-500" />
-                            <span>{displayDate}</span>
-                            <span className="text-[10px] font-semibold text-slate-550">({items.length})</span>
-                          </div>
-
-                          <div className="flex-1 flex flex-wrap gap-2">
-                            {items.map(s => {
-                              const m = getTerminalModel(s.serial, modelosDB);
-                              return (
-                                <div 
-                                  key={s.id}
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    handleCopyText(s.serial, `serial-${s.id}`);
-                                  }}
-                                  title={`${s.serial} - ${m.modelo}`}
-                                  className="group bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-300 px-2.5 py-1.5 rounded-xl flex items-center gap-2 select-all cursor-pointer transition-all max-w-sm truncate shadow-sm text-slate-800"
-                                >
-                                  <Box size={10} className="text-slate-550 group-hover:text-slate-800 transition-colors" />
-                                  <div className="flex flex-col">
-                                    <span className="text-slate-900 font-bold tracking-wider flex items-center gap-1">
-                                      <span>{s.serial}</span>
-                                      {copiedKey === `serial-${s.id}` && (
-                                        <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded p-0.5 ml-1 transition-all animate-fade-in shrink-0">
-                                          <Check className="w-2.5 h-2.5 text-white" />
-                                        </span>
-                                      )}
-                                    </span>
-                                    <span className="text-[9px] text-slate-500 font-sans leading-none">{m.modelo}</span>
-                                  </div>
-                                  <span className={getBadgeClass(s.status)}>
-                                    {s.status}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-
-                        </div>
-                      );
-                    })}
+                    <div className="mt-3 flex flex-col items-center">
+                      <span className="text-[20px] font-black text-slate-800 leading-none">{filteredRankingList[1].total}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">Equipos</span>
+                    </div>
+                    <button
+                      onClick={(e) => openProfileEditor(filteredRankingList[1].remName, e)}
+                      className="mt-3 w-full py-1 bg-slate-100 hover:bg-slate-200 text-[9px] font-bold uppercase rounded-lg border-none cursor-pointer text-slate-655 transition-colors"
+                    >
+                      Editar Perfil
+                    </button>
                   </div>
                 )}
 
-              </div>
-            );
-          })
-        )}
-      </div>
+                {/* 1ST PLACE */}
+                {filteredRankingList[0] && (
+                  <div className="bg-white border-2 border-slate-300 rounded-2xl p-6 shadow-md flex flex-col items-center text-center relative hover:scale-[1.02] transition-transform order-1 md:order-2 md:-translate-y-2 min-h-[220px] justify-between" style={{ boxShadow: '0 8px 30px rgba(0, 0, 0, 0.05)' }}>
+                    <div className="absolute top-3 left-3 bg-slate-800 text-white-force w-7 h-7 rounded-full flex items-center justify-center text-sm font-black border border-slate-700">1</div>
+                    <div className="flex flex-col items-center">
+                      <div className="relative mb-3">
+                        <div className="w-20 h-20 rounded-full overflow-hidden border border-slate-300 bg-slate-50 p-0.5 shadow-sm">
+                          {renderAvatarHelper(filteredRankingList[0].profile.genero, "w-full h-full")}
+                        </div>
+                      </div>
+                      <h4 className="font-extrabold text-sm text-slate-850 uppercase tracking-wider leading-tight line-clamp-1">{filteredRankingList[0].profile.nombreCompleto}</h4>
+                      <p className="text-[9px] font-bold text-slate-500 mt-1 line-clamp-1">
+                        {filteredRankingList[0].profile.isUsuario
+                          ? `${filteredRankingList[0].profile.cargo || 'Colaborador'}`
+                          : `${filteredRankingList[0].profile.razonSocial || 'Cliente'}`
+                        }
+                      </p>
+                    </div>
+                    <div className="mt-3 flex flex-col items-center">
+                      <span className="text-[24px] font-black text-slate-800 leading-none">{filteredRankingList[0].total}</span>
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mt-1">Equipos</span>
+                    </div>
+                    <button
+                      onClick={(e) => openProfileEditor(filteredRankingList[0].remName, e)}
+                      className="mt-3 w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-[9px] font-extrabold uppercase rounded-lg border border-slate-200 cursor-pointer text-slate-700 transition-colors"
+                    >
+                      Editar Perfil
+                    </button>
+                  </div>
+                )}
 
-      {totalPages > 1 && (
+                {/* 3RD PLACE */}
+                {filteredRankingList[2] && (
+                  <div className="bg-white border-2 border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col items-center text-center relative hover:scale-[1.02] transition-transform order-3 min-h-[200px] justify-between">
+                    <div className="absolute top-3 left-3 bg-slate-200 text-slate-855 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black">3</div>
+                    <div className="flex flex-col items-center">
+                      <div className="relative mb-3">
+                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-200 bg-slate-50 p-0.5">
+                          {renderAvatarHelper(filteredRankingList[2].profile.genero, "w-full h-full")}
+                        </div>
+                      </div>
+                      <h4 className="font-bold text-xs text-slate-850 uppercase tracking-wide leading-tight line-clamp-1">{filteredRankingList[2].profile.nombreCompleto}</h4>
+                      <p className="text-[9px] text-slate-500 mt-1 line-clamp-1">
+                        {filteredRankingList[2].profile.isUsuario
+                          ? `${filteredRankingList[2].profile.cargo || 'Colaborador'}`
+                          : `${filteredRankingList[2].profile.razonSocial || 'Cliente'}`
+                        }
+                      </p>
+                    </div>
+                    <div className="mt-3 flex flex-col items-center">
+                      <span className="text-[20px] font-black text-slate-800 leading-none">{filteredRankingList[2].total}</span>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">Equipos</span>
+                    </div>
+                    <button
+                      onClick={(e) => openProfileEditor(filteredRankingList[2].remName, e)}
+                      className="mt-3 w-full py-1 bg-slate-100 hover:bg-slate-200 text-[9px] font-bold uppercase rounded-lg border-none cursor-pointer text-slate-655 transition-colors"
+                    >
+                      Editar Perfil
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* LEADERBOARD LIST VIEW */}
+              <div className="flex flex-col gap-2.5 mt-6 font-sans">
+                <div className="bg-[#f8fafc] text-[9px] font-black text-slate-400 px-4 py-2 uppercase tracking-widest hidden sm:grid sm:grid-cols-12 items-center border-b border-slate-200">
+                  <div className="col-span-1 text-center">Rango</div>
+                  <div className="col-span-1 text-center">Avatar</div>
+                  <div className="col-span-6">Nombre Completo y Rol / Empresa</div>
+                  <div className="col-span-2 text-center">Total Equipos</div>
+                  <div className="col-span-2 text-right pr-2">Acciones</div>
+                </div>
+
+                {filteredRankingList.map((item, index) => {
+                  const rank = index + 1;
+                  const isExpanded = expandedUsers.has(item.remName);
+                  
+                  return (
+                    <div 
+                      key={item.remName}
+                      className="bg-white border border-slate-100 rounded-2xl shadow-sm hover:border-slate-350 transition-all flex flex-col overflow-hidden animate-fade-in"
+                    >
+                      {/* HEADER ROW */}
+                      <div 
+                        onClick={() => toggleExpandUser(item.remName)}
+                        className="p-4 grid grid-cols-1 sm:grid-cols-12 items-center gap-3 cursor-pointer select-none"
+                      >
+                        {/* 1. RANK */}
+                        <div className="col-span-1 flex items-center justify-center">
+                          {rank === 1 && <span className="text-xl">🥇</span>}
+                          {rank === 2 && <span className="text-xl">🥈</span>}
+                          {rank === 3 && <span className="text-xl">🥉</span>}
+                          {rank > 3 && <span className="font-bold text-sm text-slate-500 font-mono">#{rank}</span>}
+                        </div>
+
+                        {/* 2. AVATAR */}
+                        <div className="col-span-1 flex items-center justify-center">
+                          <div className="w-9 h-9 rounded-full overflow-hidden border border-slate-200 bg-slate-55 p-0.5">
+                            {renderAvatarHelper(item.profile.genero, "w-full h-full")}
+                          </div>
+                        </div>
+
+                        {/* 3. NAME & DETAILS */}
+                        <div className="col-span-6">
+                          <div className="flex items-center flex-wrap gap-2">
+                            <span className="font-extrabold text-xs text-slate-850 uppercase tracking-wide">{item.profile.nombreCompleto}</span>
+                            {item.profile.isUsuario ? (
+                              <span className="bg-blue-55 text-blue-700 border border-blue-100 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider">COLABORADOR</span>
+                            ) : (
+                              <span className="bg-emerald-55 text-emerald-700 border border-emerald-100 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider">CLIENTE</span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                            {item.profile.isUsuario ? (
+                              <>
+                                <Briefcase size={10} className="text-slate-400" />
+                                <span>{item.profile.cargo || 'Sin Cargo'}</span>
+                                {item.profile.area && (
+                                  <>
+                                    <span className="text-slate-350">|</span>
+                                    <Building size={10} className="text-slate-400" />
+                                    <span>Depto: {item.profile.area}</span>
+                                  </>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <span>Razón Social: {item.profile.razonSocial}</span>
+                                {item.profile.rif && (
+                                  <>
+                                    <span className="text-slate-355">|</span>
+                                    <span>RIF: {item.profile.rif}</span>
+                                  </>
+                                )}
+                              </>
+                            )}
+                          </p>
+                        </div>
+
+                        {/* 4. TOTAL SCORE */}
+                        <div className="col-span-2 flex items-center justify-center">
+                          <span className="bg-slate-50 text-slate-700 font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 border border-slate-100">
+                            <Activity size={12} className="text-slate-500" />
+                            <span>{item.total} Equipos</span>
+                          </span>
+                        </div>
+
+                        {/* 5. ACTIONS & EXPAND */}
+                        <div className="col-span-2 flex items-center justify-end gap-2" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => openProfileEditor(item.remName, e)}
+                            className="w-8 h-8 rounded-xl bg-white flex items-center justify-center border border-slate-200 hover:bg-slate-55 shadow-sm cursor-pointer hover:scale-105 transition-transform user-btn"
+                            title="Editar Perfil"
+                          >
+                            <Users size={14} className="text-slate-650" />
+                          </button>
+                          <button
+                            onClick={() => toggleExpandUser(item.remName)}
+                            className="w-8 h-8 rounded-xl bg-white flex items-center justify-center border border-slate-200 hover:bg-slate-55 shadow-sm cursor-pointer"
+                          >
+                            {isExpanded ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* DETAILED ACCORDION INFO PANEL */}
+                      {isExpanded && (
+                        <div className="border-t border-slate-100 bg-slate-50/50 p-4 font-sans text-xs text-slate-700 grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in">
+                          {/* Col 1: Status Breakdown */}
+                          <div className="flex flex-col gap-2 bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm">
+                            <h5 className="font-extrabold text-[8px] text-slate-400 uppercase tracking-widest mb-1">Estatus de Equipos</h5>
+                            <div className="grid grid-cols-2 gap-2 text-[10px]">
+                              <div className="flex flex-col bg-orange-50 border border-orange-100 p-2 rounded-lg text-center">
+                                <span className="font-mono text-xs font-black text-orange-700">{item.activeCount}</span>
+                                <span className="font-bold text-orange-600 uppercase text-[8px] mt-0.5">En Proceso</span>
+                              </div>
+                              <div className="flex flex-col bg-emerald-50 border border-emerald-100 p-2 rounded-lg text-center">
+                                <span className="font-mono text-xs font-black text-emerald-700">{item.availableCount}</span>
+                                <span className="font-bold text-emerald-600 uppercase text-[8px] mt-0.5">Disponibles</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Col 2: Operadoras Distribution */}
+                          <div className="flex flex-col gap-2 bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm">
+                            <h5 className="font-extrabold text-[8px] text-slate-400 uppercase tracking-widest mb-1">Distribución de Operadoras</h5>
+                            {Object.keys(item.operadoras).length === 0 ? (
+                              <p className="text-[10px] text-slate-400 font-semibold uppercase italic py-2">Sin SIMs registradas</p>
+                            ) : (
+                              <div className="flex flex-col gap-1.5">
+                                {Object.entries(item.operadoras).map(([op, count]) => {
+                                  const pct = Math.round(((count as number) / item.total) * 100);
+                                  return (
+                                    <div key={op} className="flex flex-col gap-1 text-[10px]">
+                                      <div className="flex justify-between items-center font-bold text-slate-755">
+                                        <span>{op}</span>
+                                        <span>{count} ({pct}%)</span>
+                                      </div>
+                                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                        <div 
+                                          className={`h-full ${
+                                            op === 'MOVISTAR' ? 'bg-blue-500' :
+                                            op === 'DIGITEL' ? 'bg-orange-500' :
+                                            'bg-red-500'
+                                          }`} 
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Col 3: Timing and Quick Info */}
+                          <div className="flex flex-col gap-2 bg-white p-3.5 rounded-xl border border-slate-100 shadow-sm justify-between">
+                            <div>
+                              <h5 className="font-extrabold text-[8px] text-slate-400 uppercase tracking-widest mb-1">Última Actividad</h5>
+                              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-850 mt-2">
+                                <Calendar size={13} className="text-slate-400" />
+                                <span>{item.lastArrivalDate ? item.lastArrivalDate.split('-').reverse().join('/') : 'Sin fecha'}</span>
+                              </div>
+                            </div>
+                            
+                            <div className="border-t border-slate-100 pt-2.5 mt-2 flex justify-between items-center text-[10px]">
+                              <span className="font-bold text-slate-400">Total ingresos:</span>
+                              <span className="font-mono font-black text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">{item.total}</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3 font-sans">
+          {paginatedRemitentes.length === 0 ? (
+            <div className="text-center py-10 bg-white border border-slate-100 rounded-2xl text-slate-400 text-xs font-arial shadow-sm uppercase font-bold">
+              No se encontraron {activeTab === 'clientes' ? 'clientes' : 'usuarios'} registrados.
+            </div>
+          ) : (
+            paginatedRemitentes.map(remName => {
+              const datesMap = remitentesMap.get(remName)!;
+              const datesSorted = Array.from(datesMap.keys()).sort().reverse();
+              const totalPOSCount = Array.from(datesMap.values()).reduce((sum, list) => sum + list.length, 0);
+              const isExpanded = expandedUsers.has(remName) || !!globalSearch;
+
+              const p = usersProfiles[remName];
+              const isCliente = activeTab === 'clientes';
+              
+              const associatedSerials = remitenteSerialsMap.get(remName.toUpperCase().trim()) || [];
+              const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
+              const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
+              
+              const rif = p?.rif || fallbackRif || '';
+              const cargo = p?.cargo || '';
+              const area = p?.area || '';
+
+              return (
+                <div 
+                  key={remName} 
+                  className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden text-slate-800 hover:border-slate-350 transition-all animate-fade-in"
+                >
+                  {/* ACCORDION HEADER */}
+                  <div 
+                    onClick={() => toggleExpandUser(remName)}
+                    className="bg-white hover:bg-slate-50/50 p-4 flex justify-between items-center cursor-pointer select-none transition-colors border-b border-transparent hover:border-slate-100"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div 
+                        onClick={(e) => openProfileEditor(remName, e)}
+                        className="w-8 h-8 rounded-xl bg-white user-btn flex items-center justify-center hover:scale-105 transition-all shadow-sm border border-slate-200"
+                        title="Editar Perfil"
+                      >
+                        <Users size={16} />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm tracking-wide text-slate-800 uppercase flex items-center flex-wrap gap-1.5 leading-tight">
+                          <span>{remName}</span>
+                          {isCliente ? (
+                            rif && (
+                              <span className="bg-blue-50 text-blue-700 border border-blue-100 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider">
+                                RIF: {rif}
+                              </span>
+                            )
+                          ) : (
+                            (cargo || area) && (
+                              <span className="bg-slate-100 text-slate-750 border border-slate-250 text-[8px] px-1.5 py-0.5 rounded font-extrabold tracking-wider normal-case font-arial">
+                                {cargo ? `${cargo}` : 'Sin Cargo'} {area ? ` | Departamento: ${area}` : ''}
+                              </span>
+                            )
+                          )}
+                        </h4>
+                        <p className="text-[10px] text-slate-500 font-arial mt-0.5">
+                          {isCliente 
+                            ? `Razón Social: ${p?.razonSocial || fallbackRazonSocial || 'No Registrada'}`
+                            : `Colaborador Disglobal`
+                          }
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs font-arial font-bold text-slate-600 bg-slate-50 px-2.5 py-1 rounded-xl">
+                        {totalPOSCount} Equipos | {datesSorted.length} Ingresos
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp size={16} className="text-slate-400" />
+                      ) : (
+                        <ChevronDown size={16} className="text-slate-400" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ACCORDION EXPANSION ITEMS */}
+                  {isExpanded && (
+                    <div className="divide-y divide-slate-100 bg-slate-50/50 font-arial text-[11px] text-slate-700">
+                      {datesSorted.map(dateStr => {
+                        const items = datesMap.get(dateStr)!;
+                        const displayDate = dateStr.split('-').reverse().join('/');
+
+                        return (
+                          <div key={dateStr} className="p-4 flex flex-col sm:flex-row sm:items-start gap-4">
+                            
+                            <div className="sm:w-44 flex-shrink-0 flex items-center gap-1.5 text-slate-850 font-bold tracking-wide py-0.5 text-xs">
+                              <Calendar size={13} className="text-slate-500" />
+                              <span>{displayDate}</span>
+                              <span className="text-[10px] font-semibold text-slate-550">({items.length})</span>
+                            </div>
+
+                            <div className="flex-1 flex flex-wrap gap-2">
+                              {items.map(s => {
+                                const m = getTerminalModel(s.serial, modelosDB);
+                                return (
+                                  <div 
+                                    key={s.id}
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      handleCopyText(s.serial, `serial-${s.id}`);
+                                    }}
+                                    title={`${s.serial} - ${m.modelo}`}
+                                    className="group bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-300 px-2.5 py-1.5 rounded-xl flex items-center gap-2 select-all cursor-pointer transition-all max-w-sm truncate shadow-sm text-slate-800"
+                                  >
+                                    <Box size={10} className="text-slate-555 group-hover:text-slate-850 transition-colors" />
+                                    <div className="flex flex-col">
+                                      <span className="text-slate-900 font-bold tracking-wider flex items-center gap-1">
+                                        <span>{s.serial}</span>
+                                        {copiedKey === `serial-${s.id}` && (
+                                          <span className="inline-flex items-center justify-center bg-emerald-600 border border-emerald-500 rounded p-0.5 ml-1 transition-all animate-fade-in shrink-0">
+                                            <Check className="w-2.5 h-2.5 text-white" />
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="text-[9px] text-slate-500 font-sans leading-none">{m.modelo}</span>
+                                    </div>
+                                    <span className={getBadgeClass(s.status)}>
+                                      {s.status}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+
+      {activeTab !== 'ranking' && totalPages > 1 && (
         <div className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center text-xs text-slate-500">
           <span>Página {currentPage} de {totalPages}</span>
           <div className="flex gap-1">
@@ -432,6 +932,19 @@ export const Usuarios: React.FC<UsuariosProps> = ({
                   placeholder="Ej. Pedro Pérez"
                   className="w-full bg-slate-100 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
                 />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Género (Para Avatar)</label>
+                <select
+                  value={tempGenero}
+                  onChange={e => setTempGenero(e.target.value as any)}
+                  className="w-full bg-slate-100 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold"
+                >
+                  <option value="">SELECCIONAR GÉNERO</option>
+                  <option value="MASCULINO">MASCULINO (SILUETA CON TRAJE)</option>
+                  <option value="FEMENINO">FEMENINO (SILUETA CON TRAJE)</option>
+                </select>
               </div>
 
               {/* Categorías (Casillas) */}
@@ -482,6 +995,19 @@ export const Usuarios: React.FC<UsuariosProps> = ({
                     disabled={!tempIsUsuario}
                     className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
                   />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Género (Icono de Avatar)</label>
+                  <select
+                    value={tempGenero}
+                    onChange={e => setTempGenero(e.target.value as any)}
+                    disabled={!tempIsUsuario}
+                    className="w-full bg-slate-100 disabled:opacity-50 border border-transparent rounded-xl p-2.5 text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+                  >
+                    <option value="">SELECCIONAR GÉNERO</option>
+                    <option value="MASCULINO">MASCULINO (CABALLERO)</option>
+                    <option value="FEMENINO">FEMENINO (DAMA)</option>
+                  </select>
                 </div>
               </div>
 

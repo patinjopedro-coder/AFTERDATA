@@ -100,11 +100,11 @@ aside h1, aside h2, aside .text-white {
   color: #34495e !important;
 }
 
-/* Logo toggle button — fondo blanco, logo negro, borde negro */
+/* Logo toggle button — fondo blanco, logo negro, borde gris suave */
 aside > div > div:first-child button {
   background-color: #ffffff !important;
   color: #000000 !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
   border-radius: 0px !important;
   width: 100% !important;
 }
@@ -147,21 +147,28 @@ aside div[class*="bg-[#2c3e50]"] button svg * {
 aside nav button {
   background-color: #ffffff !important;
   color: #000000 !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
   border-radius: 0px !important;
 }
 
-aside nav button:hover {
-  background-color: #f1f5f9 !important;
-  color: #000000 !important;
-  border-color: #000000 !important;
+aside nav button:not(.active-tab):hover {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+  border-color: #1f2937 !important;
+}
+
+aside nav button:not(.active-tab):hover *,
+aside nav button:not(.active-tab):hover svg,
+aside nav button:not(.active-tab):hover svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 /* Repose state (inactive button text and icon are black) */
 aside nav button:not(.active-tab) {
   color: #000000 !important;
   background-color: #ffffff !important;
-  border: 1px solid #000000 !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
 }
 
 aside nav button:not(.active-tab) *,
@@ -1752,6 +1759,29 @@ html body .estadisticas-tab-container button.metric-btn:hover span.font-mono {
 .estadisticas-tab-container div[class*="cursor-pointer"]:hover {
   box-shadow: 0 12px 24px -5px rgba(0, 0, 0, 0.08), 0 8px 16px -6px rgba(0, 0, 0, 0.04) !important;
   transform: translateY(-2px) !important;
+}
+
+/* Custom premium overrides for desglose buttons in stats */
+html body .estadisticas-tab-container button.desglose-btn {
+  background-color: #ffffff !important;
+  border: 1px solid #000000 !important;
+  color: #000000 !important;
+}
+
+html body .estadisticas-tab-container button.desglose-btn * {
+  background-color: transparent !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+html body .estadisticas-tab-container button.desglose-btn:hover {
+  background-color: #f1f5f9 !important;
+}
+
+html body .estadisticas-tab-container button.desglose-btn:hover * {
+  background-color: transparent !important;
+  color: #000000 !important;
+  stroke: #000000 !important;
 }
 
 

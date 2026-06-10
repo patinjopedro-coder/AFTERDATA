@@ -21,6 +21,64 @@ const DEPARTMENT_COLORS = [
   '#64748b'  // Slate
 ];
 
+const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="48" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="2" />
+    <mask id="male-mask">
+      <circle cx="50" cy="50" r="48" fill="#ffffff" />
+    </mask>
+    <g mask="url(#male-mask)">
+      <circle cx="50" cy="35" r="14" fill="#94a3b8" />
+      <path d="M44 48 h12 v10 h-12 z" fill="#94a3b8" />
+      <path d="M40 55 L50 68 L60 55 Z" fill="#ffffff" />
+      <path d="M47.5 63 L52.5 63 L54 85 L50 90 L46 85 Z" fill="#b91c1c" />
+      <path d="M25 60 L40 56 L45 80 L50 72 L55 80 L60 56 L75 60 L80 100 H20 Z" fill="#1e293b" />
+      <path d="M40 56 L46 75 L45 80 Z" fill="#0f172a" />
+      <path d="M60 56 L54 75 L55 80 Z" fill="#0f172a" />
+    </g>
+  </svg>
+);
+
+const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="48" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="2" />
+    <mask id="female-mask">
+      <circle cx="50" cy="50" r="48" fill="#ffffff" />
+    </mask>
+    <g mask="url(#female-mask)">
+      <circle cx="50" cy="35" r="13" fill="#64748b" />
+      <path d="M36 33 C36 22 64 22 64 33 C64 42 36 42 36 33 Z" fill="#475569" />
+      <path d="M45 46 h10 v12 h-10 z" fill="#64748b" />
+      <path d="M42 54 L50 67 L58 54 Z" fill="#ffffff" />
+      <path d="M25 62 L42 56 L46 82 L50 70 L54 82 L58 56 L75 62 L80 100 H20 Z" fill="#334155" />
+      <path d="M42 56 L47 77 L46 82 Z" fill="#1e293b" />
+      <path d="M58 56 L53 77 L54 82 Z" fill="#1e293b" />
+    </g>
+  </svg>
+);
+
+const NeutralAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="48" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
+    <mask id="neutral-mask">
+      <circle cx="50" cy="50" r="48" fill="#ffffff" />
+    </mask>
+    <g mask="url(#neutral-mask)">
+      <circle cx="50" cy="35" r="13.5" fill="#cbd5e1" />
+      <path d="M44 47 h12 v11 h-12 z" fill="#cbd5e1" />
+      <path d="M41 55 L50 66 L59 55 Z" fill="#ffffff" />
+      <path d="M48 62 h4 v20 h-4 z" fill="#94a3b8" />
+      <path d="M25 60 L41 56 L45 80 L50 71 L55 80 L59 56 L75 60 L80 100 H20 Z" fill="#475569" />
+    </g>
+  </svg>
+);
+
+const renderAvatarHelper = (genero?: 'MASCULINO' | 'FEMENINO' | '', className?: string) => {
+  if (genero === 'MASCULINO') return <MaleAvatar className={className} />;
+  if (genero === 'FEMENINO') return <FemaleAvatar className={className} />;
+  return <NeutralAvatar className={className} />;
+};
+
 interface EstadisticasProps {
   serials: POSItem[];
   modelosDB: Record<string, ModelConfig>;
@@ -1639,31 +1697,142 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           </button>
         </div>
 
-        <div className="p-4 grid grid-cols-1 sm:grid-cols-5 gap-4">
-          {top5Colaboradores.length === 0 ? (
-            <div className="col-span-5 text-center py-6 text-slate-400 font-mono text-xs">No hay entregas registradas todavía para colaboradores.</div>
-          ) : (
-            top5Colaboradores.map((u, idx) => (
-              <div 
-                key={u.name} 
-                onClick={() => { setModalType('colaborador'); setModalSelectedName(u.name); setModalSearch(''); setDetailSelectedDate(null); }}
-                className="bg-white border border-slate-200 flex flex-col justify-between hover:border-slate-350 cursor-pointer transition-all relative"
-                style={{ borderRadius: '0px' }}
-              >
-                <div className="border-b border-slate-100 px-3 py-2 flex justify-between items-center bg-slate-50">
-                  <span className="text-[8px] text-slate-400 font-bold uppercase font-mono">COLABORADOR</span>
-                  <span className="text-[9px] font-black text-slate-500 font-mono">#{idx + 1}</span>
+        <div className="p-6 flex flex-col justify-center">
+          {(() => {
+            if (top5Colaboradores.length === 0) {
+              return <div className="text-center py-12 text-slate-400 font-mono text-xs">No hay entregas registradas todavía para colaboradores.</div>;
+            }
+            const firstPlace = top5Colaboradores[0];
+            const secondPlace = top5Colaboradores[1];
+            const thirdPlace = top5Colaboradores[2];
+            const fourthPlace = top5Colaboradores[3];
+            const fifthPlace = top5Colaboradores[4];
+            return (
+              <>
+                {/* Podio 3D */}
+                <div className="flex items-end justify-center gap-4 sm:gap-8 pt-12 pb-6 max-w-xl mx-auto w-full">
+                  {/* 2do Lugar (Izquierda) */}
+                  {secondPlace ? (
+                    <div 
+                      onClick={() => { setModalType('colaborador'); setModalSelectedName(secondPlace.name); setModalSearch(''); setDetailSelectedDate(null); }}
+                      className="flex flex-col items-center flex-1 cursor-pointer group transition-all duration-300 hover:-translate-y-1"
+                    >
+                      <div className="relative mb-3">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-slate-300 bg-white overflow-hidden shadow-md flex items-center justify-center">
+                          {renderAvatarHelper(usersProfiles[secondPlace.name]?.genero, "w-full h-full")}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-slate-400 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
+                          2
+                        </div>
+                      </div>
+                      <div className="text-center mb-2 px-1">
+                        <div className="text-[11px] sm:text-xs font-black text-slate-700 truncate max-w-[90px] sm:max-w-[120px] uppercase font-arial" title={secondPlace.name}>
+                          {secondPlace.name}
+                        </div>
+                        <div className="text-[9px] text-slate-500 font-bold uppercase font-mono">{secondPlace.total} Entregas</div>
+                      </div>
+                      <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-24 sm:h-28 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                        <div className="text-3xl sm:text-4xl font-black text-slate-300 select-none">2º</div>
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-300"></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 h-24 sm:h-28 invisible"></div>
+                  )}
+
+                  {/* 1er Lugar (Centro) */}
+                  {firstPlace ? (
+                    <div 
+                      onClick={() => { setModalType('colaborador'); setModalSelectedName(firstPlace.name); setModalSearch(''); setDetailSelectedDate(null); }}
+                      className="flex flex-col items-center flex-1 cursor-pointer group z-10 transition-all duration-300 hover:-translate-y-1"
+                    >
+                      <div className="relative mb-3">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-amber-400 bg-white overflow-hidden shadow-lg flex items-center justify-center relative">
+                          {renderAvatarHelper(usersProfiles[firstPlace.name]?.genero, "w-full h-full")}
+                        </div>
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-lg animate-bounce" style={{ animationDuration: '3s' }}>
+                          👑
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 text-[10px] font-black w-6.5 h-6.5 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
+                          1
+                        </div>
+                      </div>
+                      <div className="text-center mb-2 px-1">
+                        <div className="text-xs sm:text-sm font-black text-slate-900 truncate max-w-[100px] sm:max-w-[140px] uppercase font-arial" title={firstPlace.name}>
+                          {firstPlace.name}
+                        </div>
+                        <div className="text-[10px] sm:text-xs text-amber-600 font-extrabold uppercase font-mono">{firstPlace.total} Entregas</div>
+                      </div>
+                      <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border-2 border-amber-400 border-b-0 h-32 sm:h-36 flex flex-col items-center justify-center shadow-md relative overflow-hidden">
+                        <div className="text-4xl sm:text-5xl font-black text-amber-450 select-none" style={{ color: '#d97706' }}>1º</div>
+                        <div className="absolute top-0 left-0 right-0 h-[4px] bg-amber-400"></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 h-32 sm:h-36 text-center text-slate-400 py-6 text-xs font-mono">No hay entregas</div>
+                  )}
+
+                  {/* 3er Lugar (Derecha) */}
+                  {thirdPlace ? (
+                    <div 
+                      onClick={() => { setModalType('colaborador'); setModalSelectedName(thirdPlace.name); setModalSearch(''); setDetailSelectedDate(null); }}
+                      className="flex flex-col items-center flex-1 cursor-pointer group transition-all duration-300 hover:-translate-y-1"
+                    >
+                      <div className="relative mb-3">
+                        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-4 border-amber-700 bg-white overflow-hidden shadow-md flex items-center justify-center">
+                          {renderAvatarHelper(usersProfiles[thirdPlace.name]?.genero, "w-full h-full")}
+                        </div>
+                        <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
+                          3
+                        </div>
+                      </div>
+                      <div className="text-center mb-2 px-1">
+                        <div className="text-[11px] sm:text-xs font-black text-slate-700 truncate max-w-[90px] sm:max-w-[120px] uppercase font-arial" title={thirdPlace.name}>
+                          {thirdPlace.name}
+                        </div>
+                        <div className="text-[9px] text-slate-500 font-bold uppercase font-mono">{thirdPlace.total} Entregas</div>
+                      </div>
+                      <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-18 sm:h-22 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
+                        <div className="text-2xl sm:text-3xl font-black text-slate-300 select-none">3º</div>
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-700"></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 h-18 sm:h-22 invisible"></div>
+                  )}
                 </div>
-                <div className="p-3">
-                  <div className="text-xs font-black text-black truncate uppercase font-arial mt-0.5" style={{ color: '#000000' }} title={u.name}>{u.name}</div>
-                  <div className="mt-3 border-t border-slate-100 pt-2 flex flex-col">
-                    <span className="text-[8px] text-slate-400 font-bold uppercase font-mono leading-none">TOTAL ENTREGAS</span>
-                    <span className="text-2xl font-black text-black leading-tight mt-1">{u.total}</span>
+
+                {/* Posiciones 4 y 5 (Menciones de Honor) */}
+                {(fourthPlace || fifthPlace) && (
+                  <div className="mt-6 border-t border-slate-150 pt-5 max-w-xl mx-auto w-full">
+                    <h5 className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase font-mono mb-3 text-center">Menciones de Honor</h5>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      {[fourthPlace, fifthPlace].filter(Boolean).map((u, i) => {
+                        const pos = i + 4;
+                        return (
+                          <div 
+                            key={u!.name}
+                            onClick={() => { setModalType('colaborador'); setModalSelectedName(u!.name); setModalSearch(''); setDetailSelectedDate(null); }}
+                            className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 p-2.5 px-4 cursor-pointer transition-colors flex-1"
+                            style={{ borderRadius: '0px' }}
+                          >
+                            <span className="text-xs font-black text-slate-400 font-mono">#{pos}</span>
+                            <div className="w-8 h-8 rounded-full border border-slate-300 bg-white overflow-hidden flex-shrink-0 flex items-center justify-center">
+                              {renderAvatarHelper(usersProfiles[u!.name]?.genero, "w-full h-full")}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="text-xs font-bold text-slate-800 truncate uppercase font-arial" title={u!.name}>{u!.name}</div>
+                              <div className="text-[9px] text-slate-500 font-bold font-mono">{u!.total} Entregas</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))
-          )}
+                )}
+              </>
+            );
+          })()}
         </div>
       </div>
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type POSStatus = 'PENDIENTE' | 'ACTIVO' | 'SUSPENDIDO' | 'CANCELADO' | 'N#A' | 'SIN ESTATUS' | 'RECUPERADO';
+export type POSStatus = 'PENDIENTE' | 'ACTIVO' | 'SUSPENDIDO' | 'CANCELADO' | 'N#A' | 'SIN ESTATUS' | 'RECUPERADO' | 'DISPONIBLE';
 
 export type OperatingSystem = 'ANDROID' | 'LINUX' | 'DESCONOCIDO';
 
@@ -34,6 +34,7 @@ export interface POSItem {
   entregadoTecnico?: boolean;
   esSustitucion?: boolean;
   serialSustituto?: string;
+  modeloSustituto?: string;
   fechaSalida?: string;
   fechaSalidaCliente?: string;
   guiaSalidaCliente?: string;
@@ -76,6 +77,7 @@ export interface UserProfile {
   razonSocial?: string;
   ubicacion?: string;
   telefono?: string;
+  genero?: 'MASCULINO' | 'FEMENINO' | '';
 }
 
 export interface CruceItem {

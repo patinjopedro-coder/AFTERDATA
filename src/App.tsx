@@ -551,7 +551,7 @@ export default function App() {
     // 3. Tab Stand-by (includes stateful + derived items)
     if (currentTab === 'standby') {
       const derived = serials
-        .filter(s => s.isCasillero && (!s.fechaConfirmada || (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida))))
+        .filter(s => s.isCasillero && s.status !== 'RECUPERADO' && (!s.fechaConfirmada || (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida))))
         .map(s => {
           let reason = 'PENDIENTE CONFIRMACIÓN SALIDA';
           if (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida)) {

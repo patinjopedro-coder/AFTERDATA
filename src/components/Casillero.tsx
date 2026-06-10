@@ -44,6 +44,23 @@ export const Casillero: React.FC<CasilleroProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
+  const detectModelFromSerial = (serial: string): string => {
+    if (!serial || !modelosDB) return '';
+    const upper = serial.trim().toUpperCase();
+    const sortedPrefixes = Object.keys(modelosDB).sort((a, b) => b.length - a.length);
+    for (const prefix of sortedPrefixes) {
+      if (upper.startsWith(prefix.toUpperCase())) {
+        return prefix;
+      }
+    }
+    for (const prefix of sortedPrefixes) {
+      if (upper.includes(prefix.toUpperCase())) {
+        return prefix;
+      }
+    }
+    return '';
+  };
+
   const [editingItem, setEditingItem] = useState<POSItem | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<POSItem>>({});
 
@@ -118,6 +135,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 <option value="CANCELADO">CANCELADO</option>
                 <option value="N#A">N#A</option>
                 <option value="RECUPERADO">RECUPERADO</option>
+                <option value="DISPONIBLE">DISPONIBLE</option>
                 <option value="SIN ESTATUS">SIN ESTATUS</option>
               </select>
             </div>
@@ -172,6 +190,30 @@ export const Casillero: React.FC<CasilleroProps> = ({
     const link = document.createElement("a");
     link.href = url;
     link.download = `historico_casillero_${localDate}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportRecuperados = () => {
+    const targets = serials.filter(s => s.isCasillero && s.status === 'RECUPERADO');
+
+    if (targets.length === 0) {
+      alert("No hay registros marcados como RECUPERADO en el casillero para exportar.");
+      return;
+    }
+
+    let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID\n";
+    targets.forEach(s => {
+      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}"\n`;
+    });
+
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const d = new Date();
+    const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `recuperados_casillero_${localDate}.csv`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -317,6 +359,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
               responsable: getColVal(idxResponsable).toUpperCase(),
               observaciones: getColVal(idxObservacion),
               serialSustituto: getColVal(idxSerialSaliente).toUpperCase(),
+              modeloSustituto: detectModelFromSerial(getColVal(idxSerialSaliente)),
               esSustitucion: !!getColVal(idxSerialSaliente),
               fechaSalida: getColVal(idxFechaSalida),
               fechaSalidaCliente: getColVal(idxFechaSalida),
@@ -530,6 +573,15 @@ export const Casillero: React.FC<CasilleroProps> = ({
           </button>
 
           <button
+            onClick={handleExportRecuperados}
+            className="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
+            title="Exportar Equipos Recuperados de Casillero a CSV/Excel"
+          >
+            <FileSpreadsheet size={14} className="text-white" />
+            <span>EXPORTAR RECUPERADOS</span>
+          </button>
+
+          <button
             onClick={handleImportMatriz}
             className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
             title="Importar Matriz de Envíos"
@@ -614,10 +666,19 @@ export const Casillero: React.FC<CasilleroProps> = ({
                   return (
                     <tr 
                       key={s.id} 
-                      className={`hover:bg-slate-50 transition-colors align-top border-b border-slate-100 ${s.selected ? 'bg-blue-50/50' : ''} ${s.addedFromCruce ? 'border-l-2 border-l-slate-400' : ''}`}
+                      className={`hover:bg-slate-50 transition-colors align-top border-b border-slate-100 ${s.selected ? 'bg-blue-50/50' : ''} ${s.addedFromCruce ? 'border-l-2 border-l-slate-400' : ''} ${
+                        s.fechaConfirmada ? 'bg-slate-100/90 text-slate-400 filter grayscale opacity-75' : ''
+                      }`}
                     >
                       {/* SELECTOR */}
-                      <td className="py-4 px-3 text-center">
+                      <td className="py-4 px-3 text-center relative overflow-hidden">
+                        {s.fechaConfirmada && (
+                          <div className="absolute top-0 left-0 w-16 h-16 overflow-hidden pointer-events-none select-none z-10">
+                            <div className="absolute top-[8px] -left-[22px] w-[70px] bg-emerald-600 text-white text-[6px] font-black text-center py-0.5 uppercase tracking-wider shadow-sm transform -rotate-45 font-mono">
+                              COMPLETADO
+                            </div>
+                          </div>
+                        )}
                         <input
                           type="checkbox"
                           checked={!!s.selected}
@@ -698,7 +759,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* 3. CLIENTE / SOLICITANTE */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cliente:</span>
-                            <span className="text-slate-800 font-bold select-all text-[11px] truncate uppercase font-arial max-w-[150px]">{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
+                            <span className="text-slate-800 font-bold select-all text-[11px] uppercase font-arial">{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
                           </div>
 
                           {/* RIF */}
@@ -925,12 +986,43 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {s.esSustitucion && (
                             <div className="space-y-1.5 bg-slate-50 p-2 rounded border border-slate-100">
                               <div>
+                                <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Modelo Sustituto</label>
+                                <select
+                                  disabled={isRecuperado}
+                                  value={s.modeloSustituto || ''}
+                                  onChange={e => handleUpdateTextVal(s.id, 'modeloSustituto', e.target.value)}
+                                  className={`w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
+                                    isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                                  }`}
+                                >
+                                  <option value="">SELECCIONAR MODELO</option>
+                                  {Object.keys(modelosDB).sort().map(key => (
+                                    <option key={key} value={key}>
+                                      {key} - {modelosDB[key].modelo}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
                                 <label className="text-[9px] text-slate-500 block uppercase">Serial Sustituto</label>
                                 <input
                                   type="text"
                                   disabled={isRecuperado}
                                   value={s.serialSustituto || ''}
-                                  onChange={e => handleUpdateTextVal(s.id, 'serialSustituto', e.target.value.toUpperCase())}
+                                  onChange={e => {
+                                    const text = e.target.value.toUpperCase();
+                                    const autoModel = detectModelFromSerial(text);
+                                    setSerials(prev => prev.map(o => {
+                                      if (o.id === s.id) {
+                                        const nextModel = autoModel || (text ? o.modeloSustituto : '');
+                                        return trackAndLogChanges(o, {
+                                          serialSustituto: text,
+                                          modeloSustituto: nextModel
+                                        });
+                                      }
+                                      return o;
+                                    }));
+                                  }}
                                   placeholder=""
                                   className={`w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
                                     isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''

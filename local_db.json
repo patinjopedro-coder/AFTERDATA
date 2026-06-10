@@ -40,7 +40,7 @@
       "serial": "HELENA9",
       "date": "2026-06-07",
       "displayDate": "07/06/2026",
-      "status": "SUSPENDIDO",
+      "status": "PENDIENTE",
       "remitente": "DEIBY CONTRERAS",
       "source": "CRUCE DE CORREO Y FISICO",
       "isCasillero": false,
@@ -68,7 +68,11 @@
       "fechaConfirmada": false,
       "ticket": "",
       "addedFromCruce": true,
-      "cruceBatchId": "LOTE - 07/06/2026 02:49:34"
+      "cruceBatchId": "LOTE - 07/06/2026 02:49:34",
+      "history": [
+        "07/06/2026 10:26:34 | [Estatus] cambió de \"SUSPENDIDO\" a \"CANCELADO\"",
+        "07/06/2026 10:26:36 | [Estatus] cambió de \"CANCELADO\" a \"PENDIENTE\""
+      ]
     },
     {
       "id": 27,
@@ -1239,7 +1243,7 @@
       "telefono": ""
     }
   },
-  "currentTab": "estadisticas",
+  "currentTab": "casillero",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",
