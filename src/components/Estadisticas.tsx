@@ -23,55 +23,81 @@ const DEPARTMENT_COLORS = [
 
 const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
   <svg viewBox="0 0 100 100" className={className}>
-    <circle cx="50" cy="50" r="48" fill="#eff6ff" stroke="#dbeafe" strokeWidth="2" />
-    <mask id="male-mask">
+    <circle cx="50" cy="50" r="48" fill="#e2edf5" />
+    <mask id="male-avatar-mask">
       <circle cx="50" cy="50" r="48" fill="#ffffff" />
     </mask>
-    <g mask="url(#male-mask)">
-      {/* Body Silhouette */}
-      <path d="M20 85 C20 68, 32 62, 50 62 C68 62, 80 68, 80 85 Z" fill="#64748b" />
+    <g mask="url(#male-avatar-mask)">
       {/* Neck */}
-      <path d="M44 62 L44 52 C44 52, 50 50, 56 52 L56 62 Z" fill="#94a3b8" />
-      {/* Head */}
-      <circle cx="50" cy="36" r="14" fill="#94a3b8" />
-      {/* Hairstyle Silhouette */}
-      <path d="M34 38 C34 22, 42 20, 50 22 C58 20, 66 22, 66 38 C63 36, 60 34, 50 34 C40 34, 37 36, 34 38 Z" fill="#334155" />
+      <path d="M42 62 L42 50 C42 50, 50 48, 58 50 L58 62 Z" fill="#f8b896" />
+      {/* Ears */}
+      <circle cx="34" cy="39" r="4" fill="#f8b896" />
+      <circle cx="66" cy="39" r="4" fill="#f8b896" />
+      {/* Face/Head */}
+      <circle cx="50" cy="38" r="15" fill="#f8b896" />
+      {/* Hair (neat spiky/voluminous styling on top) */}
+      <path d="M32 37 C28 29, 32 19, 41 18 C46 16, 52 17, 58 17 C64 16, 68 23, 68 34 C68 38, 66 40, 66 36 C66 30, 61 28, 55 28 C50 28, 47 30, 43 29 C38 27, 36 29, 34 33 L33 37 Z" fill="#a75d33" />
+      {/* Left sideburn */}
+      <path d="M33 35 L33 43 L36 41 L35 35 Z" fill="#a75d33" />
+      {/* Right sideburn */}
+      <path d="M67 35 L67 43 L64 41 L65 35 Z" fill="#a75d33" />
+      
+      {/* Suit Coat */}
+      <path d="M15 80 C15 68, 25 65, 50 65 C75 65, 85 68, 85 80 L85 100 H15 Z" fill="#3c4349" />
+      {/* White shirt collar */}
+      <path d="M36 65 L50 88 L64 65 Z" fill="#ffffff" />
+      {/* Tie Knot (Orange) */}
+      <path d="M46.5 68 L53.5 68 L52 74 L48 74 Z" fill="#ff7919" />
+      {/* Tie Body (Orange) */}
+      <path d="M48 74 L52 74 L54 94 L50 99 L46 94 Z" fill="#ff7919" />
+      {/* Left Coat Lapel */}
+      <path d="M15 80 L38 65 L36 78 L50 88 L46 100 H15 Z" fill="#2d3238" />
+      {/* Right Coat Lapel */}
+      <path d="M85 80 L62 65 L64 78 L50 88 L54 100 H85 Z" fill="#2d3238" />
     </g>
   </svg>
 );
 
 const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
   <svg viewBox="0 0 100 100" className={className}>
-    <circle cx="50" cy="50" r="48" fill="#fdf2f8" stroke="#fce7f3" strokeWidth="2" />
-    <mask id="female-mask">
+    <circle cx="50" cy="50" r="48" fill="#e2edf5" />
+    <mask id="female-avatar-mask">
       <circle cx="50" cy="50" r="48" fill="#ffffff" />
     </mask>
-    <g mask="url(#female-mask)">
-      {/* Body Silhouette */}
-      <path d="M22 85 C22 70, 32 64, 50 64 C68 64, 78 70, 78 85 Z" fill="#db2777" />
+    <g mask="url(#female-avatar-mask)">
       {/* Neck */}
-      <path d="M45 64 L45 54 C45 54, 50 52, 55 54 L55 64 Z" fill="#f472b6" />
-      {/* Head */}
-      <circle cx="50" cy="38" r="13" fill="#f472b6" />
-      {/* Hairstyle Silhouette */}
-      <path d="M34 42 C34 26, 66 26, 66 42 C68 54, 64 62, 64 62 C64 62, 59 46, 50 46 C41 46, 36 62, 36 62 C36 62, 32 54, 34 42 Z" fill="#831843" />
+      <path d="M42 62 L42 50 C42 50, 50 48, 58 50 L58 62 Z" fill="#f8b896" />
+      {/* Face/Head */}
+      <circle cx="50" cy="38" r="14.5" fill="#f8b896" />
+
+      {/* Suit Coat */}
+      <path d="M15 80 C15 68, 25 65, 50 65 C75 65, 85 68, 85 80 L85 100 H15 Z" fill="#3c4349" />
+      {/* White shirt inner collar */}
+      <path d="M36 65 L50 88 L64 65 Z" fill="#ffffff" />
+      {/* Left Coat Lapel */}
+      <path d="M15 80 L38 65 L36 78 L50 88 L46 100 H15 Z" fill="#2d3238" />
+      {/* Right Coat Lapel */}
+      <path d="M85 80 L62 65 L64 78 L50 88 L54 100 H85 Z" fill="#2d3238" />
+
+      {/* Hair (covers head and flows over the shoulders) */}
+      <path d="M32 40 C30 26, 38 16, 50 17 C62 16, 70 26, 68 40 C70 52, 72 68, 71 78 C71 80, 68 80, 66 75 C64 70, 62 55, 62 48 C62 42, 57 41, 50 43 C43 41, 38 42, 38 48 C38 55, 36 70, 34 75 C32 80, 29 80, 29 78 C28 68, 30 52, 32 40 Z" fill="#a75d33" />
     </g>
   </svg>
 );
 
 const NeutralAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
   <svg viewBox="0 0 100 100" className={className}>
-    <circle cx="50" cy="50" r="48" fill="#f8fafc" stroke="#cbd5e1" strokeWidth="2" />
-    <mask id="neutral-mask">
+    <circle cx="50" cy="50" r="48" fill="#e2edf5" />
+    <mask id="neutral-avatar-mask">
       <circle cx="50" cy="50" r="48" fill="#ffffff" />
     </mask>
-    <g mask="url(#neutral-mask)">
-      {/* Body Silhouette */}
-      <path d="M22 85 C22 70, 32 64, 50 64 C68 64, 78 70, 78 85 Z" fill="#94a3b8" />
+    <g mask="url(#neutral-avatar-mask)">
       {/* Neck */}
-      <path d="M45 64 L45 54 C45 54, 50 52, 55 54 L55 64 Z" fill="#cbd5e1" />
+      <path d="M42 62 L42 50 C42 50, 50 48, 58 50 L58 62 Z" fill="#cbd5e1" />
       {/* Head */}
-      <circle cx="50" cy="38" r="13.5" fill="#cbd5e1" />
+      <circle cx="50" cy="38" r="14.5" fill="#cbd5e1" />
+      {/* Body */}
+      <path d="M15 80 C15 68, 25 65, 50 65 C75 65, 85 68, 85 80 L85 100 H15 Z" fill="#475569" />
     </g>
   </svg>
 );
