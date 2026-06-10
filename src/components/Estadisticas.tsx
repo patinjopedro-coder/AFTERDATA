@@ -23,36 +23,38 @@ const DEPARTMENT_COLORS = [
 
 const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
   <svg viewBox="0 0 100 100" className={className}>
-    <circle cx="50" cy="50" r="48" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="2" />
+    <circle cx="50" cy="50" r="48" fill="#eff6ff" stroke="#dbeafe" strokeWidth="2" />
     <mask id="male-mask">
       <circle cx="50" cy="50" r="48" fill="#ffffff" />
     </mask>
     <g mask="url(#male-mask)">
-      <circle cx="50" cy="35" r="14" fill="#94a3b8" />
-      <path d="M44 48 h12 v10 h-12 z" fill="#94a3b8" />
-      <path d="M40 55 L50 68 L60 55 Z" fill="#ffffff" />
-      <path d="M47.5 63 L52.5 63 L54 85 L50 90 L46 85 Z" fill="#b91c1c" />
-      <path d="M25 60 L40 56 L45 80 L50 72 L55 80 L60 56 L75 60 L80 100 H20 Z" fill="#1e293b" />
-      <path d="M40 56 L46 75 L45 80 Z" fill="#0f172a" />
-      <path d="M60 56 L54 75 L55 80 Z" fill="#0f172a" />
+      {/* Body Silhouette */}
+      <path d="M20 85 C20 68, 32 62, 50 62 C68 62, 80 68, 80 85 Z" fill="#64748b" />
+      {/* Neck */}
+      <path d="M44 62 L44 52 C44 52, 50 50, 56 52 L56 62 Z" fill="#94a3b8" />
+      {/* Head */}
+      <circle cx="50" cy="36" r="14" fill="#94a3b8" />
+      {/* Hairstyle Silhouette */}
+      <path d="M34 38 C34 22, 42 20, 50 22 C58 20, 66 22, 66 38 C63 36, 60 34, 50 34 C40 34, 37 36, 34 38 Z" fill="#334155" />
     </g>
   </svg>
 );
 
 const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
   <svg viewBox="0 0 100 100" className={className}>
-    <circle cx="50" cy="50" r="48" fill="#f1f5f9" stroke="#cbd5e1" strokeWidth="2" />
+    <circle cx="50" cy="50" r="48" fill="#fdf2f8" stroke="#fce7f3" strokeWidth="2" />
     <mask id="female-mask">
       <circle cx="50" cy="50" r="48" fill="#ffffff" />
     </mask>
     <g mask="url(#female-mask)">
-      <circle cx="50" cy="35" r="13" fill="#64748b" />
-      <path d="M36 33 C36 22 64 22 64 33 C64 42 36 42 36 33 Z" fill="#475569" />
-      <path d="M45 46 h10 v12 h-10 z" fill="#64748b" />
-      <path d="M42 54 L50 67 L58 54 Z" fill="#ffffff" />
-      <path d="M25 62 L42 56 L46 82 L50 70 L54 82 L58 56 L75 62 L80 100 H20 Z" fill="#334155" />
-      <path d="M42 56 L47 77 L46 82 Z" fill="#1e293b" />
-      <path d="M58 56 L53 77 L54 82 Z" fill="#1e293b" />
+      {/* Body Silhouette */}
+      <path d="M22 85 C22 70, 32 64, 50 64 C68 64, 78 70, 78 85 Z" fill="#db2777" />
+      {/* Neck */}
+      <path d="M45 64 L45 54 C45 54, 50 52, 55 54 L55 64 Z" fill="#f472b6" />
+      {/* Head */}
+      <circle cx="50" cy="38" r="13" fill="#f472b6" />
+      {/* Hairstyle Silhouette */}
+      <path d="M34 42 C34 26, 66 26, 66 42 C68 54, 64 62, 64 62 C64 62, 59 46, 50 46 C41 46, 36 62, 36 62 C36 62, 32 54, 34 42 Z" fill="#831843" />
     </g>
   </svg>
 );
@@ -64,11 +66,12 @@ const NeutralAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-1
       <circle cx="50" cy="50" r="48" fill="#ffffff" />
     </mask>
     <g mask="url(#neutral-mask)">
-      <circle cx="50" cy="35" r="13.5" fill="#cbd5e1" />
-      <path d="M44 47 h12 v11 h-12 z" fill="#cbd5e1" />
-      <path d="M41 55 L50 66 L59 55 Z" fill="#ffffff" />
-      <path d="M48 62 h4 v20 h-4 z" fill="#94a3b8" />
-      <path d="M25 60 L41 56 L45 80 L50 71 L55 80 L59 56 L75 60 L80 100 H20 Z" fill="#475569" />
+      {/* Body Silhouette */}
+      <path d="M22 85 C22 70, 32 64, 50 64 C68 64, 78 70, 78 85 Z" fill="#94a3b8" />
+      {/* Neck */}
+      <path d="M45 64 L45 54 C45 54, 50 52, 55 54 L55 64 Z" fill="#cbd5e1" />
+      {/* Head */}
+      <circle cx="50" cy="38" r="13.5" fill="#cbd5e1" />
     </g>
   </svg>
 );
@@ -1749,9 +1752,6 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                       <div className="relative mb-3">
                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-amber-400 bg-white overflow-hidden shadow-lg flex items-center justify-center relative">
                           {renderAvatarHelper(usersProfiles[firstPlace.name]?.genero, "w-full h-full")}
-                        </div>
-                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 text-lg animate-bounce" style={{ animationDuration: '3s' }}>
-                          👑
                         </div>
                         <div className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 text-[10px] font-black w-6.5 h-6.5 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
                           1
