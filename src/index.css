@@ -741,7 +741,7 @@ html body select.status-select-green {
 .estadisticas-tab-container h3,
 .estadisticas-tab-container h4,
 .estadisticas-tab-container span:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]),
-.estadisticas-tab-container div:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]):not(.active-tab),
+.estadisticas-tab-container div:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]):not(.active-tab):not(.podium-watermark),
 .estadisticas-tab-container p:not(button *):not(a *):not(.text-white-force):not(.text-white):not([class*="text-white"]),
 .estadisticas-tab-container label,
 .estadisticas-tab-container text,
@@ -1070,7 +1070,7 @@ button.bulk-btn:hover {
 .font-arial button:not([class*="text-["]):not(.pagination-btn),
 .font-arial td:not([class*="text-["]),
 .font-arial th:not([class*="text-["]),
-.font-arial div:not(.text-3xl):not(.text-base):not(.text-lg):not(.text-xl):not(.text-2xl):not([class*="text-["]):not(.pagination-btn) {
+.font-arial div:not(.text-3xl):not(.text-4xl):not(.text-5xl):not(.text-6xl):not(.text-7xl):not(.text-base):not(.text-lg):not(.text-xl):not(.text-2xl):not([class*="text-["]):not(.pagination-btn) {
   font-size: 12px !important;
 }
 

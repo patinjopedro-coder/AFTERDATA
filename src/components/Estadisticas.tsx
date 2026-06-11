@@ -1884,7 +1884,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="text-[9px] text-slate-500 font-bold uppercase font-mono">{secondPlace.total} Entregas</div>
                       </div>
                       <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-24 sm:h-28 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                        <div className="text-3xl sm:text-4xl font-black text-slate-300 select-none">2º</div>
+                        <div className="text-3xl sm:text-4xl font-black text-slate-300 select-none podium-watermark">2º</div>
                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-300"></div>
                       </div>
                     </div>
@@ -1913,7 +1913,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="text-[10px] sm:text-xs text-amber-600 font-extrabold uppercase font-mono">{firstPlace.total} Entregas</div>
                       </div>
                       <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border-2 border-amber-400 border-b-0 h-32 sm:h-36 flex flex-col items-center justify-center shadow-md relative overflow-hidden">
-                        <div className="text-5xl sm:text-6xl font-black select-none" style={{ color: '#d97706' }}>1º</div>
+                        <div className="text-5xl sm:text-6xl font-black select-none podium-watermark" style={{ color: '#d97706' }}>1º</div>
                         <div className="absolute top-0 left-0 right-0 h-[4px] bg-amber-400"></div>
                       </div>
                     </div>
@@ -1942,7 +1942,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="text-[9px] text-slate-500 font-bold uppercase font-mono">{thirdPlace.total} Entregas</div>
                       </div>
                       <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-18 sm:h-22 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                        <div className="text-2xl sm:text-3xl font-black text-slate-300 select-none">3º</div>
+                        <div className="text-2xl sm:text-3xl font-black text-slate-300 select-none podium-watermark">3º</div>
                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-700"></div>
                       </div>
                     </div>
