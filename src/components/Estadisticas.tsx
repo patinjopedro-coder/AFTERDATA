@@ -110,19 +110,81 @@ const NeutralAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-1
       <circle cx="50" cy="50" r="48" fill="#ffffff" />
     </mask>
     <g mask="url(#neutral-avatar-mask-v2)">
-      {/* Neck */}
-      <path d="M42 62 L42 50 C42 50, 50 48, 58 50 L58 62 Z" fill="#cbd5e1" />
-      {/* Head */}
+      {/* Neck base with shadow on the left */}
+      <path d="M40 65 L40 50 C40 50, 50 48, 60 50 L60 65 Z" fill="#94a3b8" />
+      {/* Neck highlight on the right */}
+      <path d="M48 65 L48 51 C48 51, 54 49, 60 50 L60 65 Z" fill="#cbd5e1" />
+      
+      {/* Left Ear */}
+      <circle cx="34" cy="39" r="3.5" fill="#94a3b8" />
+      {/* Right Ear */}
+      <circle cx="66" cy="39" r="3.5" fill="#cbd5e1" />
+      {/* Face/Head */}
       <circle cx="50" cy="38" r="14.5" fill="#cbd5e1" />
-      {/* Body */}
-      <path d="M15 82 C15 70, 25 66, 50 66 C75 66, 85 70, 85 82 L85 100 H15 Z" fill="#94a3b8" />
+      
+      {/* Hair (generic neat cropped styling) */}
+      <path d="M33 35 C32 24, 40 18, 50 18 C60 18, 68 24, 67 35 C66 40, 64 42, 64 36 C64 30, 58 29, 50 29 C42 29, 36 30, 36 36 C36 42, 34 40, 33 35 Z" fill="#475569" />
+      {/* Left sideburn */}
+      <path d="M33 35 L33 42 L36 40 L35 35 Z" fill="#475569" />
+      {/* Right sideburn */}
+      <path d="M67 35 L67 42 L64 40 L65 35 Z" fill="#475569" />
+      
+      {/* White Shirt Body */}
+      <path d="M15 82 C15 70, 25 66, 50 66 C75 66, 85 70, 85 82 L85 100 H15 Z" fill="#ffffff" />
+      {/* Shirt shadow on the left */}
+      <path d="M15 82 C15 70, 25 66, 50 66 L50 100 H15 Z" fill="#e5e7eb" />
+      
+      {/* Collar Triangles */}
+      <path d="M50 72 L36 66 L50 66 Z" fill="#e5e7eb" />
+      <path d="M50 72 L64 66 L50 66 Z" fill="#ffffff" />
+      
+      {/* Black Tie */}
+      <path d="M47.5 70 L52.5 70 L51.5 75 L48.5 75 Z" fill="#111827" />
+      <path d="M48.5 75 L51.5 75 L53 98 L50 100 L47 98 Z" fill="#111827" />
     </g>
   </svg>
 );
 
-const renderAvatarHelper = (genero?: 'MASCULINO' | 'FEMENINO' | '', className?: string) => {
-  if (genero === 'MASCULINO') return <MaleAvatar className={className} />;
-  if (genero === 'FEMENINO') return <FemaleAvatar className={className} />;
+const guessGenero = (name: string, isCliente?: boolean): 'MASCULINO' | 'FEMENINO' | '' => {
+  const n = name.toUpperCase().trim();
+  if (!n || n.includes('SIN REMITENTE')) return '';
+  if (
+    n.includes('HELENA') || 
+    n.includes('ANDREA') || 
+    n.includes('MARIA') || 
+    n.includes('ANA') || 
+    n.includes('GABRIELA') || 
+    n.includes('CARLA') || 
+    n.includes('LAURA') ||
+    n.includes('DIANA') ||
+    n.includes('PATRICIA') ||
+    n.includes('CARMEN') ||
+    n.includes('VALENTINA') ||
+    n.includes('ISABELA') ||
+    n.includes('SOFIA') ||
+    n.includes('YUDITH') ||
+    n.includes('YOLANDA') ||
+    n.includes('GLADYS') ||
+    n.includes('ROSA') ||
+    n.includes('BEATRIZ') ||
+    n.includes('LILIANA') ||
+    n.includes('PATTY')
+  ) {
+    return 'FEMENINO';
+  }
+  if (!isCliente) {
+    return 'MASCULINO';
+  }
+  return '';
+};
+
+const renderAvatarHelper = (genero?: 'MASCULINO' | 'FEMENINO' | '', className?: string, name?: string) => {
+  let g = genero;
+  if (!g && name) {
+    g = guessGenero(name, false);
+  }
+  if (g === 'MASCULINO') return <MaleAvatar className={className} />;
+  if (g === 'FEMENINO') return <FemaleAvatar className={className} />;
   return <NeutralAvatar className={className} />;
 };
 
@@ -1766,7 +1828,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     >
                       <div className="relative mb-3">
                         <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-slate-300 bg-white overflow-hidden shadow-md flex items-center justify-center">
-                          {renderAvatarHelper(usersProfiles[secondPlace.name]?.genero, "w-full h-full")}
+                          {renderAvatarHelper(usersProfiles[secondPlace.name]?.genero, "w-full h-full", secondPlace.name)}
                         </div>
                         <div className="absolute -bottom-1 -right-1 bg-slate-400 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
                           2
@@ -1795,7 +1857,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     >
                       <div className="relative mb-3">
                         <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-amber-400 bg-white overflow-hidden shadow-lg flex items-center justify-center relative">
-                          {renderAvatarHelper(usersProfiles[firstPlace.name]?.genero, "w-full h-full")}
+                          {renderAvatarHelper(usersProfiles[firstPlace.name]?.genero, "w-full h-full", firstPlace.name)}
                         </div>
                         <div className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 text-[10px] font-black w-6.5 h-6.5 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
                           1
@@ -1824,7 +1886,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     >
                       <div className="relative mb-3">
                         <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-4 border-amber-700 bg-white overflow-hidden shadow-md flex items-center justify-center">
-                          {renderAvatarHelper(usersProfiles[thirdPlace.name]?.genero, "w-full h-full")}
+                          {renderAvatarHelper(usersProfiles[thirdPlace.name]?.genero, "w-full h-full", thirdPlace.name)}
                         </div>
                         <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
                           3
@@ -1862,7 +1924,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                           >
                             <span className="text-xs font-black text-slate-400 font-mono">#{pos}</span>
                             <div className="w-8 h-8 rounded-full border border-slate-300 bg-white overflow-hidden flex-shrink-0 flex items-center justify-center">
-                              {renderAvatarHelper(usersProfiles[u!.name]?.genero, "w-full h-full")}
+                              {renderAvatarHelper(usersProfiles[u!.name]?.genero, "w-full h-full", u!.name)}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="text-xs font-bold text-slate-800 truncate uppercase font-arial" title={u!.name}>{u!.name}</div>
