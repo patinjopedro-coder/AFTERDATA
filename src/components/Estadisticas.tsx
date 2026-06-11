@@ -257,7 +257,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       return s;
     });
   }, [rawSerials]);
-  const [modalType, setModalType] = useState<'total' | 'disponibles' | 'entregados' | 'android' | 'linux' | 'manual_cruce' | 'zoom' | 'cliente' | 'colaborador' | 'modeloFisico' | 'modeloNegocio' | 'departamento' | null>(null);
+  const [modalType, setModalType] = useState<'total' | 'disponibles' | 'entregados' | 'android' | 'linux' | 'manual_cruce' | 'zoom' | 'cliente' | 'colaborador' | 'modeloFisico' | 'modeloNegocio' | 'departamento' | 'casillero_completados' | 'casillero_incompletados' | 'casillero_recuperados' | 'casillero_otros' | null>(null);
   const [modalSelectedName, setModalSelectedName] = useState<string | null>(null);
   const [modalDateDesde, setModalDateDesde] = useState('');
   const [modalDateHasta, setModalDateHasta] = useState('');
@@ -840,25 +840,24 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [serials, exportCasilleroFilter]);
 
-  // Areas distribution counts
-  const areaCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    serials.forEach(s => {
-      // Filter by casillero option
-      if (exportCasilleroFilter === 'no-casillero' && s.isCasillero) return;
-      if (exportCasilleroFilter === 'only-casillero' && !s.isCasillero) return;
-      if (!s.remitente) return;
+  // Casillero metrics counts
+  const casilleroMetrics = useMemo(() => {
+    const completadas = rawSerials.filter(s => s.isCasillero && s.status !== 'RECUPERADO' && s.esSustitucion && s.serialSustituto && s.fechaSalida).length;
+    const incompletas = rawSerials.filter(s => s.isCasillero && s.status !== 'RECUPERADO' && s.esSustitucion && (!s.serialSustituto || !s.fechaSalida)).length;
+    const recuperados = rawSerials.filter(s => s.isCasillero && s.status === 'RECUPERADO').length;
+    const otros = rawSerials.filter(s => s.isCasillero && s.status !== 'RECUPERADO' && !s.esSustitucion).length;
+    
+    return [
+      { key: 'casillero_completados', label: 'SUSTITUCIONES COMPLETADAS', count: completadas, color: '#10b981' },
+      { key: 'casillero_incompletados', label: 'SUSTITUCIONES INCOMPLETAS', count: incompletas, color: '#f59e0b' },
+      { key: 'casillero_recuperados', label: 'EQUIPOS RECUPERADOS', count: recuperados, color: '#3b82f6' },
+      { key: 'casillero_otros', label: 'OTROS EN CASILLERO', count: otros, color: '#64748b' }
+    ] as const;
+  }, [rawSerials]);
 
-      const remKey = s.remitente.toUpperCase().trim();
-      const p = usersProfiles[remKey];
-      // Check if remitente is User and has an area
-      if (p && p.isUsuario && p.area && p.area.trim() !== '') {
-        const areaUp = p.area.toUpperCase().trim();
-        counts[areaUp] = (counts[areaUp] || 0) + 1;
-      }
-    });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]);
-  }, [serials, usersProfiles, exportCasilleroFilter]);
+  const totalCasilleroCount = useMemo(() => {
+    return rawSerials.filter(s => s.isCasillero).length;
+  }, [rawSerials]);
 
   // Historical SIM cards calculations
   const posSims = serials
@@ -996,6 +995,14 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         const p = usersProfiles[remKey];
         return p && p.isUsuario && p.area && p.area.toUpperCase().trim() === modalSelectedName?.toUpperCase().trim();
       });
+    } else if (modalType === 'casillero_completados') {
+      list = rawSerials.filter(s => s.isCasillero && s.status !== 'RECUPERADO' && s.esSustitucion && s.serialSustituto && s.fechaSalida);
+    } else if (modalType === 'casillero_incompletados') {
+      list = rawSerials.filter(s => s.isCasillero && s.status !== 'RECUPERADO' && s.esSustitucion && (!s.serialSustituto || !s.fechaSalida));
+    } else if (modalType === 'casillero_recuperados') {
+      list = rawSerials.filter(s => s.isCasillero && s.status === 'RECUPERADO');
+    } else if (modalType === 'casillero_otros') {
+      list = rawSerials.filter(s => s.isCasillero && s.status !== 'RECUPERADO' && !s.esSustitucion);
     }
 
     if (modalDateDesde) {
@@ -1565,7 +1572,17 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
   };
 
   const getPOSItemHeaders = (type: string): string[] => {
-    if (type === 'cliente' || type === 'colaborador' || type === 'disponibles' || type === 'entregados' || type === 'periodo') {
+    if (
+      type === 'cliente' || 
+      type === 'colaborador' || 
+      type === 'disponibles' || 
+      type === 'entregados' || 
+      type === 'periodo' ||
+      type === 'casillero_completados' ||
+      type === 'casillero_incompletados' ||
+      type === 'casillero_recuperados' ||
+      type === 'casillero_otros'
+    ) {
       return ['MODELO', 'SERIAL', 'STATUS'];
     } else if (type === 'modeloNegocio' || type === 'modeloNegocioDates') {
       return ['MODELO', 'SERIAL', 'GUIA', 'RAZON SOCIAL'];
@@ -2660,18 +2677,18 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           </div>
         </div>
 
-        {/* Distribución por Departamento (Usuarios) Card */}
+        {/* Métricas de Casillero Card */}
         <div className="bg-white border border-slate-200 shadow-sm flex flex-col" style={{ borderRadius: '0px' }}>
           <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex justify-between items-center">
             <h4 className="font-bold uppercase text-slate-805 text-[12px] font-arial">
-              Distribución por Departamento (Usuarios)
+              Métricas de Casillero (Sustituciones y Recuperados)
             </h4>
           </div>
 
           <div className="p-3 flex-1 flex flex-col justify-between gap-2">
-            {areaCounts.length === 0 ? (
+            {totalCasilleroCount === 0 ? (
               <div className="text-center py-12 text-slate-400 font-mono text-xs uppercase font-bold flex-1 flex items-center justify-center">
-                No hay registros de departamentos.
+                No hay registros en el casillero.
               </div>
             ) : (
               <>
@@ -2685,21 +2702,19 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                       {/* Segments */}
                       {(() => {
                         const circ = 226.195;
-                        const totalAreaCount = areaCounts.reduce((acc, curr) => acc + curr[1], 0);
                         let accumulatedLength = 0;
                         
-                        return areaCounts.map(([label, count], index) => {
-                          const percentage = totalAreaCount > 0 ? (count / totalAreaCount) : 0;
+                        return casilleroMetrics.map(({ key, label, count, color }) => {
+                          const percentage = totalCasilleroCount > 0 ? (count / totalCasilleroCount) : 0;
                           const strokeLength = percentage * circ;
                           const strokeOffset = -accumulatedLength;
                           accumulatedLength += strokeLength;
-                          const color = DEPARTMENT_COLORS[index % DEPARTMENT_COLORS.length];
 
                           if (strokeLength <= 0) return null;
                           
                           return (
                             <circle 
-                              key={label}
+                              key={key}
                               cx="50" 
                               cy="50" 
                               r="36" 
@@ -2710,7 +2725,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                               strokeDashoffset={strokeOffset} 
                               transform="rotate(-90 50 50)" 
                               className="cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => { setModalType('departamento'); setModalSelectedName(label); setModalSearch(''); }}
+                              onClick={() => { setModalType(key as any); setModalSelectedName(label); setModalSearch(''); }}
                               title={`${label}: ${count}`}
                             />
                           );
@@ -2721,7 +2736,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     <div className="absolute inset-0 flex flex-col items-center justify-center select-none mt-0.5">
                       <span className="text-[8px] uppercase tracking-wider font-bold leading-none text-slate-400">Total</span>
                       <span className="text-base font-black font-sans tracking-tight text-slate-800">
-                        {areaCounts.reduce((acc, curr) => acc + curr[1], 0)}
+                        {totalCasilleroCount}
                       </span>
                     </div>
                   </div>
@@ -2730,14 +2745,12 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                 {/* Doughnut Legends */}
                 <div className="flex flex-col gap-0.5 text-[11px] font-bold uppercase tracking-wider mt-1 border-t border-slate-100 pt-2 max-h-[110px] overflow-y-auto pr-1" style={{ color: '#000000', fontFamily: 'Arial', fontSize: '11px' }}>
                   {(() => {
-                    const totalAreaCount = areaCounts.reduce((acc, curr) => acc + curr[1], 0);
-                    return areaCounts.map(([label, count], index) => {
-                      const color = DEPARTMENT_COLORS[index % DEPARTMENT_COLORS.length];
-                      const percentage = totalAreaCount > 0 ? Math.round((count / totalAreaCount) * 100) : 0;
+                    return casilleroMetrics.map(({ key, label, count, color }) => {
+                      const percentage = totalCasilleroCount > 0 ? Math.round((count / totalCasilleroCount) * 100) : 0;
                       return (
                         <div 
-                          key={label} 
-                          onClick={() => { setModalType('departamento'); setModalSelectedName(label); setModalSearch(''); }}
+                          key={key} 
+                          onClick={() => { setModalType(key as any); setModalSelectedName(label); setModalSearch(''); }}
                           className="flex justify-between items-center hover:bg-slate-50 border border-slate-200 border-t-0 first:border-t p-1.5 px-2 cursor-pointer transition-colors"
                           style={{ borderRadius: '0px' }}
                         >
@@ -2896,7 +2909,11 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                            modalType === 'colaborador' ? `EQUIPOS - COLABORADOR: ${modalSelectedName}` :
                            modalType === 'modeloFisico' ? `EQUIPOS - MODELO FÍSICO: ${modalSelectedName}` :
                            modalType === 'modeloNegocio' ? `EQUIPOS - MODELO DE NEGOCIO: ${modalSelectedName}` :
-                           modalType === 'departamento' ? `EQUIPOS - DEPARTAMENTO: ${modalSelectedName}` : ''}
+                           modalType === 'departamento' ? `EQUIPOS - DEPARTAMENTO: ${modalSelectedName}` :
+                           modalType === 'casillero_completados' ? 'SUSTITUCIONES COMPLETADAS (CASILLERO)' :
+                           modalType === 'casillero_incompletados' ? 'SUSTITUCIONES INCOMPLETAS (CASILLERO)' :
+                           modalType === 'casillero_recuperados' ? 'EQUIPOS RECUPERADOS (CASILLERO)' :
+                           modalType === 'casillero_otros' ? 'OTROS EN CASILLERO' : ''}
                 </h3>
                 <p className="text-[11px] text-slate-455 mt-1 font-mono">
                   Encontrados: {modalList.length} registros para este enfoque.
