@@ -1913,7 +1913,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="text-[10px] sm:text-xs text-amber-600 font-extrabold uppercase font-mono">{firstPlace.total} Entregas</div>
                       </div>
                       <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border-2 border-amber-400 border-b-0 h-32 sm:h-36 flex flex-col items-center justify-center shadow-md relative overflow-hidden">
-                        <div className="text-4xl sm:text-5xl font-black text-amber-450 select-none" style={{ color: '#d97706' }}>1º</div>
+                        <div className="text-5xl sm:text-6xl font-black select-none" style={{ color: '#d97706' }}>1º</div>
                         <div className="absolute top-0 left-0 right-0 h-[4px] bg-amber-400"></div>
                       </div>
                     </div>

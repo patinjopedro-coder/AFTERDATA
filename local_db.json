@@ -1240,7 +1240,8 @@
       "rif": "J-010223123",
       "razonSocial": "MC DONALDS",
       "ubicacion": "PORTUGUESA",
-      "telefono": ""
+      "telefono": "",
+      "genero": "MASCULINO"
     },
     "TEST11": {
       "remitenteId": "TEST11",

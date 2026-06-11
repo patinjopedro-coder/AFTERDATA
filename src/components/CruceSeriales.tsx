@@ -65,7 +65,48 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     })();
   }, []);
 
-  const [remitenteCorreo, setRemitenteCorreo] = useState('VALIDADOR');
+  const [remitenteCorreo, setRemitenteCorreo] = useState('');
+  const [isRemitentePromptOpen, setIsRemitentePromptOpen] = useState(false);
+  const [modalRemitenteValue, setModalRemitenteValue] = useState('');
+  const [showMainSuggestions, setShowMainSuggestions] = useState(false);
+  const [showModalSuggestions, setShowModalSuggestions] = useState(false);
+
+  const existingRemitentes = useMemo(() => {
+    const names = new Set<string>();
+    if (usersProfiles) {
+      Object.keys(usersProfiles).forEach(key => {
+        if (key) {
+          names.add(key.toUpperCase().trim());
+        }
+        const p = usersProfiles[key];
+        if (p && p.nombreCompleto) {
+          names.add(p.nombreCompleto.toUpperCase().trim());
+        }
+      });
+    }
+    if (serials) {
+      serials.forEach(s => {
+        if (s && s.remitente) {
+          names.add(s.remitente.toUpperCase().trim());
+        }
+      });
+    }
+    names.delete('S/R (SIN REMITENTE)');
+    names.delete('');
+    return Array.from(names).sort();
+  }, [usersProfiles, serials]);
+
+  const mainSuggestions = useMemo(() => {
+    const query = remitenteCorreo.toUpperCase().trim();
+    if (!query) return [];
+    return existingRemitentes.filter(r => r.startsWith(query));
+  }, [remitenteCorreo, existingRemitentes]);
+
+  const modalSuggestions = useMemo(() => {
+    const query = modalRemitenteValue.toUpperCase().trim();
+    if (!query) return [];
+    return existingRemitentes.filter(r => r.startsWith(query));
+  }, [modalRemitenteValue, existingRemitentes]);
 
   // Modals view state
   const [isIMSModalOpen, setIsIMSModalOpen] = useState(false);
@@ -424,12 +465,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     alert(`⚡ Base de datos CMS cargada con éxito: ${newCMS.length} registros indexados.`);
   };
 
-  const handleAddMatchesToGeneral = () => {
-    if (coincidencias.length === 0) {
-      alert('No hay coincidencias detectadas para agregar en este momento.');
-      return;
-    }
-
+  const proceedWithAdding = (remName: string) => {
     const d = new Date();
     const formatTimeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
     const formatDayStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
@@ -437,7 +473,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const displayToday = today.split('-').reverse().join('/');
-    const cleanRemitente = remitenteCorreo.trim().toUpperCase() || 'VALIDADOR';
+    const cleanRemitente = remName.trim().toUpperCase() || 'VALIDADOR';
 
     let nuevos = 0;
     let actualizados = 0;
@@ -540,6 +576,21 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
     alert(`✅ ¡Cruce inteligente completado!\n• ${nuevos} nuevos registros agregados.\n• ${actualizados} terminales existentes actualizados.`);
     setCurrentTab('general');
+  };
+
+  const handleAddMatchesToGeneral = () => {
+    if (coincidencias.length === 0) {
+      alert('No hay coincidencias detectadas para agregar en este momento.');
+      return;
+    }
+
+    if (!remitenteCorreo.trim()) {
+      setModalRemitenteValue('');
+      setIsRemitentePromptOpen(true);
+      return;
+    }
+
+    proceedWithAdding(remitenteCorreo);
   };
 
   const handleExportCruceReport = () => {
@@ -918,15 +969,38 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
       {/* PARAMETROS DE RECONCILIACIÓN DE DATOS */}
       <div className="dark-panel p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div>
+        <div className="relative">
           <label className="text-xs font-extrabold text-blue-600 block mb-1.5 uppercase">REMITENTE:</label>
           <input
             type="text"
             value={remitenteCorreo}
-            onChange={e => setRemitenteCorreo(e.target.value.toUpperCase())}
+            onChange={e => {
+              setRemitenteCorreo(e.target.value.toUpperCase());
+              setShowMainSuggestions(true);
+            }}
+            onFocus={() => setShowMainSuggestions(true)}
+            onBlur={() => {
+              setTimeout(() => setShowMainSuggestions(false), 200);
+            }}
             placeholder="Introduce remitente asignado (ej. VALIDADOR, DISGLOBAL)..."
             className="w-full text-xs font-semibold p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-800 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
           />
+          {showMainSuggestions && mainSuggestions.length > 0 && (
+            <div className="absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+              {mainSuggestions.map((suggestion) => (
+                <div
+                  key={suggestion}
+                  onMouseDown={() => {
+                    setRemitenteCorreo(suggestion);
+                    setShowMainSuggestions(false);
+                  }}
+                  className="px-3.5 py-2 hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer uppercase border-b border-slate-50 last:border-b-0"
+                >
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col justify-center">
@@ -1432,6 +1506,96 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               </div>
             </div>
 
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {isRemitentePromptOpen && createPortal(
+        <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay font-arial">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-md flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
+            {/* Header */}
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Database className="text-slate-850 w-5 h-5" />
+                <h3 className="text-sm font-black uppercase text-slate-800 tracking-wider">Remitente Requerido</h3>
+              </div>
+              <button 
+                onClick={() => setIsRemitentePromptOpen(false)}
+                className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
+              >
+                Cancelar ✕
+              </button>
+            </div>
+            {/* Content */}
+            <div className="p-5 flex flex-col gap-4">
+              <p className="text-xs text-slate-650 font-sans">
+                Por favor, introduzca el nombre del remitente para completar el cruce de seriales e ingresarlos en la gestión general.
+              </p>
+              
+              <div className="relative">
+                <label className="text-[10px] text-slate-550 uppercase font-mono font-bold tracking-wider block mb-1">
+                  Nombre del Remitente:
+                </label>
+                <input
+                  type="text"
+                  value={modalRemitenteValue}
+                  onChange={e => {
+                    setModalRemitenteValue(e.target.value.toUpperCase());
+                    setShowModalSuggestions(true);
+                  }}
+                  onFocus={() => setShowModalSuggestions(true)}
+                  onBlur={() => {
+                    setTimeout(() => setShowModalSuggestions(false), 200);
+                  }}
+                  placeholder="Escriba el remitente (ej. VALIDADOR, DISGLOBAL)..."
+                  className="w-full text-xs font-semibold p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:bg-white focus:border-slate-350 transition-all font-semibold uppercase"
+                  autoFocus
+                />
+                {showModalSuggestions && modalSuggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-40 overflow-y-auto">
+                    {modalSuggestions.map((suggestion) => (
+                      <div
+                        key={suggestion}
+                        onMouseDown={() => {
+                          setModalRemitenteValue(suggestion);
+                          setShowModalSuggestions(false);
+                        }}
+                        className="px-3.5 py-2 hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer uppercase border-b border-slate-50 last:border-b-0"
+                      >
+                        {suggestion}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2 justify-end mt-2">
+                <button
+                  onClick={() => setIsRemitentePromptOpen(false)}
+                  className="px-4 py-2 toggle-inactive text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const val = modalRemitenteValue.trim().toUpperCase();
+                    if (!val) {
+                      alert('Debe introducir un remitente válido.');
+                      return;
+                    }
+                    setRemitenteCorreo(val);
+                    setIsRemitentePromptOpen(false);
+                    proceedWithAdding(val);
+                  }}
+                  className="btn-green font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 cursor-pointer transition-all flex items-center gap-1.5 text-white-force"
+                  style={{ color: '#ffffff' }}
+                >
+                  <Check size={12} />
+                  Confirmar y Guardar
+                </button>
+              </div>
+            </div>
           </div>
         </div>,
         document.body
