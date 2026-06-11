@@ -1241,6 +1241,19 @@
       "razonSocial": "MC DONALDS",
       "ubicacion": "PORTUGUESA",
       "telefono": ""
+    },
+    "TEST11": {
+      "remitenteId": "TEST11",
+      "nombreCompleto": "TEST11",
+      "isUsuario": true,
+      "isCliente": false,
+      "area": "",
+      "cargo": "",
+      "rif": "",
+      "razonSocial": "",
+      "ubicacion": "",
+      "telefono": "",
+      "genero": "FEMENINO"
     }
   },
   "currentTab": "estadisticas",
