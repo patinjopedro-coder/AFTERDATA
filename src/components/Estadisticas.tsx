@@ -50,9 +50,9 @@ const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" 
       <path d="M 50 25.5 A 14.5 14.5 0 0 1 50 54.5 Z" fill="#fcd5c0" />
       
       {/* Hair Shadow (Left) */}
-      <path d="M 31 38 C 29 25, 38 18, 50 18 L 50 26 C 42 26, 36 27, 36 32 C 36 34, 33 36, 31 38 Z" fill="#0f172a" />
+      <path d="M 31 38 C 29 32, 28 26, 33 23 C 31 22, 33 18, 38 16 C 42 14, 46 12, 50 13.5 L 50 25 C 44 24, 38 25, 36 30 C 36 33, 33 36, 31 38 Z" fill="#0f172a" />
       {/* Hair Highlight (Right) */}
-      <path d="M 50 18 C 62 18, 71 25, 69 38 C 67 36, 64 34, 64 32 C 64 27, 58 26, 50 26 Z" fill="#1e293b" />
+      <path d="M 50 13.5 C 53 11, 58 10, 61 11.5 C 66 13.5, 71 25, 69 38 C 67 36, 64 34, 64 32 C 64 26, 57 25, 50 25 Z" fill="#1e293b" />
       {/* Left sideburn */}
       <path d="M 31 38 L 31 44 L 34 42 L 33 38 Z" fill="#0f172a" />
       {/* Right sideburn */}
@@ -1318,7 +1318,11 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         </div>
                       )}
                       <div className="p-1.5 flex items-center justify-between">
-                        <span className="text-[9px] text-slate-450 font-bold uppercase">Cliente:</span>
+                        <span className="text-[9px] text-slate-455 font-bold uppercase">Remitente:</span>
+                        <span className="font-bold text-slate-800 uppercase truncate max-w-[130px]" title={s.remitente}>{s.remitente || 'SIN REMITENTE'}</span>
+                      </div>
+                      <div className="p-1.5 flex items-center justify-between">
+                        <span className="text-[9px] text-slate-450 font-bold uppercase">Razón Social:</span>
                         <span className="font-bold text-slate-800 uppercase truncate max-w-[130px]" title={s.razonSocial}>{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
                       </div>
                       {s.rif && (
@@ -1901,11 +1905,21 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="text-[11px] sm:text-xs font-black text-slate-700 truncate max-w-[90px] sm:max-w-[120px] uppercase font-arial" title={secondPlace.name}>
                           {secondPlace.name}
                         </div>
-                        <div className="text-[9px] text-slate-500 font-bold uppercase font-mono">{secondPlace.total} Entregas</div>
+                        <div className="text-xs sm:text-sm text-slate-600 font-black uppercase font-mono text-white-slate" style={{ fontWeight: 900 }}>{secondPlace.total} Entregas</div>
                       </div>
                       <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-24 sm:h-28 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                        <div className="text-3xl sm:text-4xl font-black text-slate-300 select-none podium-watermark">2º</div>
-                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-300"></div>
+                        <div 
+                          className="text-3xl sm:text-4xl font-black select-none podium-watermark"
+                          style={{
+                            background: 'linear-gradient(135deg, #1e293b 20%, #94a3b8 45%, #ffffff 50%, #cbd5e1 55%, #334155 80%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.65)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                          }}
+                        >
+                          2º
+                        </div>
+                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-400"></div>
                       </div>
                     </div>
                   ) : (
@@ -1930,10 +1944,20 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="text-xs sm:text-sm font-black text-slate-900 truncate max-w-[100px] sm:max-w-[140px] uppercase font-arial" title={firstPlace.name}>
                           {firstPlace.name}
                         </div>
-                        <div className="text-[10px] sm:text-xs text-amber-600 font-extrabold uppercase font-mono">{firstPlace.total} Entregas</div>
+                        <div className="text-xs sm:text-sm text-amber-600 font-black uppercase font-mono text-white-amber" style={{ fontWeight: 900 }}>{firstPlace.total} Entregas</div>
                       </div>
                       <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border-2 border-amber-400 border-b-0 h-32 sm:h-36 flex flex-col items-center justify-center shadow-md relative overflow-hidden">
-                        <div className="text-5xl sm:text-6xl font-black select-none podium-watermark" style={{ color: '#d97706' }}>1º</div>
+                        <div 
+                          className="text-5xl sm:text-6xl font-black select-none podium-watermark"
+                          style={{
+                            background: 'linear-gradient(135deg, #78350f 15%, #d97706 40%, #fef3c7 50%, #fbbf24 60%, #92400e 85%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            filter: 'drop-shadow(1px 1px 1.5px rgba(0,0,0,0.65)) drop-shadow(0 0 2.5px rgba(255,255,255,0.45))'
+                          }}
+                        >
+                          1º
+                        </div>
                         <div className="absolute top-0 left-0 right-0 h-[4px] bg-amber-400"></div>
                       </div>
                     </div>
@@ -1959,10 +1983,20 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="text-[11px] sm:text-xs font-black text-slate-700 truncate max-w-[90px] sm:max-w-[120px] uppercase font-arial" title={thirdPlace.name}>
                           {thirdPlace.name}
                         </div>
-                        <div className="text-[9px] text-slate-500 font-bold uppercase font-mono">{thirdPlace.total} Entregas</div>
+                        <div className="text-xs sm:text-sm text-amber-800 font-black uppercase font-mono text-white-bronze" style={{ fontWeight: 900 }}>{thirdPlace.total} Entregas</div>
                       </div>
                       <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-18 sm:h-22 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                        <div className="text-2xl sm:text-3xl font-black text-slate-300 select-none podium-watermark">3º</div>
+                        <div 
+                          className="text-2xl sm:text-3xl font-black select-none podium-watermark"
+                          style={{
+                            background: 'linear-gradient(135deg, #451a03 20%, #b45309 45%, #fef3c7 50%, #d97706 55%, #78350f 80%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.65)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
+                          }}
+                        >
+                          3º
+                        </div>
                         <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-700"></div>
                       </div>
                     </div>

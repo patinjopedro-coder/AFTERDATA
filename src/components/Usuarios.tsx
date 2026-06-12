@@ -34,9 +34,9 @@ const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" 
       <path d="M 50 25.5 A 14.5 14.5 0 0 1 50 54.5 Z" fill="#fcd5c0" />
       
       {/* Hair Shadow (Left) */}
-      <path d="M 31 38 C 29 25, 38 18, 50 18 L 50 26 C 42 26, 36 27, 36 32 C 36 34, 33 36, 31 38 Z" fill="#0f172a" />
+      <path d="M 31 38 C 29 32, 28 26, 33 23 C 31 22, 33 18, 38 16 C 42 14, 46 12, 50 13.5 L 50 25 C 44 24, 38 25, 36 30 C 36 33, 33 36, 31 38 Z" fill="#0f172a" />
       {/* Hair Highlight (Right) */}
-      <path d="M 50 18 C 62 18, 71 25, 69 38 C 67 36, 64 34, 64 32 C 64 27, 58 26, 50 26 Z" fill="#1e293b" />
+      <path d="M 50 13.5 C 53 11, 58 10, 61 11.5 C 66 13.5, 71 25, 69 38 C 67 36, 64 34, 64 32 C 64 26, 57 25, 50 25 Z" fill="#1e293b" />
       {/* Left sideburn */}
       <path d="M 31 38 L 31 44 L 34 42 L 33 38 Z" fill="#0f172a" />
       {/* Right sideburn */}

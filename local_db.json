@@ -413,8 +413,15 @@
         "06/06/2026 16:16:01 | [Responsable] cambió de \"PEDRO PA\" a \"PEDRO PAT\"",
         "06/06/2026 16:16:01 | [Responsable] cambió de \"PEDRO PAT\" a \"PEDRO PATI\"",
         "06/06/2026 16:16:01 | [Responsable] cambió de \"PEDRO PATI\" a \"PEDRO PATIÑ\"",
-        "06/06/2026 16:16:02 | [Responsable] cambió de \"PEDRO PATIÑ\" a \"PEDRO PATIÑO\""
-      ]
+        "06/06/2026 16:16:02 | [Responsable] cambió de \"PEDRO PATIÑ\" a \"PEDRO PATIÑO\"",
+        "11/06/2026 22:08:22 | [Entregado a Disglobal] cambió de \"vacío\" a \"true\"",
+        "11/06/2026 22:08:22 | [Entregado A] cambió de \"vacío\" a \"TEST11\"",
+        "11/06/2026 22:08:27 | [Entregado A] cambió de \"TEST11\" a \"vacío\"",
+        "11/06/2026 22:08:41 | [Entregado A] cambió de \"vacío\" a \"TEST11\""
+      ],
+      "simSustituto": true,
+      "entregadoDisglobal": true,
+      "entregadoA": "TEST11"
     },
     {
       "id": 18,
@@ -1257,7 +1264,7 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "estadisticas",
+  "currentTab": "general",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",

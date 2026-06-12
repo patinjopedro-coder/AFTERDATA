@@ -1784,4 +1784,15 @@ html body .estadisticas-tab-container button.desglose-btn:hover * {
   stroke: #000000 !important;
 }
 
+/* Highlighter yellow styling for delivered to Disglobal cases - Minimalist version */
+.casillero-table tbody tr.entregado-highlight {
+  background-color: #fefdf0 !important; /* Extremely soft, warm cream-yellow background */
+}
+.casillero-table tbody tr.entregado-highlight:hover {
+  background-color: #fefbe8 !important; /* Slightly more yellow on hover, still very soft */
+}
+.casillero-table tbody tr.entregado-highlight td:first-child {
+  border-left: 4px solid #eab308 !important; /* Sleek yellow accent bar on the left edge */
+}
+
 

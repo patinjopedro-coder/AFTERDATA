@@ -68,6 +68,9 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       if (editDraft.date && editDraft.date !== s.date) {
         draft.displayDate = editDraft.date.split('-').reverse().join('/');
       }
+      if (s.serial === 'POR RECIBIR' && draft.serial && draft.serial !== 'POR RECIBIR') {
+        draft.salienteSinRecibir = false;
+      }
       return trackAndLogChanges(s, draft);
     }));
     setEditingItem(null);
@@ -183,8 +186,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Estado</label>
               <select
                 value={(editDraft.status as string) || ''}
+                disabled={editDraft.serial === 'POR RECIBIR'}
                 onChange={e => setEditDraft(d => ({ ...d, status: e.target.value as POSStatus }))}
-                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                className={`w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300 ${
+                  editDraft.serial === 'POR RECIBIR' ? 'opacity-55 cursor-not-allowed' : ''
+                }`}
                 style={{ borderRadius: '4px' }}
               >
                 <option value="PENDIENTE">PENDIENTE</option>
@@ -209,6 +215,33 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <option value="COMODATO">COMODATO</option>
               </select>
             </div>
+            <div className="col-span-2 flex items-center gap-2 py-1">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!editDraft.simSustituto}
+                  onChange={e => setEditDraft(d => ({
+                    ...d,
+                    simSustituto: e.target.checked,
+                    simSustitutoNumber: e.target.checked ? d.simSustitutoNumber : ''
+                  }))}
+                  className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                />
+                <span>SIM Sustituto</span>
+              </label>
+            </div>
+            {editDraft.simSustituto && (
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Número SIM Sustituto</label>
+                <input
+                  type="text"
+                  value={editDraft.simSustitutoNumber || ''}
+                  onChange={e => setEditDraft(d => ({ ...d, simSustitutoNumber: e.target.value.toUpperCase() }))}
+                  className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                  style={{ borderRadius: '4px' }}
+                />
+              </div>
+            )}
           </div>
           <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
             <button
@@ -248,6 +281,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [costoUsdt, setCostoUsdt] = useState('');
   const [banco, setBanco] = useState('');
   const [sinCosto, setSinCosto] = useState(false);
+  const [salienteSinRecibir, setSalienteSinRecibir] = useState(false);
+  const [serialSaliente, setSerialSaliente] = useState('');
 
   const handleRemitenteChange = (val: string) => {
     setRemitente(val);
@@ -281,11 +316,19 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   };
 
   const handleRegister = () => {
-    const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
-    if (rawLines.length === 0) {
-      alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
-      return;
+    if (salienteSinRecibir) {
+      if (!serialSaliente.trim()) {
+        alert('POR FAVOR INGRESE EL SERIAL SALIENTE');
+        return;
+      }
+    } else {
+      const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
+      if (rawLines.length === 0) {
+        alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
+        return;
+      }
     }
+
     if (!remitente.trim()) {
       alert('POR FAVOR INDIQUE EL REMITENTE');
       return;
@@ -293,22 +336,23 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
     const today = currentDateStr();
     const displayToday = today.split('-').reverse().join('/');
-    const isCas = !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || costoUsdt || banco || sinCosto);
+    const isCas = salienteSinRecibir || !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || costoUsdt || banco || sinCosto);
 
     let maxId = serials.reduce((max, s) => (s && s.id && typeof s.id === 'number') ? Math.max(max, s.id) : max, 0);
 
-    const newItems: POSItem[] = rawLines.map((s) => {
-      const serialUp = s.toUpperCase();
+    let newItems: POSItem[] = [];
+
+    if (salienteSinRecibir) {
       maxId++;
-      return {
+      newItems = [{
         id: maxId,
-        serial: serialUp,
+        serial: 'POR RECIBIR',
         date: today,
         displayDate: displayToday,
-        status: 'SIN ESTATUS',
+        status: 'PENDIENTE',
         remitente: remitente.toUpperCase().trim(),
         source: guia.toUpperCase().trim(),
-        isCasillero: isCas,
+        isCasillero: true,
         selected: false,
         rif: formatRif(rif),
         razonSocial: razonSocial.toUpperCase().trim(),
@@ -324,8 +368,9 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         modeloManual: modeloManual.toUpperCase().trim(),
         modeloNegocio,
         entregadoTecnico: false,
-        esSustitucion: false,
-        serialSustituto: '',
+        esSustitucion: true,
+        serialSustituto: serialSaliente.toUpperCase().trim(),
+        salienteSinRecibir: true,
         fechaSalida: '',
         fechaSalidaCliente: '',
         guiaSalidaCliente: '',
@@ -337,8 +382,52 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         banco: banco.toUpperCase().trim(),
         cruceBatchId: activeCruceBatchId || undefined,
         sinCosto: sinCosto
-      };
-    });
+      }];
+    } else {
+      const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
+      newItems = rawLines.map((s) => {
+        const serialUp = s.toUpperCase();
+        maxId++;
+        return {
+          id: maxId,
+          serial: serialUp,
+          date: today,
+          displayDate: displayToday,
+          status: 'SIN ESTATUS',
+          remitente: remitente.toUpperCase().trim(),
+          source: guia.toUpperCase().trim(),
+          isCasillero: isCas,
+          selected: false,
+          rif: formatRif(rif),
+          razonSocial: razonSocial.toUpperCase().trim(),
+          destino: destino.toUpperCase().trim(),
+          observaciones: '',
+          forro: accForro,
+          bateria: accBateria,
+          cargador: accCargador,
+          caja: accCaja,
+          sim: accSim,
+          simNumber: accSim ? (simNumber.toUpperCase().trim() || 'NO POSEE') : 'NO POSEE',
+          operadora,
+          modeloManual: modeloManual.toUpperCase().trim(),
+          modeloNegocio,
+          entregadoTecnico: false,
+          esSustitucion: false,
+          serialSustituto: '',
+          fechaSalida: '',
+          fechaSalidaCliente: '',
+          guiaSalidaCliente: '',
+          destinoSalida: '',
+          fechaConfirmada: false,
+          ticket: ticket.toUpperCase().trim(),
+          bsf: costoBsf.toUpperCase().trim(),
+          usdt: costoUsdt.toUpperCase().trim(),
+          banco: banco.toUpperCase().trim(),
+          cruceBatchId: activeCruceBatchId || undefined,
+          sinCosto: sinCosto
+        };
+      });
+    }
 
     setSerials(prev => [...newItems, ...prev]);
 
@@ -385,6 +474,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     setCostoUsdt('');
     setBanco('');
     setSinCosto(false);
+    setSalienteSinRecibir(false);
+    setSerialSaliente('');
 
     alert(`Se registraron ${newItems.length} seriales correctamente.`);
   };
@@ -499,7 +590,16 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   };
 
   const handleUpdateStatus = (id: number, status: POSStatus) => {
-    setSerials(prev => prev.map(s => s.id === id ? trackAndLogChanges(s, { status }) : s));
+    setSerials(prev => prev.map(s => {
+      if (s.id === id) {
+        if (s.serial === 'POR RECIBIR') {
+          alert('El equipo sigue sin recibir. El estado debe ser PENDIENTE.');
+          return s;
+        }
+        return trackAndLogChanges(s, { status });
+      }
+      return s;
+    }));
   };
 
   const handleUpdateDateText = (id: number, textVal: string) => {
@@ -577,11 +677,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       return;
     }
 
-    let csv = "sep=;\nID;SERIAL_CRUCE;SERIAL_CASILLERO;STATUS;REMITENTE;GUI_ENTRADA;IS_CASILLERO;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;FECHA_CONFIRMADA;TICKET;ADDED_FROM_CRUCE;BANCO;BSF;USDT;SIN_COSTO;CRUCE_BATCH_ID;FECHA_INGRESO\n";
+    let csv = "sep=;\nID;SERIAL_CRUCE;SERIAL_CASILLERO;STATUS;REMITENTE;GUI_ENTRADA;IS_CASILLERO;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;SIM_SUSTITUTO;SIM_SUSTITUTO_NUMBER;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;FECHA_CONFIRMADA;TICKET;ADDED_FROM_CRUCE;BANCO;BSF;USDT;SIN_COSTO;CRUCE_BATCH_ID;FECHA_INGRESO\n";
     targets.forEach(s => {
       const serialCruce = !s.isCasillero ? s.serial : '';
       const serialCasillero = s.isCasillero ? s.serial : '';
-      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${!!s.sinCosto}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
+      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${!!s.sinCosto}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -627,12 +727,51 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial</label>
             <input
               type="text"
-              value={bulkInput}
+              value={salienteSinRecibir ? 'POR RECIBIR' : bulkInput}
               onChange={e => setBulkInput(e.target.value)}
               placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+              disabled={salienteSinRecibir}
+              className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${
+                salienteSinRecibir ? 'opacity-55 cursor-not-allowed' : ''
+              }`}
             />
           </div>
+
+          {/* Fila: Opción Saliente sin Recibir */}
+          <div className="flex flex-col gap-1 col-span-2">
+            <div className="flex items-center h-[38px] bg-slate-100 px-3 border border-transparent rounded-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]">
+              <input
+                type="checkbox"
+                id="formSalienteSinRecibir"
+                checked={salienteSinRecibir}
+                onChange={e => {
+                  setSalienteSinRecibir(e.target.checked);
+                  if (e.target.checked) {
+                    setBulkInput('POR RECIBIR');
+                  } else {
+                    setBulkInput('');
+                  }
+                }}
+                className="rounded text-amber-600 bg-white border-slate-300 focus:ring-0 cursor-pointer w-4 h-4 mr-2"
+              />
+              <label htmlFor="formSalienteSinRecibir" className="text-[10px] font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
+                SALIENTE SIN RECIBIR
+              </label>
+            </div>
+          </div>
+
+          {salienteSinRecibir && (
+            <div className="flex flex-col gap-1 col-span-2">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial Saliente</label>
+              <input
+                type="text"
+                value={serialSaliente}
+                onChange={e => setSerialSaliente(e.target.value.toUpperCase())}
+                placeholder="INGRESE EL SERIAL SALIENTE"
+                className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+              />
+            </div>
+          )}
 
           {/* Fila 2: Remitente y Origen */}
           <div className="flex flex-col gap-1">

@@ -44,6 +44,15 @@ export const Casillero: React.FC<CasilleroProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
+  const [filterEntregadosDisglobal, setFilterEntregadosDisglobal] = useState(false);
+
+  const disglobalUsers = useMemo(() => {
+    return (Object.values(usersProfiles) as UserProfile[])
+      .filter(p => p.isUsuario)
+      .map(p => p.nombreCompleto || p.remitenteId)
+      .sort((a, b) => a.localeCompare(b));
+  }, [usersProfiles]);
+
   const detectModelFromSerial = (serial: string): string => {
     if (!serial || !modelosDB) return '';
     const upper = serial.trim().toUpperCase();
@@ -76,6 +85,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
       const draft = { ...editDraft };
       if (editDraft.date && editDraft.date !== s.date) {
         draft.displayDate = (editDraft.date as string).split('-').reverse().join('/');
+      }
+      if (s.serial === 'POR RECIBIR' && draft.serial && draft.serial !== 'POR RECIBIR') {
+        draft.salienteSinRecibir = false;
       }
       return trackAndLogChanges(s, draft);
     }));
@@ -125,8 +137,11 @@ export const Casillero: React.FC<CasilleroProps> = ({
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Estado</label>
               <select
                 value={(editDraft.status as string) || ''}
+                disabled={editDraft.serial === 'POR RECIBIR'}
                 onChange={e => setEditDraft(d => ({ ...d, status: e.target.value as POSStatus }))}
-                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                className={`w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300 ${
+                  editDraft.serial === 'POR RECIBIR' ? 'opacity-55 cursor-not-allowed' : ''
+                }`}
                 style={{ borderRadius: '4px' }}
               >
                 <option value="PENDIENTE">PENDIENTE</option>
@@ -217,6 +232,64 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 </div>
               </>
             )}
+            <div className="col-span-2 flex items-center gap-2 py-1">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!editDraft.simSustituto}
+                  onChange={e => setEditDraft(d => ({
+                    ...d,
+                    simSustituto: e.target.checked,
+                    simSustitutoNumber: e.target.checked ? d.simSustitutoNumber : ''
+                  }))}
+                  className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                />
+                <span>SIM Sustituto</span>
+              </label>
+            </div>
+            {editDraft.simSustituto && (
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Número SIM Sustituto</label>
+                <input
+                  type="text"
+                  value={editDraft.simSustitutoNumber || ''}
+                  onChange={e => setEditDraft(d => ({ ...d, simSustitutoNumber: e.target.value.toUpperCase() }))}
+                  className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                  style={{ borderRadius: '4px' }}
+                />
+              </div>
+            )}
+            <div className="col-span-2 flex items-center gap-2 py-1 border-t border-slate-100 pt-2 mt-2">
+              <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!editDraft.entregadoDisglobal}
+                  onChange={e => setEditDraft(d => ({
+                    ...d,
+                    entregadoDisglobal: e.target.checked,
+                    entregadoA: e.target.checked ? (d.entregadoA || disglobalUsers[0] || '') : ''
+                  }))}
+                  className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                />
+                <span>Entregado a Usuario Disglobal</span>
+              </label>
+            </div>
+            {editDraft.entregadoDisglobal && (
+              <div className="flex flex-col gap-1 col-span-2">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Entregado A</label>
+                <select
+                  value={editDraft.entregadoA || ''}
+                  onChange={e => setEditDraft(d => ({ ...d, entregadoA: e.target.value }))}
+                  className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-bold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                  style={{ borderRadius: '4px' }}
+                >
+                  <option value="">SELECCIONAR USUARIO</option>
+                  {disglobalUsers.map(name => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
             <button
@@ -243,9 +316,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
       return;
     }
 
-    let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID\n";
+    let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;SIM_SUSTITUTO;SIM_SUSTITUTO_NUMBER;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID;ENTREGADO_DISGLOBAL;ENTREGADO_A\n";
     targets.forEach(s => {
-      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}"\n`;
+      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}";"${!!s.entregadoDisglobal}";"${s.entregadoA || ''}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -267,9 +340,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
       return;
     }
 
-    let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID\n";
+    let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;SIM_SUSTITUTO;SIM_SUSTITUTO_NUMBER;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID;ENTREGADO_DISGLOBAL;ENTREGADO_A\n";
     targets.forEach(s => {
-      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}"\n`;
+      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}";"${!!s.entregadoDisglobal}";"${s.entregadoA || ''}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -341,6 +414,8 @@ export const Casillero: React.FC<CasilleroProps> = ({
           const idxBateria = headers.findIndex(h => h === 'BATERIA');
           const idxTicket = headers.findIndex(h => h === 'TICKET');
           const idxBs = headers.findIndex(h => h === 'BS' || h === 'BSF');
+          const idxSimSust = headers.findIndex(h => h === 'SIMSUSTITUTO');
+          const idxSimSustNum = headers.findIndex(h => h === 'NUMEROSIMSUSTITUTO' || h === 'SERIALSIMSUSTITUTO' || h === 'SIMSUSTITUTONUMBER');
 
           const newItems: POSItem[] = [];
           const d = new Date();
@@ -436,7 +511,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
               sim: parseBool(getColVal(idxSimTogg)),
               bateria: parseBool(getColVal(idxBateria)),
               ticket: getColVal(idxTicket).toUpperCase(),
-              bsf: getColVal(idxBs).toUpperCase()
+              bsf: getColVal(idxBs).toUpperCase(),
+              simSustituto: parseBool(getColVal(idxSimSust)),
+              simSustitutoNumber: getColVal(idxSimSustNum).toUpperCase()
             });
           }
 
@@ -497,6 +574,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
       // Casillero criteria: only items registered with isCasillero === true
       if (!s.isCasillero) return false;
 
+      // Filter by delivered to disglobal if active
+      if (filterEntregadosDisglobal && !s.entregadoDisglobal) return false;
+
       const modelInfo = getTerminalModel(s.serial, modelosDB);
       const inSearch = !globalSearch ||
         s.serial.toLowerCase().includes(searchLow) ||
@@ -516,7 +596,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
 
       return inSearch && matchStatus && matchDateFrom && matchDateTo;
     });
-  }, [serials, globalSearch, statusFilter, dateFrom, dateTo, modelosDB]);
+  }, [serials, globalSearch, statusFilter, dateFrom, dateTo, modelosDB, filterEntregadosDisglobal]);
 
   // Group and sort batches
   const finalBatchesList = useMemo(() => {
@@ -656,6 +736,17 @@ export const Casillero: React.FC<CasilleroProps> = ({
           </button>
           
           <button
+            onClick={() => setFilterEntregadosDisglobal(p => !p)}
+            className={`px-3 py-1.5 font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn ${
+              filterEntregadosDisglobal ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-slate-200 hover:bg-slate-350 text-slate-700'
+            }`}
+            title="Filtrar por entregados a usuarios de Disglobal"
+          >
+            <Check size={14} className={filterEntregadosDisglobal ? 'text-white' : 'text-slate-700'} />
+            <span>{filterEntregadosDisglobal ? 'FILTRADO: DISGLOBAL' : 'VER DISGLOBAL'}</span>
+          </button>
+
+          <button
             onClick={deleteSelectedCasillero}
             className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
             title="Eliminar seleccionados"
@@ -733,7 +824,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       key={s.id} 
                       className={`hover:bg-slate-50 transition-colors align-top border-b border-slate-100 ${s.selected ? 'bg-blue-50/50' : ''} ${s.addedFromCruce ? 'border-l-2 border-l-slate-400' : ''} ${
                         s.fechaConfirmada ? 'bg-slate-100/90 text-slate-400 filter grayscale opacity-75' : ''
-                      }`}
+                      } ${s.entregadoDisglobal ? 'entregado-highlight' : ''}`}
                     >
                       {/* SELECTOR */}
                       <td className="py-4 px-3 text-center relative overflow-hidden">
@@ -821,9 +912,15 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             </span>
                           </div>
 
-                          {/* 3. CLIENTE / SOLICITANTE */}
+                          {/* REMITENTE */}
                           <div className="p-2 flex items-center justify-between">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Cliente:</span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Remitente:</span>
+                            <span className="text-slate-800 font-bold select-all text-[11px] uppercase font-arial">{s.remitente || 'SIN REMITENTE'}</span>
+                          </div>
+
+                          {/* RAZÓN SOCIAL */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Razón Social:</span>
                             <span className="text-slate-800 font-bold select-all text-[11px] uppercase font-arial">{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
                           </div>
 
@@ -1019,6 +1116,46 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               }`}
                             />
                           </div>
+
+                          {/* ENTREGADO A DISGLOBAL */}
+                          <div className="mt-2 grid grid-cols-1 gap-1 border-t border-slate-100 pt-2">
+                            <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Entregado a Disglobal?</label>
+                            <div className="flex items-center gap-2">
+                              <label className="flex items-center gap-1.5 text-[10px] text-slate-700 font-bold select-none cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  disabled={isRecuperado || !!s.entregadoTecnico}
+                                  checked={!!s.entregadoDisglobal}
+                                  onChange={e => {
+                                    setSerials(prev => prev.map(o => {
+                                      if (o.id === s.id) {
+                                        return trackAndLogChanges(o, {
+                                          entregadoDisglobal: e.target.checked,
+                                          entregadoA: e.target.checked ? (o.entregadoA || disglobalUsers[0] || '') : ''
+                                        });
+                                      }
+                                      return o;
+                                    }));
+                                  }}
+                                  className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                                />
+                                <span>ENTREGADO A</span>
+                              </label>
+                              <select
+                                disabled={isRecuperado || !!s.entregadoTecnico || !s.entregadoDisglobal}
+                                value={s.entregadoA || ''}
+                                onChange={e => handleUpdateTextVal(s.id, 'entregadoA', e.target.value)}
+                                className={`flex-1 text-[11px] p-1 bg-slate-100 border border-transparent rounded text-slate-900 font-arial uppercase focus:outline-none focus:ring-1 focus:ring-slate-200 casillero-input ${
+                                  (!s.entregadoDisglobal || isRecuperado || s.entregadoTecnico) ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                              >
+                                <option value="">SELECCIONAR</option>
+                                {disglobalUsers.map(name => (
+                                  <option key={name} value={name}>{name}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
                         </div>
                       </td>
 
@@ -1115,6 +1252,39 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               Sin sustitución de equipo asociada.
                             </span>
                           )}
+
+                          {/* SIM Sustituto */}
+                          <div className="flex flex-col gap-1 mt-1.5 border-t border-slate-100 pt-1.5">
+                            <label className={`flex items-center gap-2 text-[10px] select-none cursor-pointer text-slate-500 font-bold uppercase ${isRecuperado ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                              <input
+                                type="checkbox"
+                                disabled={isRecuperado}
+                                checked={!!s.simSustituto}
+                                onChange={e => {
+                                  setSerials(prev => prev.map(o => {
+                                    if (o.id === s.id) {
+                                      return { ...o, simSustituto: e.target.checked, simSustitutoNumber: e.target.checked ? o.simSustitutoNumber : '' };
+                                    }
+                                    return o;
+                                  }));
+                                }}
+                                className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                              />
+                              <span>SIM Sustituto</span>
+                            </label>
+                            {s.simSustituto && (
+                              <input
+                                type="text"
+                                disabled={isRecuperado}
+                                value={s.simSustitutoNumber || ''}
+                                onChange={e => handleUpdateTextVal(s.id, 'simSustitutoNumber', e.target.value.toUpperCase())}
+                                placeholder="NÚMERO SIM"
+                                className={`w-full text-[10px] font-arial p-1.5 bg-slate-100 border border-transparent rounded text-amber-600 uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
+                                  isRecuperado ? 'opacity-55 cursor-not-allowed bg-slate-200 border-slate-350' : ''
+                                }`}
+                              />
+                            )}
+                          </div>
                         </div>
                       </td>
 
@@ -1136,7 +1306,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           </div>
 
                           <div className="mt-1.5">
-                            <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Guía Salida (Cliente)</label>
+                            <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Guía Salida del POS</label>
                             <input
                               type="text"
                               disabled={isRecuperado}

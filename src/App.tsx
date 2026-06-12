@@ -319,6 +319,8 @@ export default function App() {
             const idxEntregadoTec = parsedHeaders.findIndex(h => h.includes('ENTREGADOTECNICO'));
             const idxSust = parsedHeaders.findIndex(h => h.includes('ESSUSTITUCION'));
             const idxSerialSust = parsedHeaders.findIndex(h => h.includes('SERIALSUSTITUTO') || h.includes('SUSTITUTO'));
+            const idxSimSust = parsedHeaders.findIndex(h => h.includes('SIMSUSTITUTO'));
+            const idxSimSustNum = parsedHeaders.findIndex(h => h.includes('SIMSUSTITUTONUMBER') || h.includes('NUMEROSIMSUSTITUTO'));
             const idxFechaSalida = parsedHeaders.findIndex(h => h === 'FECHASALIDA' || (h.includes('FECHASALIDA') && !h.includes('CLIENTE')));
             const idxFechaLiberacion = parsedHeaders.findIndex(h => h.includes('FECHASALIDACLIENTE') || h.includes('FECHALIBERACION'));
             const idxGuiaLib = parsedHeaders.findIndex(h => h.includes('GUIASALIDACLIENTE') || h.includes('GUIALIBERACION'));
@@ -392,6 +394,8 @@ export default function App() {
                 entregadoTecnico: idxEntregadoTec !== -1 ? (cols[idxEntregadoTec]?.toLowerCase() === 'true') : false,
                 esSustitucion: idxSust !== -1 ? (cols[idxSust]?.toLowerCase() === 'true') : false,
                 serialSustituto: idxSerialSust !== -1 ? cols[idxSerialSust] : '',
+                simSustituto: idxSimSust !== -1 ? (cols[idxSimSust]?.toLowerCase() === 'true') : false,
+                simSustitutoNumber: idxSimSustNum !== -1 ? cols[idxSimSustNum] : '',
                 fechaSalida: idxFechaSalida !== -1 ? cols[idxFechaSalida] : '',
                 fechaSalidaCliente: idxFechaLiberacion !== -1 ? cols[idxFechaLiberacion] : '',
                 guiaSalidaCliente: idxGuiaLib !== -1 ? cols[idxGuiaLib] : '',
@@ -810,11 +814,11 @@ export default function App() {
   };
 
   const handleExportFullCSVBackup = () => {
-    let csv = "sep=;\nID;SERIAL_CRUCE;SERIAL_CASILLERO;STATUS;REMITENTE;GUI_ENTRADA;IS_CASILLERO;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;FECHA_CONFIRMADA;TICKET;ADDED_FROM_CRUCE;BANCO;BSF;USDT;CRUCE_BATCH_ID;FECHA_INGRESO\n";
+    let csv = "sep=;\nID;SERIAL_CRUCE;SERIAL_CASILLERO;STATUS;REMITENTE;GUI_ENTRADA;IS_CASILLERO;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;SIM_SUSTITUTO;SIM_SUSTITUTO_NUMBER;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;FECHA_CONFIRMADA;TICKET;ADDED_FROM_CRUCE;BANCO;BSF;USDT;CRUCE_BATCH_ID;FECHA_INGRESO\n";
     serials.forEach(s => {
       const serialCruce = !s.isCasillero ? s.serial : '';
       const serialCasillero = s.isCasillero ? s.serial : '';
-      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
+      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

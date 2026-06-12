@@ -119,7 +119,7 @@ export function exportToExcel(data: Record<string, any>[], filename: string): vo
 export function trackAndLogChanges(original: POSItem, updatedFields: Partial<POSItem>): POSItem {
   const fieldsToTrack: (keyof POSItem)[] = [
     'serial', 'status', 'remitente', 'rif', 'razonSocial', 'banco', 'ticket', 'destino', 
-    'observaciones', 'bsf', 'usdt', 'date', 'modeloManual', 'modeloNegocio', 'simNumber', 'operadora', 'responsable', 'sinCosto'
+    'observaciones', 'bsf', 'usdt', 'date', 'modeloManual', 'modeloNegocio', 'simNumber', 'operadora', 'responsable', 'sinCosto', 'salienteSinRecibir', 'simSustituto', 'simSustitutoNumber', 'entregadoDisglobal', 'entregadoA'
   ];
   
   const changes: string[] = [];
@@ -150,7 +150,12 @@ export function trackAndLogChanges(original: POSItem, updatedFields: Partial<POS
           simNumber: 'Número SIM',
           operadora: 'Operadora',
           responsable: 'Responsable',
-          sinCosto: 'Sin Costo'
+          sinCosto: 'Sin Costo',
+          salienteSinRecibir: 'Saliente sin Recibir',
+          simSustituto: 'SIM Sustituto',
+          simSustitutoNumber: 'Número SIM Sustituto',
+          entregadoDisglobal: 'Entregado a Disglobal',
+          entregadoA: 'Entregado A'
         };
         const displayName = fieldNameMap[field as string] || (field as string);
         changes.push(`[${displayName}] cambió de "${origStr || 'vacío'}" a "${newStr || 'vacío'}"`);

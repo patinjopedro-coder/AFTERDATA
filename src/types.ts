@@ -34,7 +34,12 @@ export interface POSItem {
   entregadoTecnico?: boolean;
   esSustitucion?: boolean;
   serialSustituto?: string;
+  salienteSinRecibir?: boolean;
+  simSustituto?: boolean;
+  simSustitutoNumber?: string;
   modeloSustituto?: string;
+  entregadoDisglobal?: boolean;
+  entregadoA?: string;
   fechaSalida?: string;
   fechaSalidaCliente?: string;
   guiaSalidaCliente?: string;
