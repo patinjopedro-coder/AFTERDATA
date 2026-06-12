@@ -417,11 +417,21 @@
         "11/06/2026 22:08:22 | [Entregado a Disglobal] cambió de \"vacío\" a \"true\"",
         "11/06/2026 22:08:22 | [Entregado A] cambió de \"vacío\" a \"TEST11\"",
         "11/06/2026 22:08:27 | [Entregado A] cambió de \"TEST11\" a \"vacío\"",
-        "11/06/2026 22:08:41 | [Entregado A] cambió de \"vacío\" a \"TEST11\""
+        "11/06/2026 22:08:41 | [Entregado A] cambió de \"vacío\" a \"TEST11\"",
+        "11/06/2026 22:16:51 | [Entregado a Disglobal] cambió de \"true\" a \"false\"",
+        "11/06/2026 22:16:51 | [Entregado A] cambió de \"TEST11\" a \"vacío\"",
+        "11/06/2026 22:16:58 | [Entregado a Disglobal] cambió de \"false\" a \"true\"",
+        "11/06/2026 22:16:58 | [Entregado A] cambió de \"vacío\" a \"CLIENTE1\"",
+        "11/06/2026 22:17:16 | [Entregado A] cambió de \"CLIENTE1\" a \"DEIBY CONTRERAS\"",
+        "11/06/2026 22:17:17 | [Entregado a Disglobal] cambió de \"true\" a \"false\"",
+        "11/06/2026 22:17:17 | [Entregado A] cambió de \"DEIBY CONTRERAS\" a \"vacío\"",
+        "11/06/2026 22:17:36 | [Entregado a Disglobal] cambió de \"false\" a \"true\"",
+        "11/06/2026 22:17:36 | [Entregado A] cambió de \"vacío\" a \"CLIENTE1\"",
+        "11/06/2026 22:18:02 | [Entregado A] cambió de \"CLIENTE1\" a \"DEIBY CONTRERAS\""
       ],
       "simSustituto": true,
       "entregadoDisglobal": true,
-      "entregadoA": "TEST11"
+      "entregadoA": "DEIBY CONTRERAS"
     },
     {
       "id": 18,
@@ -1264,7 +1274,7 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "general",
+  "currentTab": "casillero",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",

@@ -47,11 +47,41 @@ export const Casillero: React.FC<CasilleroProps> = ({
   const [filterEntregadosDisglobal, setFilterEntregadosDisglobal] = useState(false);
 
   const disglobalUsers = useMemo(() => {
-    return (Object.values(usersProfiles) as UserProfile[])
-      .filter(p => p.isUsuario)
-      .map(p => p.nombreCompleto || p.remitenteId)
-      .sort((a, b) => a.localeCompare(b));
-  }, [usersProfiles]);
+    const uniqueRemitentes = new Set<string>();
+    serials.forEach(s => {
+      if (s.remitente) {
+        uniqueRemitentes.add(s.remitente.toUpperCase().trim());
+      }
+    });
+
+    const list: string[] = [];
+    uniqueRemitentes.forEach(remName => {
+      const p = usersProfiles[remName];
+      const associatedSerials = serials.filter(s => s.remitente && s.remitente.toUpperCase().trim() === remName);
+      const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
+      const fallbackRazonSocial = associatedSerials.find(s => s.razonSocial)?.razonSocial || '';
+      const isClienteBySerials = !!(fallbackRif || fallbackRazonSocial || associatedSerials.some(s => s.isCasillero));
+
+      const isCliente = p ? !!p.isCliente : isClienteBySerials;
+      const isUsuario = p ? !!p.isUsuario : !isCliente;
+
+      if (isUsuario) {
+        list.push(p?.nombreCompleto || fallbackRazonSocial || remName);
+      }
+    });
+
+    Object.keys(usersProfiles).forEach(remName => {
+      const p = usersProfiles[remName];
+      if (p.isUsuario) {
+        const name = p.nombreCompleto || p.remitenteId || remName;
+        if (!list.includes(name)) {
+          list.push(name);
+        }
+      }
+    });
+
+    return list.sort((a, b) => a.localeCompare(b));
+  }, [serials, usersProfiles]);
 
   const detectModelFromSerial = (serial: string): string => {
     if (!serial || !modelosDB) return '';
