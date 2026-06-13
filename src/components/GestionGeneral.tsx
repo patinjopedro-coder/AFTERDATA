@@ -88,8 +88,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       { key: 'destino', label: 'Destino / Origen' },
       { key: 'ticket', label: 'Ticket' },
       { key: 'banco', label: 'Banco' },
-      { key: 'bsf', label: 'Monto BsF' },
-      { key: 'usdt', label: 'Monto USDT' },
+      { key: 'bsf', label: 'Costo' },
       { key: 'observaciones', label: 'Observaciones' },
       { key: 'date', label: 'Fecha Ingreso (YYYY-MM-DD)', type: 'date' },
     ];
@@ -104,7 +103,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
           </div>
           <div className="p-5 grid grid-cols-2 gap-3 max-h-[70vh] overflow-y-auto">
             {/* Campos principales (excepto costo, observaciones, fecha) */}
-            {fields.filter(f => f.key !== 'bsf' && f.key !== 'usdt' && f.key !== 'observaciones' && f.key !== 'date').map(f => {
+            {fields.filter(f => f.key !== 'bsf' && f.key !== 'observaciones' && f.key !== 'date').map(f => {
               return (
                 <div key={f.key} className="flex flex-col gap-1">
                   <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{f.label}</label>
@@ -141,24 +140,23 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               </label>
             </div>
 
-            {/* Campos de Costo */}
-            {['bsf', 'usdt'].map(key => {
-              const label = key === 'bsf' ? 'Monto BsF' : 'Monto USDT';
+            {/* Campo de Costo */}
+            {(() => {
               const isDisabled = !!editDraft.sinCosto;
               return (
-                <div key={key} className="flex flex-col gap-1">
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{label}</label>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo</label>
                   <input
                     type="text"
-                    value={(editDraft[key as keyof POSItem] as string) || ''}
+                    value={editDraft.bsf || ''}
                     disabled={isDisabled}
-                    onChange={e => setEditDraft(d => ({ ...d, [key]: e.target.value.toUpperCase() }))}
+                    onChange={e => setEditDraft(d => ({ ...d, bsf: e.target.value.toUpperCase(), usdt: '' }))}
                     className={`w-full text-xs p-2 bg-${isDisabled ? 'slate-200' : 'slate-100'} border border-${isDisabled ? 'slate-350' : 'transparent'} text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                     style={{ borderRadius: '4px' }}
                   />
                 </div>
               );
-            })}
+            })()}
 
             <div className="flex flex-col gap-1 col-span-2">
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Observaciones</label>
@@ -284,6 +282,23 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [salienteSinRecibir, setSalienteSinRecibir] = useState(false);
   const [serialSaliente, setSerialSaliente] = useState('');
 
+  const detectModelFromSerial = (serial: string, models: Record<string, any>): string => {
+    if (!serial || !models) return '';
+    const upper = serial.trim().toUpperCase();
+    const sortedPrefixes = Object.keys(models).sort((a, b) => b.length - a.length);
+    for (const prefix of sortedPrefixes) {
+      if (upper.startsWith(prefix.toUpperCase())) {
+        return prefix;
+      }
+    }
+    for (const prefix of sortedPrefixes) {
+      if (upper.includes(prefix.toUpperCase())) {
+        return prefix;
+      }
+    }
+    return '';
+  };
+
   const handleRemitenteChange = (val: string) => {
     setRemitente(val);
     const searchVal = val.toUpperCase().trim();
@@ -378,7 +393,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         fechaConfirmada: false,
         ticket: ticket.toUpperCase().trim(),
         bsf: costoBsf.toUpperCase().trim(),
-        usdt: costoUsdt.toUpperCase().trim(),
+        usdt: '',
         banco: banco.toUpperCase().trim(),
         cruceBatchId: activeCruceBatchId || undefined,
         sinCosto: sinCosto
@@ -421,7 +436,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
           fechaConfirmada: false,
           ticket: ticket.toUpperCase().trim(),
           bsf: costoBsf.toUpperCase().trim(),
-          usdt: costoUsdt.toUpperCase().trim(),
+          usdt: '',
           banco: banco.toUpperCase().trim(),
           cruceBatchId: activeCruceBatchId || undefined,
           sinCosto: sinCosto
@@ -728,7 +743,15 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             <input
               type="text"
               value={salienteSinRecibir ? 'POR RECIBIR' : bulkInput}
-              onChange={e => setBulkInput(e.target.value)}
+              onChange={e => {
+                const val = e.target.value;
+                setBulkInput(val);
+                const firstSerial = val.split(/[\n,;\s]+/)[0] || '';
+                const detected = detectModelFromSerial(firstSerial, modelosDB);
+                if (detected) {
+                  setModeloManual(detected);
+                }
+              }}
               placeholder=""
               disabled={salienteSinRecibir}
               className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${
@@ -766,7 +789,14 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               <input
                 type="text"
                 value={serialSaliente}
-                onChange={e => setSerialSaliente(e.target.value.toUpperCase())}
+                onChange={e => {
+                  const val = e.target.value.toUpperCase();
+                  setSerialSaliente(val);
+                  const detected = detectModelFromSerial(val, modelosDB);
+                  if (detected) {
+                    setModeloManual(detected);
+                  }
+                }}
                 placeholder="INGRESE EL SERIAL SALIENTE"
                 className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
               />
@@ -823,7 +853,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
           {/* Fila 4: Modelo y Ticket */}
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo POS (Manual)</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo POS</label>
             <input
               type="text"
               value={modeloManual}
@@ -833,7 +863,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Ticket / Caso</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Nro de Ticket</label>
             <input
               type="text"
               value={ticket}
@@ -906,27 +936,17 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             </div>
           </div>
 
-          {/* Fila 7: Costo BsF o USDT y al lado BANCO */}
+          {/* Fila 7: Costo y al lado BANCO */}
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo (BsF / USDT)</label>
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={costoBsf}
-                onChange={e => setCostoBsf(e.target.value)}
-                disabled={sinCosto}
-                placeholder="BsF"
-                className={`w-full text-xs p-2 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
-              />
-              <input
-                type="text"
-                value={costoUsdt}
-                onChange={e => setCostoUsdt(e.target.value)}
-                disabled={sinCosto}
-                placeholder="USDT"
-                className={`w-full text-xs p-2 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
-              />
-            </div>
+            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo</label>
+            <input
+              type="text"
+              value={costoBsf}
+              onChange={e => setCostoBsf(e.target.value)}
+              disabled={sinCosto}
+              placeholder=""
+              className={`w-full text-sm p-2.5 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Banco</label>
@@ -1249,16 +1269,14 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                               {modelInfo.so === 'ANDROID' ? 'ANDROID' : modelInfo.so === 'LINUX' ? 'LINUX' : 'UNK'} - {modelInfo.modelo}
                             </span>
                             {(s.sinCosto || s.banco || s.bsf || s.usdt) && (
-                              <div className="text-[9px] text-slate-500 font-semibold uppercase">
+                              <div className="text-[9px] text-slate-500 font-semibold uppercase font-arial">
                                 {s.sinCosto ? (
                                   <span className="text-emerald-700 font-bold uppercase">SIN COSTO</span>
                                 ) : (
                                   <>
                                     {s.banco && `${s.banco}`}
                                     {s.banco && (s.bsf || s.usdt) && ' - '}
-                                    {s.bsf && `${s.bsf} BSF`}
-                                    {s.bsf && s.usdt && ' / '}
-                                    {s.usdt && `${s.usdt} USDT`}
+                                    {s.bsf || s.usdt}
                                   </>
                                 )}
                               </div>

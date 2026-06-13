@@ -209,7 +209,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">N° Ticket / Caso</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Nro de Ticket</label>
             <input
               type="text"
               value={ticket}

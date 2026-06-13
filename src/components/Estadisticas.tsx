@@ -1347,7 +1347,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         <div className="p-1.5 flex items-center justify-between">
                           <span className="text-[9px] text-slate-455 font-bold uppercase">Monto:</span>
                           <span className="font-bold text-slate-850 uppercase text-[10px]">
-                            {s.bsf ? `${s.bsf} BSF` : ''} {s.bsf && s.usdt ? '/' : ''} {s.usdt ? `${s.usdt} USDT` : ''}
+                            {s.bsf || s.usdt}
                           </span>
                         </div>
                       )}
@@ -1577,6 +1577,9 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
 
   const getPOSItemHeaders = (type: string): string[] => {
     if (
+      type === 'total' ||
+      type === 'android' ||
+      type === 'linux' ||
       type === 'cliente' || 
       type === 'colaborador' || 
       type === 'disponibles' || 
@@ -1587,7 +1590,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
       type === 'casillero_recuperados' ||
       type === 'casillero_otros'
     ) {
-      return ['MODELO', 'SERIAL', 'STATUS'];
+      return ['MODELO', 'SERIAL', 'STATUS', 'REMITENTE'];
     } else if (type === 'modeloNegocio' || type === 'modeloNegocioDates') {
       return ['MODELO', 'SERIAL', 'GUIA', 'RAZON SOCIAL'];
     } else if (type === 'manual_cruce') {
@@ -1859,9 +1862,9 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           <div>
             <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805 flex items-center gap-1.5">
               <Users className="w-4 h-4 text-black" />
-              TOP 5 USUARIOS DISGLOBAL CON MAYOR ENTREGAS
+              USUARIOS DESTACADOS DE DISGLOBAL
             </h4>
-            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 font-mono">COLABORADORES QUE MÁS DISPOSITIVOS HAN INGRESADO/ENTREGADO</p>
+
           </div>
           <button
             onClick={() => setShowAllColaboradoresModal(true)}
@@ -1878,162 +1881,99 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
             if (top5Colaboradores.length === 0) {
               return <div className="text-center py-12 text-slate-400 font-mono text-xs">No hay entregas registradas todavía para colaboradores.</div>;
             }
-            const firstPlace = top5Colaboradores[0];
-            const secondPlace = top5Colaboradores[1];
-            const thirdPlace = top5Colaboradores[2];
-            const fourthPlace = top5Colaboradores[3];
-            const fifthPlace = top5Colaboradores[4];
+            const rankLabels = ['1º', '2º', '3º', '4º', '5º'];
             return (
-              <>
-                {/* Podio 3D */}
-                <div className="flex items-end justify-center gap-4 sm:gap-8 pt-12 pb-6 max-w-xl mx-auto w-full">
-                  {/* 2do Lugar (Izquierda) */}
-                  {secondPlace ? (
-                    <div 
-                      onClick={() => { setModalType('colaborador'); setModalSelectedName(secondPlace.name); setModalSearch(''); setDetailSelectedDate(null); }}
-                      className="flex flex-col items-center flex-1 cursor-pointer group transition-all duration-300 hover:-translate-y-1"
-                    >
-                      <div className="relative mb-3">
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-slate-300 bg-white overflow-hidden shadow-md flex items-center justify-center">
-                          {renderAvatarHelper(usersProfiles[secondPlace.name]?.genero, "w-full h-full", secondPlace.name)}
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 bg-slate-400 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
-                          2
-                        </div>
-                      </div>
-                      <div className="text-center mb-2 px-1">
-                        <div className="text-[11px] sm:text-xs font-black text-slate-700 truncate max-w-[90px] sm:max-w-[120px] uppercase font-arial" title={secondPlace.name}>
-                          {secondPlace.name}
-                        </div>
-                        <div className="text-xs sm:text-sm text-slate-600 font-black uppercase font-mono text-white-slate" style={{ fontWeight: 900 }}>{secondPlace.total} Entregas</div>
-                      </div>
-                      <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-24 sm:h-28 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                        <div 
-                          className="text-3xl sm:text-4xl font-black select-none podium-watermark"
-                          style={{
-                            background: 'linear-gradient(135deg, #1e293b 20%, #94a3b8 45%, #ffffff 50%, #cbd5e1 55%, #334155 80%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.65)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
-                          }}
-                        >
-                          2º
-                        </div>
-                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-slate-400"></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 h-24 sm:h-28 invisible"></div>
-                  )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5 w-full mt-2 select-none">
+                {top5Colaboradores.map((colab, index) => {
+                  const rank = index + 1;
+                  const pProfile = usersProfiles[colab.name];
+                  
+                  // Custom border styles based on rank
+                  let borderClass = 'border-slate-200';
+                  let rankBgClass = 'from-slate-50 to-white';
+                  let accentColor = '#64748b'; // default slate
+                  
+                  if (rank === 1) {
+                    borderClass = 'border-amber-400 border-2';
+                    rankBgClass = 'from-amber-50/20 to-white';
+                    accentColor = '#f59e0b'; // Gold
+                  } else if (rank === 2) {
+                    borderClass = 'border-slate-300 border-2';
+                    rankBgClass = 'from-slate-100/40 to-white';
+                    accentColor = '#94a3b8'; // Silver
+                  } else if (rank === 3) {
+                    borderClass = 'border-amber-700 border-2';
+                    rankBgClass = 'from-amber-50/10 to-white';
+                    accentColor = '#b45309'; // Bronze
+                  }
 
-                  {/* 1er Lugar (Centro) */}
-                  {firstPlace ? (
-                    <div 
-                      onClick={() => { setModalType('colaborador'); setModalSelectedName(firstPlace.name); setModalSearch(''); setDetailSelectedDate(null); }}
-                      className="flex flex-col items-center flex-1 cursor-pointer group z-10 transition-all duration-300 hover:-translate-y-1"
+                  return (
+                    <div
+                      key={colab.name}
+                      onClick={() => {
+                        setModalType('colaborador');
+                        setModalSelectedName(colab.name);
+                        setModalSearch('');
+                        setDetailSelectedDate(null);
+                      }}
+                      className={`relative flex flex-col items-center justify-between p-4 cursor-pointer hover:-translate-y-1 hover:shadow-lg transition-all duration-300 bg-gradient-to-b ${rankBgClass} border ${borderClass} h-[250px] group`}
+                      style={{ borderRadius: '0px' }}
                     >
-                      <div className="relative mb-3">
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-amber-400 bg-white overflow-hidden shadow-lg flex items-center justify-center relative">
-                          {renderAvatarHelper(usersProfiles[firstPlace.name]?.genero, "w-full h-full", firstPlace.name)}
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 bg-amber-400 text-amber-950 text-[10px] font-black w-6.5 h-6.5 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
-                          1
-                        </div>
+                      {/* Rank Badge */}
+                      <div 
+                        className="absolute top-2.5 left-2.5 text-[9.5px] font-black w-5.5 h-5.5 rounded-full flex items-center justify-center border font-mono select-none"
+                        style={{ 
+                          borderColor: accentColor, 
+                          color: rank <= 3 ? '#ffffff' : accentColor,
+                          backgroundColor: rank <= 3 ? accentColor : 'transparent'
+                        }}
+                      >
+                        {rank}
                       </div>
-                      <div className="text-center mb-2 px-1">
-                        <div className="text-xs sm:text-sm font-black text-slate-900 truncate max-w-[100px] sm:max-w-[140px] uppercase font-arial" title={firstPlace.name}>
-                          {firstPlace.name}
-                        </div>
-                        <div className="text-xs sm:text-sm text-amber-600 font-black uppercase font-mono text-white-amber" style={{ fontWeight: 900 }}>{firstPlace.total} Entregas</div>
-                      </div>
-                      <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border-2 border-amber-400 border-b-0 h-32 sm:h-36 flex flex-col items-center justify-center shadow-md relative overflow-hidden">
-                        <div 
-                          className="text-5xl sm:text-6xl font-black select-none podium-watermark"
-                          style={{
-                            background: 'linear-gradient(135deg, #78350f 15%, #d97706 40%, #fef3c7 50%, #fbbf24 60%, #92400e 85%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            filter: 'drop-shadow(1px 1px 1.5px rgba(0,0,0,0.65)) drop-shadow(0 0 2.5px rgba(255,255,255,0.45))'
-                          }}
-                        >
-                          1º
-                        </div>
-                        <div className="absolute top-0 left-0 right-0 h-[4px] bg-amber-400"></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 h-32 sm:h-36 text-center text-slate-400 py-6 text-xs font-mono">No hay entregas</div>
-                  )}
 
-                  {/* 3er Lugar (Derecha) */}
-                  {thirdPlace ? (
-                    <div 
-                      onClick={() => { setModalType('colaborador'); setModalSelectedName(thirdPlace.name); setModalSearch(''); setDetailSelectedDate(null); }}
-                      className="flex flex-col items-center flex-1 cursor-pointer group transition-all duration-300 hover:-translate-y-1"
-                    >
-                      <div className="relative mb-3">
-                        <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-4 border-amber-700 bg-white overflow-hidden shadow-md flex items-center justify-center">
-                          {renderAvatarHelper(usersProfiles[thirdPlace.name]?.genero, "w-full h-full", thirdPlace.name)}
-                        </div>
-                        <div className="absolute -bottom-1 -right-1 bg-amber-700 text-white text-[10px] font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow font-mono">
-                          3
-                        </div>
+                      {/* Rank Background Watermark */}
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center select-none overflow-hidden pointer-events-none opacity-[0.04] group-hover:opacity-[0.08] transition-opacity font-sans font-black text-[100px]"
+                        style={{ color: accentColor }}
+                      >
+                        {rankLabels[index]}
                       </div>
-                      <div className="text-center mb-2 px-1">
-                        <div className="text-[11px] sm:text-xs font-black text-slate-700 truncate max-w-[90px] sm:max-w-[120px] uppercase font-arial" title={thirdPlace.name}>
-                          {thirdPlace.name}
-                        </div>
-                        <div className="text-xs sm:text-sm text-amber-800 font-black uppercase font-mono text-white-bronze" style={{ fontWeight: 900 }}>{thirdPlace.total} Entregas</div>
-                      </div>
-                      <div className="w-full bg-gradient-to-t from-slate-200 to-slate-100 border border-slate-300 border-b-0 h-18 sm:h-22 flex flex-col items-center justify-center shadow-sm relative overflow-hidden">
-                        <div 
-                          className="text-2xl sm:text-3xl font-black select-none podium-watermark"
-                          style={{
-                            background: 'linear-gradient(135deg, #451a03 20%, #b45309 45%, #fef3c7 50%, #d97706 55%, #78350f 80%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.65)) drop-shadow(0 0 2px rgba(255,255,255,0.4))'
-                          }}
-                        >
-                          3º
-                        </div>
-                        <div className="absolute top-0 left-0 right-0 h-[3px] bg-amber-700"></div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex-1 h-18 sm:h-22 invisible"></div>
-                  )}
-                </div>
 
-                {/* Posiciones 4 y 5 (Menciones de Honor) */}
-                {(fourthPlace || fifthPlace) && (
-                  <div className="mt-6 border-t border-slate-150 pt-5 max-w-xl mx-auto w-full">
-                    <h5 className="text-[10px] font-extrabold tracking-wider text-slate-400 uppercase font-mono mb-3 text-center">Menciones de Honor</h5>
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                      {[fourthPlace, fifthPlace].filter(Boolean).map((u, i) => {
-                        const pos = i + 4;
-                        return (
-                          <div 
-                            key={u!.name}
-                            onClick={() => { setModalType('colaborador'); setModalSelectedName(u!.name); setModalSearch(''); setDetailSelectedDate(null); }}
-                            className="flex items-center gap-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 p-2.5 px-4 cursor-pointer transition-colors flex-1"
-                            style={{ borderRadius: '0px' }}
-                          >
-                            <span className="text-xs font-black text-slate-400 font-mono">#{pos}</span>
-                            <div className="w-8 h-8 rounded-full border border-slate-300 bg-white overflow-hidden flex-shrink-0 flex items-center justify-center">
-                              {renderAvatarHelper(usersProfiles[u!.name]?.genero, "w-full h-full", u!.name)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-bold text-slate-800 truncate uppercase font-arial" title={u!.name}>{u!.name}</div>
-                              <div className="text-[9px] text-slate-500 font-bold font-mono">{u!.total} Entregas</div>
-                            </div>
-                          </div>
-                        );
-                      })}
+                      {/* Avatar */}
+                      <div className="relative mt-4 z-10">
+                        <div 
+                          className="w-18 h-18 rounded-full border-2 bg-white overflow-hidden shadow-sm flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
+                          style={{ borderColor: accentColor }}
+                        >
+                          {renderAvatarHelper(pProfile?.genero, "w-full h-full", colab.name)}
+                        </div>
+                      </div>
+
+                      {/* Details */}
+                      <div className="text-center w-full z-10 mt-auto pb-1">
+                        <div 
+                          className="text-[11px] font-black text-slate-800 truncate uppercase font-arial max-w-full px-1" 
+                          title={colab.name}
+                        >
+                          {colab.name}
+                        </div>
+                        <div 
+                          className="text-[10px] font-extrabold uppercase font-mono mt-1"
+                          style={{ color: accentColor }}
+                        >
+                          {colab.total} Entregas
+                        </div>
+                      </div>
+
+                      {/* Bottom Accent Bar */}
+                      <div 
+                        className="absolute bottom-0 left-0 right-0 h-1 transition-all duration-300 group-hover:h-1.5"
+                        style={{ backgroundColor: accentColor }}
+                      ></div>
                     </div>
-                  </div>
-                )}
-              </>
+                  );
+                })}
+              </div>
             );
           })()}
         </div>
@@ -2045,9 +1985,9 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
           <div>
             <h4 className="font-bold text-xs tracking-widest uppercase text-slate-805 flex items-center gap-1.5">
               <Users className="w-4 h-4 text-black" />
-              TOP 5 CLIENTES CON MAYOR ENTREGAS
+              CLIENTES CON MAS ENTREGAS
             </h4>
-            <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 font-mono">CLIENTES QUE MÁS DISPOSITIVOS HAN INGRESADO/ENTREGADO</p>
+
           </div>
           <button
             onClick={() => setShowAllClientesModal(true)}

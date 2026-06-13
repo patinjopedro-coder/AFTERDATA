@@ -1,6 +1,41 @@
 {
   "serialesDB": [
     {
+      "id": 30,
+      "serial": "TEST_SERIAL_MATCH_1",
+      "date": "2026-06-13",
+      "displayDate": "13/06/2026",
+      "status": "N#A",
+      "remitente": "PRUEBA_SENDER",
+      "source": "CRUCE DE CORREO Y FISICO",
+      "isCasillero": false,
+      "selected": false,
+      "rif": "",
+      "razonSocial": "",
+      "destino": "",
+      "observaciones": "DISPONIBLE - No encontrado en lista IMS",
+      "forro": false,
+      "bateria": false,
+      "cargador": false,
+      "caja": false,
+      "sim": false,
+      "simNumber": "",
+      "operadora": "DISPONIBLE",
+      "modeloManual": "",
+      "modeloNegocio": "",
+      "entregadoTecnico": false,
+      "esSustitucion": false,
+      "serialSustituto": "",
+      "fechaSalida": "",
+      "fechaSalidaCliente": "",
+      "guiaSalidaCliente": "",
+      "destinoSalida": "",
+      "fechaConfirmada": false,
+      "ticket": "",
+      "addedFromCruce": true,
+      "cruceBatchId": "LOTE - 13/06/2026 09:53:05"
+    },
+    {
       "id": 29,
       "serial": "HELENA10",
       "date": "2026-06-07",
@@ -427,11 +462,12 @@
         "11/06/2026 22:17:17 | [Entregado A] cambió de \"DEIBY CONTRERAS\" a \"vacío\"",
         "11/06/2026 22:17:36 | [Entregado a Disglobal] cambió de \"false\" a \"true\"",
         "11/06/2026 22:17:36 | [Entregado A] cambió de \"vacío\" a \"CLIENTE1\"",
-        "11/06/2026 22:18:02 | [Entregado A] cambió de \"CLIENTE1\" a \"DEIBY CONTRERAS\""
+        "11/06/2026 22:18:02 | [Entregado A] cambió de \"CLIENTE1\" a \"DEIBY CONTRERAS\"",
+        "11/06/2026 22:19:28 | [Entregado A] cambió de \"DEIBY CONTRERAS\" a \"CLIENTE1\""
       ],
       "simSustituto": true,
       "entregadoDisglobal": true,
-      "entregadoA": "DEIBY CONTRERAS"
+      "entregadoA": "CLIENTE1"
     },
     {
       "id": 18,
@@ -1232,6 +1268,10 @@
     "WP": {
       "modelo": "WP",
       "so": "ANDROID"
+    },
+    "N3": {
+      "modelo": "n300",
+      "so": "ANDROID"
     }
   },
   "usersProfilesDB": {
@@ -1274,10 +1314,10 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "casillero",
+  "currentTab": "estadisticas",
   "simCardBatchesDB": [],
   "standbyListDB": [],
-  "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",
-  "cruce_emailText": "HELENA1\nHELENA2\nHELENA3\nHELENA4\nHELENA5\nHELENA6\nHELENA7\nHELENA8\nHELENA9\nHELENA10",
-  "cruce_fisicoText": "HELENA1\nHELENA2\nHELENA3\nHELENA4\nHELENA5\nHELENA6\nHELENA7\nHELENA8\nHELENA9\nHELENA10"
+  "activeCruceBatchIdDB": "LOTE - 13/06/2026 09:53:05",
+  "cruce_emailText": "",
+  "cruce_fisicoText": ""
 }

@@ -137,8 +137,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
       { key: 'ticket', label: 'Ticket' },
       { key: 'destino', label: 'Destino / Origen' },
       { key: 'observaciones', label: 'Observaciones' },
-      { key: 'bsf', label: 'Monto BsF' },
-      { key: 'usdt', label: 'Monto USDT' },
+      { key: 'bsf', label: 'Costo' },
       { key: 'date', label: 'Fecha Ingreso (YYYY-MM-DD)', type: 'date' },
     ];
     return (
@@ -157,7 +156,13 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 <input
                   type={f.type || 'text'}
                   value={(editDraft[f.key] as string) || ''}
-                  onChange={e => setEditDraft(d => ({ ...d, [f.key]: e.target.value.toUpperCase() }))}
+                  onChange={e => setEditDraft(d => {
+                    const next = { ...d, [f.key]: e.target.value.toUpperCase() };
+                    if (f.key === 'bsf') {
+                      next.usdt = '';
+                    }
+                    return next;
+                  })}
                   className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
                   style={{ borderRadius: '4px' }}
                 />
@@ -894,7 +899,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Serial:</span>
                             <div className="flex items-center gap-1">
                               <span 
-                                className="text-[11px] font-arial cursor-pointer hover:text-slate-900 select-all font-bold text-slate-800"
+                                className="text-[13px] font-arial cursor-pointer hover:text-slate-900 select-all font-bold text-slate-900"
                                 onClick={() => handleCopyText(s.serial, `serial-${s.id}`)}
                               >
                                 {s.serial}
@@ -912,7 +917,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Guía:</span>
                             <div className="flex items-center gap-1">
                               <span 
-                                className="text-[11px] font-arial cursor-pointer hover:text-slate-900 select-all font-bold text-slate-800 uppercase"
+                                className="text-[13px] font-arial cursor-pointer hover:text-slate-900 select-all font-bold text-slate-900 uppercase"
                                 onClick={() => handleCopyText(s.source || 'S/N', `guia-${s.id}`)}
                                 title="Click para copiar guía"
                               >
@@ -929,7 +934,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* MODELO DE HARDWARE */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Equipo:</span>
-                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase">
+                            <span className="text-[13px] font-bold font-arial text-slate-900 uppercase">
                               {modelInfo.so === 'ANDROID' ? 'ANDROID' : modelInfo.so === 'LINUX' ? 'LINUX' : 'UNK'} - {modelInfo.modelo}
                             </span>
                           </div>
@@ -937,7 +942,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* 2. MODELO DE NEGOCIO */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mod. Negocio:</span>
-                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase">
+                            <span className="text-[13px] font-bold font-arial text-slate-900 uppercase">
                               {s.modeloNegocio || 'SIN ASIGNAR'}
                             </span>
                           </div>
@@ -945,42 +950,39 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* REMITENTE */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Remitente:</span>
-                            <span className="text-slate-800 font-bold select-all text-[11px] uppercase font-arial">{s.remitente || 'SIN REMITENTE'}</span>
+                            <span className="text-slate-900 font-bold select-all text-[13px] uppercase font-arial">{s.remitente || 'SIN REMITENTE'}</span>
                           </div>
 
                           {/* RAZÓN SOCIAL */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Razón Social:</span>
-                            <span className="text-slate-800 font-bold select-all text-[11px] uppercase font-arial">{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
+                            <span className="text-slate-900 font-bold select-all text-[13px] uppercase font-arial">{s.razonSocial || 'SIN RAZÓN SOCIAL'}</span>
                           </div>
 
                           {/* RIF */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Rif:</span>
-                            <span className="text-[11px] font-bold font-arial text-slate-800 uppercase select-all">{s.rif || 'S/N'}</span>
+                            <span className="text-[13px] font-bold font-arial text-slate-900 uppercase select-all">{s.rif || 'S/N'}</span>
                           </div>
 
                           {/* 4. TICKET */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Ticket:</span>
-                            <span className="text-[11px] font-arial font-bold text-slate-800 uppercase select-all">{s.ticket || 'S/N'}</span>
+                            <span className="text-[13px] font-arial font-bold text-slate-900 uppercase select-all">{s.ticket || 'S/N'}</span>
                           </div>
 
                           {/* 5. BANCO */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Banco:</span>
-                            <span className="text-[11px] font-arial font-bold text-slate-800 uppercase select-all">{s.banco || 'S/N'}</span>
+                            <span className="text-[13px] font-arial font-bold text-slate-900 uppercase select-all">{s.banco || 'S/N'}</span>
                           </div>
 
                           {/* 6. MONTOS */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Monto:</span>
-                            <div className="flex gap-1">
-                              {s.bsf && <span className="text-slate-800 font-bold text-[11px] font-arial">{s.bsf} BSF</span>}
-                              {s.bsf && s.usdt && <span className="text-slate-800 font-bold text-[11px] font-arial">/</span>}
-                              {s.usdt && <span className="text-slate-800 font-bold text-[11px] font-arial">{s.usdt} USDT</span>}
-                              {!s.bsf && !s.usdt && <span className="text-slate-800 font-bold text-[11px] font-arial">S/N</span>}
-                            </div>
+                            <span className="text-slate-900 font-bold text-[13px] font-arial uppercase">
+                              {s.sinCosto ? 'SIN COSTO' : (s.bsf || s.usdt || 'S/N')}
+                            </span>
                           </div>
 
                         </div>

@@ -35,9 +35,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   const [emailViewMode, setEmailViewMode] = useState<'visual' | 'edit'>('edit');
   const [fisicoViewMode, setFisicoViewMode] = useState<'visual' | 'edit'>('edit');
 
-  // Dedicated barcode scanner live input value
-  const [scanInput, setScanInput] = useState('');
-  const scanInputRef = useRef<HTMLInputElement>(null);
+
 
   const [datosMaestro, setDatosMaestro] = useState<CruceItem[]>([]);
 
@@ -159,12 +157,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     setLocalItem('datosCMS', datosCMS);
   }, [datosCMS]);
 
-  // Focus barcode scan field when list mode is visual
-  useEffect(() => {
-    if (fisicoViewMode === 'visual' && scanInputRef.current && !isBulkModalOpen && !isIMSModalOpen && !isCMSModalOpen) {
-      scanInputRef.current.focus();
-    }
-  }, [fisicoViewMode, isBulkModalOpen, isIMSModalOpen, isCMSModalOpen]);
+
 
   // Clean O(1) matching index for supreme performance handling elements with 100k+ list lookups
   const maestroMap = useMemo(() => {
@@ -353,25 +346,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     setSelectedSerialsBulk(new Set());
   };
 
-  // Barcode enter key handler
-  const handleScanKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const cleanScan = scanInput.trim().toUpperCase();
-      if (!cleanScan) return;
 
-      const current = parseLines(fisicoText);
-      if (!current.includes(cleanScan)) {
-        const joiner = fisicoText === '' || fisicoText.endsWith('\n') ? '' : '\n';
-        setFisicoText(prev => prev + joiner + cleanScan);
-      }
-      setScanInput('');
-      
-      setTimeout(() => {
-        if (scanInputRef.current) scanInputRef.current.focus();
-      }, 30);
-    }
-  };
 
   // High performance line-by-line parsing for Excel copy/pastes (>100k lines)
   const handleConfirmIMS = () => {
@@ -575,6 +550,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     });
 
     alert(`✅ ¡Cruce inteligente completado!\n• ${nuevos} nuevos registros agregados.\n• ${actualizados} terminales existentes actualizados.`);
+    setRemitenteCorreo('');
     setCurrentTab('general');
   };
 
@@ -712,7 +688,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-550 animate-pulse"></span>
-              <h4 className="font-extrabold text-xs text-blue-600 uppercase tracking-wider">Seriales desde Correo (Digital)</h4>
+              <h4 className="font-extrabold text-xs text-blue-600 uppercase tracking-wider">SERIALES EN CORREO</h4>
             </div>
             
             <div className="flex items-center gap-1.5">
@@ -808,7 +784,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></span>
-              <h4 className="font-extrabold text-xs text-orange-600 uppercase tracking-wider">Seriales Físicos (Físico)</h4>
+              <h4 className="font-extrabold text-xs text-orange-600 uppercase tracking-wider">SERIALES EN FISICO</h4>
             </div>
             
             <div className="flex items-center gap-1.5">
@@ -865,20 +841,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           ) : (
             <div className="flex-1 flex flex-col gap-2.5">
               
-              {/* Barcode scanner live box */}
-              <div className="relative">
-                <input
-                  ref={scanInputRef}
-                  type="text"
-                  value={scanInput}
-                  onChange={e => setScanInput(e.target.value)}
-                  onKeyDown={handleScanKeyDown}
-                  placeholder="Pistolee serial físico aquí..."
-                  className="w-full text-xs font-bold p-2.5 pl-8 bg-slate-100 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-white focus:border-orange-500 placeholder-slate-400"
-                />
-                <Search size={13} className="absolute left-2.5 top-3.5 text-slate-400" />
-                <span className="absolute right-2 px-1.5 py-0.5 rounded text-[8px] bg-white border border-slate-200 text-slate-500 select-none top-2.5 uppercase font-mono shadow-xs">Pistola Conectada</span>
-              </div>
+
 
               <div className="flex-1 pr-1.5 space-y-1.5 border border-slate-150 p-2 rounded-xl bg-slate-50">
                 {fisicoUniques.map((serial, idx) => {
@@ -968,7 +931,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       </div>
 
       {/* PARAMETROS DE RECONCILIACIÓN DE DATOS */}
-      <div className="dark-panel p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="dark-panel p-5">
         <div className="relative">
           <label className="text-xs font-extrabold text-blue-600 block mb-1.5 uppercase">REMITENTE:</label>
           <input
@@ -1001,13 +964,6 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="flex flex-col justify-center">
-          <label className="text-xs font-extrabold text-slate-500 block mb-1 uppercase">ESTADO DE TRANSFERENCIA</label>
-          <p className="text-[11px] text-slate-650 font-semibold normal-case">
-            Los seriales cruzados heredarán directamente sus estados configurados de forma individual u obtenidos desde la Base IMS o CMS.
-          </p>
         </div>
       </div>
 
