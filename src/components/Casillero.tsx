@@ -879,7 +879,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       </td>
 
                       {/* ENTRADA (FECHA O GUÍA) */}
-                      <td className="py-4 px-3 text-center whitespace-nowrap text-xs font-arial text-slate-800">
+                      <td className={`py-4 px-3 text-center whitespace-nowrap text-xs font-arial text-slate-800 transition-all ${
+                        s.entregadoTecnico ? 'opacity-40 filter grayscale contrast-75 pointer-events-none select-none' : ''
+                      }`}>
                         <div>{s.displayDate}</div>
                         {s.addedFromCruce && (
                           <div className="mt-1.5">
@@ -891,7 +893,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       </td>
 
                       {/* CLASIFICACIÓN Y DATOS COMERCIALES */}
-                      <td className="py-4 px-4 text-xs font-arial">
+                      <td className={`py-4 px-4 text-xs font-arial transition-all ${
+                        s.entregadoTecnico ? 'opacity-40 filter grayscale contrast-75 pointer-events-none select-none' : ''
+                      }`}>
                         <div className="flex flex-col divide-y divide-slate-100 border border-slate-200" style={{ borderRadius: '0px' }}>
                           
                           {/* 1. EQUIPO / SERIAL */}
@@ -991,81 +995,85 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       {/* LISTADO DE ACCESORIOS */}
                       <td className="py-4 px-3 text-xs w-44">
                         <div className="flex flex-col gap-1.5 pr-2">
-                          <button
-                            disabled={isRecuperado}
-                            onClick={() => toggleBooleanRef(s.id, 'forro')}
-                            className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                              s.forro ? 'active' : ''
-                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
-                          >
-                            <span>FORRO</span>
-                            {s.forro && <Check size={12} />}
-                          </button>
-                          
-                          <button
-                            disabled={isRecuperado}
-                            onClick={() => toggleBooleanRef(s.id, 'bateria')}
-                            className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                              s.bateria ? 'active' : ''
-                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
-                          >
-                            <span>BATERÍA</span>
-                            {s.bateria && <Check size={12} />}
-                          </button>
+                          <div className={`flex flex-col gap-1.5 transition-all ${
+                            s.entregadoTecnico ? 'opacity-40 filter grayscale contrast-75 pointer-events-none select-none' : ''
+                          }`}>
+                            <button
+                              disabled={isRecuperado || !!s.entregadoTecnico}
+                              onClick={() => toggleBooleanRef(s.id, 'forro')}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
+                                s.forro ? 'active' : ''
+                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                            >
+                              <span>FORRO</span>
+                              {s.forro && <Check size={12} />}
+                            </button>
+                            
+                            <button
+                              disabled={isRecuperado || !!s.entregadoTecnico}
+                              onClick={() => toggleBooleanRef(s.id, 'bateria')}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
+                                s.bateria ? 'active' : ''
+                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                            >
+                              <span>BATERÍA</span>
+                              {s.bateria && <Check size={12} />}
+                            </button>
 
-                          <button
-                            disabled={isRecuperado}
-                            onClick={() => toggleBooleanRef(s.id, 'cargador')}
-                            className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                              s.cargador ? 'active' : ''
-                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
-                          >
-                            <span>CARGADOR</span>
-                            {s.cargador && <Check size={12} />}
-                          </button>
+                            <button
+                              disabled={isRecuperado || !!s.entregadoTecnico}
+                              onClick={() => toggleBooleanRef(s.id, 'cargador')}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
+                                s.cargador ? 'active' : ''
+                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                            >
+                              <span>CARGADOR</span>
+                              {s.cargador && <Check size={12} />}
+                            </button>
 
-                          <button
-                            disabled={isRecuperado}
-                            onClick={() => toggleBooleanRef(s.id, 'caja')}
-                            className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                              s.caja ? 'active' : ''
-                            } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
-                          >
-                            <span>CAJA</span>
-                            {s.caja && <Check size={12} />}
-                          </button>
+                            <button
+                              disabled={isRecuperado || !!s.entregadoTecnico}
+                              onClick={() => toggleBooleanRef(s.id, 'caja')}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
+                                s.caja ? 'active' : ''
+                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                            >
+                              <span>CAJA</span>
+                              {s.caja && <Check size={12} />}
+                            </button>
 
-                          {/* SIM CARD CHIP TOGGLE */}
-                          <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-1.5">
-                            <label className={`flex items-center gap-2 text-[10px] select-none cursor-pointer text-slate-500 font-bold uppercase ${isRecuperado ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                              <input
-                                type="checkbox"
-                                disabled={isRecuperado}
-                                checked={!!s.sim}
-                                onChange={e => {
-                                  setSerials(prev => prev.map(o => {
-                                    if (o.id === s.id) {
-                                      return { ...o, sim: e.target.checked, simNumber: e.target.checked ? o.simNumber : '' };
-                                    }
-                                    return o;
-                                  }));
-                                }}
-                                className="rounded text-blue-600 bg-slate-100 border-slate-200 focus:ring-0"
-                              />
-                              <span>SIM Incorporado</span>
-                            </label>
-                            {s.sim && (
-                              <input
-                                type="text"
-                                disabled={isRecuperado}
-                                value={s.simNumber || ''}
-                                onChange={e => handleUpdateTextVal(s.id, 'simNumber', e.target.value.toUpperCase())}
-                                placeholder=""
-                                className={`w-full text-[10px] font-arial p-1 bg-slate-100 border border-transparent rounded text-amber-600 uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
-                                  isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350' : ''
-                                }`}
-                              />
-                            )}
+                            {/* SIM CARD CHIP TOGGLE */}
+                            <div className="flex flex-col gap-1 mt-1 border-t border-slate-100 pt-1.5">
+                              <label className={`flex items-center gap-2 text-[10px] select-none cursor-pointer text-slate-500 font-bold uppercase ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                                <input
+                                  type="checkbox"
+                                  disabled={isRecuperado || !!s.entregadoTecnico}
+                                  checked={!!s.sim}
+                                  onChange={e => {
+                                    setSerials(prev => prev.map(o => {
+                                      if (o.id === s.id) {
+                                        return { ...o, sim: e.target.checked, simNumber: e.target.checked ? o.simNumber : '' };
+                                      }
+                                      return o;
+                                    }));
+                                  }}
+                                  className="rounded text-blue-600 bg-slate-100 border-slate-200 focus:ring-0"
+                                />
+                                <span>SIM Incorporado</span>
+                              </label>
+                              {s.sim && (
+                                <input
+                                  type="text"
+                                  disabled={isRecuperado || !!s.entregadoTecnico}
+                                  value={s.simNumber || ''}
+                                  onChange={e => handleUpdateTextVal(s.id, 'simNumber', e.target.value.toUpperCase())}
+                                  placeholder=""
+                                  className={`w-full text-[10px] font-arial p-1 bg-slate-100 border border-transparent rounded text-amber-600 uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
+                                    (isRecuperado || s.entregadoTecnico) ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350' : ''
+                                  }`}
+                                />
+                              )}
+                            </div>
                           </div>
 
                           {/* OUT TO TECHNICIAN */}
@@ -1076,12 +1084,12 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               onClick={() => toggleBooleanRef(s.id, 'entregadoTecnico')}
                               className={`w-full py-1.5 px-3 rounded-lg text-[10px] font-bold uppercase transition-colors flex items-center justify-center gap-1.5 mt-1 cursor-pointer border ${
                                 s.entregadoTecnico 
-                                  ? 'bg-slate-400 hover:bg-slate-500 border-slate-400 text-white shadow-sm custom-entregado-btn' 
+                                  ? 'saliente-recibido-active custom-entregado-btn shadow-sm' 
                                   : 'bg-slate-800 hover:bg-slate-700 border-slate-800 text-white shadow-sm'
                               } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
                             >
                               {s.entregadoTecnico && <Check size={12} className="text-white" />}
-                              <span>{s.entregadoTecnico ? 'ENTREGADO' : 'ENTREGAR'}</span>
+                              <span>{s.entregadoTecnico ? 'SALIENTE RECIBIDO' : 'RECIBIR SALIENTE'}</span>
                             </button>
                           </div>
                         </div>

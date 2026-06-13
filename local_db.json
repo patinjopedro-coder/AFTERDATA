@@ -412,7 +412,7 @@
       "operadora": "MOVISTAR",
       "modeloManual": "G2",
       "modeloNegocio": "COMODATO",
-      "entregadoTecnico": false,
+      "entregadoTecnico": true,
       "esSustitucion": true,
       "serialSustituto": "4465411214",
       "fechaSalida": "",
@@ -426,7 +426,7 @@
       "banco": "BANCO DE VENEZUELA",
       "cruceBatchId": "LOTE - 06/06/2026 08:33:11",
       "sinCosto": false,
-      "responsable": "PEDRO PATIÑO",
+      "responsable": "PEDRO PATIÑOPEDRO",
       "history": [
         "06/06/2026 16:15:59 | [Responsable] cambió de \"vacío\" a \"P\"",
         "06/06/2026 16:15:59 | [Responsable] cambió de \"P\" a \"PD\"",
@@ -463,7 +463,12 @@
         "11/06/2026 22:17:36 | [Entregado a Disglobal] cambió de \"false\" a \"true\"",
         "11/06/2026 22:17:36 | [Entregado A] cambió de \"vacío\" a \"CLIENTE1\"",
         "11/06/2026 22:18:02 | [Entregado A] cambió de \"CLIENTE1\" a \"DEIBY CONTRERAS\"",
-        "11/06/2026 22:19:28 | [Entregado A] cambió de \"DEIBY CONTRERAS\" a \"CLIENTE1\""
+        "11/06/2026 22:19:28 | [Entregado A] cambió de \"DEIBY CONTRERAS\" a \"CLIENTE1\"",
+        "13/06/2026 15:07:53 | [Responsable] cambió de \"PEDRO PATIÑO\" a \"PEDRO PATIÑOP\"",
+        "13/06/2026 15:07:53 | [Responsable] cambió de \"PEDRO PATIÑOP\" a \"PEDRO PATIÑOPE\"",
+        "13/06/2026 15:07:54 | [Responsable] cambió de \"PEDRO PATIÑOPE\" a \"PEDRO PATIÑOPED\"",
+        "13/06/2026 15:07:54 | [Responsable] cambió de \"PEDRO PATIÑOPED\" a \"PEDRO PATIÑOPEDR\"",
+        "13/06/2026 15:07:54 | [Responsable] cambió de \"PEDRO PATIÑOPEDR\" a \"PEDRO PATIÑOPEDRO\""
       ],
       "simSustituto": true,
       "entregadoDisglobal": true,
@@ -1268,10 +1273,6 @@
     "WP": {
       "modelo": "WP",
       "so": "ANDROID"
-    },
-    "N3": {
-      "modelo": "n300",
-      "so": "ANDROID"
     }
   },
   "usersProfilesDB": {
@@ -1314,10 +1315,10 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "estadisticas",
+  "currentTab": "casillero",
   "simCardBatchesDB": [],
   "standbyListDB": [],
-  "activeCruceBatchIdDB": "LOTE - 13/06/2026 09:53:05",
+  "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",
   "cruce_emailText": "",
   "cruce_fisicoText": ""
 }

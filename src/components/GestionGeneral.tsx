@@ -279,8 +279,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [costoUsdt, setCostoUsdt] = useState('');
   const [banco, setBanco] = useState('');
   const [sinCosto, setSinCosto] = useState(false);
-  const [salienteSinRecibir, setSalienteSinRecibir] = useState(false);
-  const [serialSaliente, setSerialSaliente] = useState('');
 
   const detectModelFromSerial = (serial: string, models: Record<string, any>): string => {
     if (!serial || !models) return '';
@@ -331,17 +329,10 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   };
 
   const handleRegister = () => {
-    if (salienteSinRecibir) {
-      if (!serialSaliente.trim()) {
-        alert('POR FAVOR INGRESE EL SERIAL SALIENTE');
-        return;
-      }
-    } else {
-      const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
-      if (rawLines.length === 0) {
-        alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
-        return;
-      }
+    const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    if (rawLines.length === 0) {
+      alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
+      return;
     }
 
     if (!remitente.trim()) {
@@ -351,23 +342,22 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
     const today = currentDateStr();
     const displayToday = today.split('-').reverse().join('/');
-    const isCas = salienteSinRecibir || !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || costoUsdt || banco || sinCosto);
+    const isCas = !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || costoUsdt || banco || sinCosto);
 
     let maxId = serials.reduce((max, s) => (s && s.id && typeof s.id === 'number') ? Math.max(max, s.id) : max, 0);
 
-    let newItems: POSItem[] = [];
-
-    if (salienteSinRecibir) {
+    const newItems = rawLines.map((s) => {
+      const serialUp = s.toUpperCase();
       maxId++;
-      newItems = [{
+      return {
         id: maxId,
-        serial: 'POR RECIBIR',
+        serial: serialUp,
         date: today,
         displayDate: displayToday,
-        status: 'PENDIENTE',
+        status: 'SIN ESTATUS',
         remitente: remitente.toUpperCase().trim(),
         source: guia.toUpperCase().trim(),
-        isCasillero: true,
+        isCasillero: isCas,
         selected: false,
         rif: formatRif(rif),
         razonSocial: razonSocial.toUpperCase().trim(),
@@ -383,9 +373,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         modeloManual: modeloManual.toUpperCase().trim(),
         modeloNegocio,
         entregadoTecnico: false,
-        esSustitucion: true,
-        serialSustituto: serialSaliente.toUpperCase().trim(),
-        salienteSinRecibir: true,
+        esSustitucion: false,
+        serialSustituto: '',
         fechaSalida: '',
         fechaSalidaCliente: '',
         guiaSalidaCliente: '',
@@ -397,52 +386,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         banco: banco.toUpperCase().trim(),
         cruceBatchId: activeCruceBatchId || undefined,
         sinCosto: sinCosto
-      }];
-    } else {
-      const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
-      newItems = rawLines.map((s) => {
-        const serialUp = s.toUpperCase();
-        maxId++;
-        return {
-          id: maxId,
-          serial: serialUp,
-          date: today,
-          displayDate: displayToday,
-          status: 'SIN ESTATUS',
-          remitente: remitente.toUpperCase().trim(),
-          source: guia.toUpperCase().trim(),
-          isCasillero: isCas,
-          selected: false,
-          rif: formatRif(rif),
-          razonSocial: razonSocial.toUpperCase().trim(),
-          destino: destino.toUpperCase().trim(),
-          observaciones: '',
-          forro: accForro,
-          bateria: accBateria,
-          cargador: accCargador,
-          caja: accCaja,
-          sim: accSim,
-          simNumber: accSim ? (simNumber.toUpperCase().trim() || 'NO POSEE') : 'NO POSEE',
-          operadora,
-          modeloManual: modeloManual.toUpperCase().trim(),
-          modeloNegocio,
-          entregadoTecnico: false,
-          esSustitucion: false,
-          serialSustituto: '',
-          fechaSalida: '',
-          fechaSalidaCliente: '',
-          guiaSalidaCliente: '',
-          destinoSalida: '',
-          fechaConfirmada: false,
-          ticket: ticket.toUpperCase().trim(),
-          bsf: costoBsf.toUpperCase().trim(),
-          usdt: '',
-          banco: banco.toUpperCase().trim(),
-          cruceBatchId: activeCruceBatchId || undefined,
-          sinCosto: sinCosto
-        };
-      });
-    }
+      };
+    });
 
     setSerials(prev => [...newItems, ...prev]);
 
@@ -489,8 +434,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     setCostoUsdt('');
     setBanco('');
     setSinCosto(false);
-    setSalienteSinRecibir(false);
-    setSerialSaliente('');
 
     alert(`Se registraron ${newItems.length} seriales correctamente.`);
   };
@@ -742,7 +685,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial</label>
             <input
               type="text"
-              value={salienteSinRecibir ? 'POR RECIBIR' : bulkInput}
+              value={bulkInput}
               onChange={e => {
                 const val = e.target.value;
                 setBulkInput(val);
@@ -753,55 +696,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 }
               }}
               placeholder=""
-              disabled={salienteSinRecibir}
-              className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${
-                salienteSinRecibir ? 'opacity-55 cursor-not-allowed' : ''
-              }`}
+              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
             />
           </div>
 
-          {/* Fila: Opción Saliente sin Recibir */}
-          <div className="flex flex-col gap-1 col-span-2">
-            <div className="flex items-center h-[38px] bg-slate-100 px-3 border border-transparent rounded-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]">
-              <input
-                type="checkbox"
-                id="formSalienteSinRecibir"
-                checked={salienteSinRecibir}
-                onChange={e => {
-                  setSalienteSinRecibir(e.target.checked);
-                  if (e.target.checked) {
-                    setBulkInput('POR RECIBIR');
-                  } else {
-                    setBulkInput('');
-                  }
-                }}
-                className="rounded text-amber-600 bg-white border-slate-300 focus:ring-0 cursor-pointer w-4 h-4 mr-2"
-              />
-              <label htmlFor="formSalienteSinRecibir" className="text-[10px] font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
-                SALIENTE SIN RECIBIR
-              </label>
-            </div>
-          </div>
 
-          {salienteSinRecibir && (
-            <div className="flex flex-col gap-1 col-span-2">
-              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial Saliente</label>
-              <input
-                type="text"
-                value={serialSaliente}
-                onChange={e => {
-                  const val = e.target.value.toUpperCase();
-                  setSerialSaliente(val);
-                  const detected = detectModelFromSerial(val, modelosDB);
-                  if (detected) {
-                    setModeloManual(detected);
-                  }
-                }}
-                placeholder="INGRESE EL SERIAL SALIENTE"
-                className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-              />
-            </div>
-          )}
 
           {/* Fila 2: Remitente y Origen */}
           <div className="flex flex-col gap-1">

@@ -1795,4 +1795,41 @@ html body .estadisticas-tab-container button.desglose-btn:hover * {
   border-left: 4px solid #eab308 !important; /* Sleek yellow accent bar on the left edge */
 }
 
+@keyframes subtle-green-pulse {
+  0% {
+    background-color: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    background-color: #059669;
+    border-color: #059669;
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.15);
+  }
+  100% {
+    background-color: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+button.custom-entregado-btn.saliente-recibido-active {
+  animation: subtle-green-pulse 2s infinite ease-in-out !important;
+  background-color: #10b981 !important;
+  border: 1px solid #10b981 !important;
+  color: #ffffff !important;
+}
+
+button.custom-entregado-btn.saliente-recibido-active:hover {
+  background-color: #059669 !important;
+  border-color: #059669 !important;
+}
+
+body .saliente-recibido-active,
+body .saliente-recibido-active * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+
 
