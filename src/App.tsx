@@ -217,10 +217,10 @@ export default function App() {
       if (match) {
         hasChanges = true;
         const alertId = `STBY-ALERT-${item.id}-${Date.now()}`;
-        const detail = item.serial && item.guia 
-          ? `Serial [${item.serial}] y Guía [${item.guia}]` 
-          : item.serial 
-            ? `Serial [${item.serial}]` 
+        const detail = item.serial && item.guia
+          ? `Serial [${item.serial}] y Guía [${item.guia}]`
+          : item.serial
+            ? `Serial [${item.serial}]`
             : `Guía [${item.guia}]`;
 
         setStandbyAlerts(prev => [...prev, {
@@ -299,7 +299,7 @@ export default function App() {
             const idxSerialCruce = parsedHeaders.findIndex(h => h.includes('SERIALCRUCE'));
             const idxSerialCasillero = parsedHeaders.findIndex(h => h.includes('SERIALCASILLERO'));
             const idxSerial = parsedHeaders.findIndex(h => h === 'SERIAL' || (h.includes('SERIAL') && h !== 'SERIALSUSTITUTO' && h !== 'SERIALCRUCE' && h !== 'SERIALCASILLERO'));
-            
+
             const idxStatus = parsedHeaders.findIndex(h => h.includes('STATUS') || h.includes('ESTADO'));
             const idxRemitente = parsedHeaders.findIndex(h => h.includes('REMITENTE'));
             const idxRif = parsedHeaders.findIndex(h => h.includes('RIF'));
@@ -353,8 +353,8 @@ export default function App() {
                 isCasilleroVal = false;
               } else if (idxSerial !== -1 && cols[idxSerial]) {
                 cleanSerial = cols[idxSerial].toUpperCase().trim();
-                isCasilleroVal = idxIsCasillero !== -1 
-                  ? (cols[idxIsCasillero]?.toLowerCase() === 'true') 
+                isCasilleroVal = idxIsCasillero !== -1
+                  ? (cols[idxIsCasillero]?.toLowerCase() === 'true')
                   : (idxSource !== -1 && !!cols[idxSource]);
               }
 
@@ -555,7 +555,7 @@ export default function App() {
     // 3. Tab Stand-by (includes stateful + derived items)
     if (currentTab === 'standby') {
       const derived = serials
-        .filter(s => s.isCasillero && s.status !== 'RECUPERADO' && (!s.fechaConfirmada || (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida))))
+        .filter(s => s.isCasillero && s.status !== 'RECUPERADO' && !s.fechaConfirmada && (!s.esSustitucion || (!s.serialSustituto || !s.fechaSalida)))
         .map(s => {
           let reason = 'PENDIENTE CONFIRMACIÓN SALIDA';
           if (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida)) {
@@ -667,7 +667,7 @@ export default function App() {
 
     // 5. Tab Simcards
     if (currentTab === 'simcards') {
-      const annulledSims = (simCardBatches || []).flatMap(b => 
+      const annulledSims = (simCardBatches || []).flatMap(b =>
         (b.serials || []).map((s: string) => ({
           serial: s,
           source: `Lote: ${b.title}`,
@@ -858,7 +858,7 @@ export default function App() {
   const getProfileWithFallback = (remName: string) => {
     const p = usersProfiles[remName];
     if (p && (p.isUsuario || p.isCliente)) return p;
-    
+
     // Find fallback from serials
     const associatedSerials = serials.filter(s => s.remitente && s.remitente.toUpperCase().trim() === remName.toUpperCase().trim());
     const fallbackRif = associatedSerials.find(s => s.rif)?.rif || '';
@@ -1003,7 +1003,7 @@ export default function App() {
 
       {/* 1. SIDEBAR IZQUIERDA VERTICAL */}
       <aside className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-[#f8fafc] border-r border-slate-200 flex flex-col justify-between shrink-0 h-full select-none z-10`}>
-        
+
         <div className="flex flex-col gap-6">
           {/* Logo — botón de toggle estilizado igual que los otros del menú */}
           <div className="flex flex-col pb-3 px-3 pt-3 border-b border-slate-200">
@@ -1043,11 +1043,10 @@ export default function App() {
                   key={t.id}
                   onClick={() => setCurrentTab(t.id)}
                   title={t.label}
-                  className={`sidebar-btn flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer text-left w-full ${
-                    isActive
+                  className={`sidebar-btn flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer text-left w-full ${isActive
                       ? 'bg-slate-800 text-white border-black shadow-sm font-black active-tab'
                       : 'bg-white text-black hover:bg-slate-100 border-black'
-                  }`}
+                    }`}
                   style={{ borderRadius: '0px' }}
                 >
                   <Icon size={18} className={isActive ? 'text-white' : 'text-black'} />
@@ -1083,9 +1082,9 @@ export default function App() {
             <div className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-1">
               <span className="text-[10px] font-bold bg-[#2c3e50] text-white px-2 py-0.5 rounded-full font-mono uppercase tracking-widest" style={{ color: '#ffffff' }}>TRACKING</span>
             </div>
-            
+
             <div className="h-4 w-px bg-slate-300"></div>
-            
+
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
               {currentTab === 'general' && 'Gestión General de Seriales'}
               {currentTab === 'casillero' && 'Control de Casillero'}
@@ -1144,7 +1143,7 @@ export default function App() {
 
             {/* NOTIFICATION BELL */}
             <div className="relative notification-container">
-              <div 
+              <div
                 onClick={() => {
                   setShowNotificationsMenu(!showNotificationsMenu);
                   setShowNotificationBadge(false);
@@ -1172,8 +1171,8 @@ export default function App() {
                     ) : (
                       <>
                         {duplicateSerialsList.map(item => (
-                          <div 
-                            key={`serial-${item.serial}`} 
+                          <div
+                            key={`serial-${item.serial}`}
                             className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
                             onClick={() => {
                               setGlobalSearch(item.serial);
@@ -1191,8 +1190,8 @@ export default function App() {
                           </div>
                         ))}
                         {duplicateSimsList.map(item => (
-                          <div 
-                            key={`sim-${item.sim}`} 
+                          <div
+                            key={`sim-${item.sim}`}
                             className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
                             onClick={() => {
                               setGlobalSearch(item.sim);
@@ -1220,7 +1219,7 @@ export default function App() {
 
             {/* USER PROFILE INFO + LOGOUT */}
             <div className="relative">
-              <div 
+              <div
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => setShowUserMenu(!showUserMenu)}
               >
@@ -1228,7 +1227,7 @@ export default function App() {
                   <div className="text-[14px] font-bold text-slate-800 uppercase font-arial leading-none">PEDRO</div>
                   <div className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wider font-arial leading-none">ESPECIALISTA EN NEXGO</div>
                 </div>
-                
+
                 {/* Profile Image Circle representation */}
                 <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-300 shadow-sm select-none">
                   P
@@ -1466,8 +1465,7 @@ export default function App() {
                     <div className="font-bold uppercase" style={{ color: '#ffffff' }}>{log.displayDate}</div>
                     <div className="text-[9px] uppercase" style={{ color: '#a1a1aa' }}>{log.remitente}</div>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider text-white ${
-                    ['CANCELADO', 'N#A', 'RECUPERADO'].includes(log.status)
+                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider text-white ${['CANCELADO', 'N#A', 'RECUPERADO'].includes(log.status)
                       ? 'bg-green-600 text-white'
                       : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(log.status)
                         ? 'bg-orange-500 text-white'
@@ -1488,11 +1486,11 @@ export default function App() {
       {viewingProfile && (() => {
         const profile = getProfileWithFallback(viewingProfile);
         return createPortal(
-          <div 
+          <div
             className="fixed inset-0 bg-slate-900/30 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in-overlay"
             onClick={() => setViewingProfile(null)}
           >
-            <div 
+            <div
               className="bg-white border border-slate-100 rounded-2xl w-full max-w-sm max-h-[85vh] p-6 shadow-xl flex flex-col gap-4 overflow-y-auto animate-fade-in"
               onClick={e => e.stopPropagation()}
             >
@@ -1505,7 +1503,7 @@ export default function App() {
                   <p className="text-[9px] text-slate-450 font-mono">Ficha de Remitente Logístico</p>
                 </div>
               </div>
-              
+
               <div className="flex flex-col gap-3 font-sans text-xs">
                 <div className="bg-slate-50 p-3 rounded-xl border border-transparent">
                   <span className="block text-[8px] text-slate-550 uppercase font-bold mb-1">Nombre Completo</span>
@@ -1562,7 +1560,7 @@ export default function App() {
                 )}
               </div>
 
-              <button 
+              <button
                 onClick={() => setViewingProfile(null)}
                 className="mt-2 w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer shadow-sm"
               >

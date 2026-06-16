@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { POSItem, POSStatus, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
-import { formatRif, trackAndLogChanges } from '../utils';
+import { formatRif, trackAndLogChanges, copyToClipboard } from '../utils';
 import { 
   FileText, CheckSquare, Square, Search, Layers, 
   Trash2, Filter, ChevronLeft, ChevronRight, User, 
@@ -50,7 +50,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [editDraft, setEditDraft] = useState<Partial<POSItem>>({});
 
   const handleCopyText = async (text: string, key: string) => {
-    await navigator.clipboard.writeText(text);
+    await copyToClipboard(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 1500);
   };

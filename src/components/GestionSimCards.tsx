@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Layers, Search, Trash2, Download, Plus, Calendar, CardSim } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { Layers, Search, Trash2, Download, Plus, Calendar, CardSim, Clipboard } from 'lucide-react';
+import { copyToClipboard } from '../utils';
 
 interface SimBatch {
   id: string;
@@ -21,6 +23,7 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
   const [batchTitle, setBatchTitle] = useState('');
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFlatModalOpen, setIsFlatModalOpen] = useState(false);
 
   // Handle Save Lote
   const handleSaveBatch = (e: React.FormEvent) => {
@@ -216,6 +219,14 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
                   Total Lote: {selectedBatch.serials.length}
                 </span>
                 <button
+                  onClick={() => setIsFlatModalOpen(true)}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-sm text-white-force border-none"
+                  style={{ color: '#ffffff' }}
+                >
+                  <Clipboard size={13} className="text-white" />
+                  <span>Vista Plana</span>
+                </button>
+                <button
                   onClick={(e) => handleExportBatch(selectedBatch, e)}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-sm btn-blue text-white-force border-none"
                 >
@@ -295,6 +306,69 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
             </div>
           </div>
         )}
+      {isFlatModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay select-none font-arial">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-lg flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
+            
+            {/* Header */}
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <Clipboard className="text-slate-850 w-5 h-5" />
+                <div>
+                  <h3 className="text-sm font-black uppercase text-slate-800 tracking-wider">Lista Plana de SIM-Cards</h3>
+                  <p className="text-[9px] text-slate-400 uppercase font-mono tracking-wider">
+                    {filteredSerials.length} seriales {searchQuery ? 'filtrados' : 'totales'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsFlatModalOpen(false)}
+                className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all bg-transparent border-none"
+              >
+                Cerrar ✕
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-5 flex flex-col gap-3.5 select-text">
+              <p className="text-xs text-slate-550 font-sans text-left">
+                Haga clic dentro del cuadro para seleccionar todos los seriales de SIM-Card y copiarlos juntos:
+              </p>
+              
+              <textarea
+                readOnly
+                value={filteredSerials.join('\n')}
+                onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                className="w-full h-64 font-mono text-xs p-3.5 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none select-text cursor-text"
+                title="Haga clic para seleccionar todo"
+              />
+
+              <div className="flex gap-2 justify-end mt-1">
+                <button
+                  onClick={() => {
+                    copyToClipboard(filteredSerials.join('\n'));
+                    alert('⚡ Todos los seriales de SIM-Card han sido copiados al portapapeles.');
+                  }}
+                  className="btn-green font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 cursor-pointer transition-all flex items-center gap-1.5 text-white-force"
+                  style={{ color: '#ffffff' }}
+                >
+                  <Clipboard size={12} className="text-white" />
+                  Copiar Todo
+                </button>
+                <button
+                  onClick={() => setIsFlatModalOpen(false)}
+                  className="px-4 py-2 toggle-inactive text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>,
+        document.body
+      )}
+
       </div>
 
     </div>

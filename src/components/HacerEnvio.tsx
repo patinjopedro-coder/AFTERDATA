@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { EnvioExterno, POSItem } from '../types';
-import { formatRif } from '../utils';
+import { formatRif, copyToClipboard } from '../utils';
 import { Send, FileSymlink, Trash2, Search, ClipboardList, Check } from 'lucide-react';
 
 interface HacerEnvioProps {
@@ -20,7 +20,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const handleCopyText = async (text: string, key: string) => {
-    await navigator.clipboard.writeText(text);
+    await copyToClipboard(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 1500);
   };

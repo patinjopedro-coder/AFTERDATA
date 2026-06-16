@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, POSStatus, ModelConfig, CruceItem, CMSItem } from '../types';
 import { getDBItem, setDBItem, getLocalItem, setLocalItem } from '../db';
+import { copyToClipboard } from '../utils';
 import { 
   FileCheck, ArrowRightLeft, Check, Import, Send, Trash2, Edit2, Play, Search, Database, Layers, X, Clipboard
 } from 'lucide-react';
@@ -1174,9 +1175,9 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               />
 
               <div className="flex gap-2 justify-end mt-1">
-                <button
+                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(fisicoUniques.join('\n'));
+                    copyToClipboard(fisicoUniques.join('\n'));
                     alert('⚡ Todos los seriales han sido copiados al portapapeles.');
                   }}
                   className="btn-green font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 cursor-pointer transition-all flex items-center gap-1.5 text-white-force"

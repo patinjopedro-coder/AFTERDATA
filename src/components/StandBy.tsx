@@ -85,7 +85,7 @@ export const StandBy: React.FC<StandByProps> = ({
   const derivedCasilleroItems = useMemo(() => {
     if (!serials) return [];
     return serials
-      .filter(s => s.isCasillero && s.status !== 'RECUPERADO' && (!s.fechaConfirmada || (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida))))
+      .filter(s => s.isCasillero && s.status !== 'RECUPERADO' && !s.fechaConfirmada && (!s.esSustitucion || (!s.serialSustituto || !s.fechaSalida)))
       .map(s => {
         let reason = 'PENDIENTE CONFIRMACIÓN SALIDA';
         if (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida)) {

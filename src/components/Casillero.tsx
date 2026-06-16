@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { POSItem, POSStatus, ModelConfig, UserProfile } from '../types';
 import { getTerminalModel } from '../data';
-import { formatRif, trackAndLogChanges } from '../utils';
+import { formatRif, trackAndLogChanges, copyToClipboard } from '../utils';
 import { 
   FolderLock, Check, Trash2,
   ChevronLeft, ChevronRight,
@@ -37,7 +37,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const handleCopyText = async (text: string, key: string) => {
-    await navigator.clipboard.writeText(text);
+    await copyToClipboard(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 1500);
   };
@@ -82,6 +82,34 @@ export const Casillero: React.FC<CasilleroProps> = ({
 
     return list.sort((a, b) => a.localeCompare(b));
   }, [serials, usersProfiles]);
+
+  const responsableSuggestions = useMemo(() => {
+    const suggestions = new Set<string>();
+    
+    // Add current logged-in user (Pedro)
+    const loggedInUser = (localStorage.getItem('disglobal_username') || '').toUpperCase().trim();
+    if (loggedInUser) {
+      suggestions.add(loggedInUser);
+      // Look up in usersProfiles for the full name or matching key
+      Object.entries(usersProfiles).forEach(([key, profile]) => {
+        const keyUpper = key.toUpperCase().trim();
+        if (keyUpper === loggedInUser || profile.nombreCompleto?.toUpperCase().trim().includes(loggedInUser)) {
+          if (profile.nombreCompleto) {
+            suggestions.add(profile.nombreCompleto.toUpperCase().trim());
+          }
+        }
+      });
+    }
+
+    // Add all other disglobal users
+    disglobalUsers.forEach(user => {
+      if (user) {
+        suggestions.add(user.toUpperCase().trim());
+      }
+    });
+
+    return Array.from(suggestions).sort((a, b) => a.localeCompare(b));
+  }, [disglobalUsers, usersProfiles]);
 
   const detectModelFromSerial = (serial: string): string => {
     if (!serial || !modelosDB) return '';
@@ -1150,6 +1178,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               disabled={isRecuperado || !!s.entregadoTecnico}
                               value={s.responsable || ''}
                               onChange={e => handleUpdateTextVal(s.id, 'responsable', e.target.value.toUpperCase())}
+                              list="responsableList"
                               placeholder=""
                               className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 font-arial uppercase focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
                                 (isRecuperado || s.entregadoTecnico) ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
@@ -1464,6 +1493,12 @@ export const Casillero: React.FC<CasilleroProps> = ({
           )}
         </div>
       </div>
+
+      <datalist id="responsableList">
+        {responsableSuggestions.map(name => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
 
       {renderEditModal()}
     </div>

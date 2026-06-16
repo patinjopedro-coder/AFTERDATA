@@ -412,11 +412,11 @@
       "operadora": "MOVISTAR",
       "modeloManual": "G2",
       "modeloNegocio": "COMODATO",
-      "entregadoTecnico": true,
+      "entregadoTecnico": false,
       "esSustitucion": true,
       "serialSustituto": "4465411214",
       "fechaSalida": "",
-      "fechaSalidaCliente": "",
+      "fechaSalidaCliente": "2026-06-13",
       "guiaSalidaCliente": "",
       "destinoSalida": "",
       "fechaConfirmada": false,
@@ -1315,7 +1315,7 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "casillero",
+  "currentTab": "hacerEnvio",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",

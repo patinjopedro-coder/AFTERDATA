@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { POSItem, EnvioExterno, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
 import { Truck, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { copyToClipboard } from '../utils';
 
 interface EquiposEnviadosProps {
   serials: POSItem[];
@@ -38,7 +39,7 @@ export const EquiposEnviados: React.FC<EquiposEnviadosProps> = ({
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const handleCopyText = async (text: string, key: string) => {
-    await navigator.clipboard.writeText(text);
+    await copyToClipboard(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 1500);
   };

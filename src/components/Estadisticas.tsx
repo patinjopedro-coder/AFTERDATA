@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
+import { copyToClipboard } from '../utils';
 import { 
   BarChart3, Calendar, FileDown, Search, 
   Layers, Cpu, Smartphone, CardSim, Users, Compass, Check,
@@ -277,7 +278,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
 
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const handleCopyText = async (text: string, key: string) => {
-    await navigator.clipboard.writeText(text);
+    await copyToClipboard(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 1500);
   };

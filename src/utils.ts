@@ -183,3 +183,50 @@ export function trackAndLogChanges(original: POSItem, updatedFields: Partial<POS
   };
 }
 
+/**
+ * Copies text to the clipboard using the modern Clipboard API if available,
+ * with a fallback to document.execCommand('copy') for non-secure/sandboxed contexts.
+ */
+export function copyToClipboard(text: string): Promise<boolean> {
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    return navigator.clipboard.writeText(text)
+      .then(() => true)
+      .catch((err) => {
+        console.warn('Modern clipboard copy failed, falling back...', err);
+        return fallbackCopyToClipboard(text);
+      });
+  }
+  return Promise.resolve(fallbackCopyToClipboard(text));
+}
+
+function fallbackCopyToClipboard(text: string): boolean {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.style.top = "0";
+  textArea.style.left = "0";
+  textArea.style.position = "fixed";
+  textArea.style.opacity = "0";
+  document.body.appendChild(textArea);
+  
+  // Save active element
+  const activeElement = document.activeElement;
+  
+  textArea.focus();
+  textArea.select();
+  
+  let successful = false;
+  try {
+    successful = document.execCommand('copy');
+  } catch (err) {
+    console.error('Fallback copy failed', err);
+  }
+  
+  document.body.removeChild(textArea);
+  
+  // Restore focus
+  if (activeElement && (activeElement as HTMLElement).focus) {
+    (activeElement as HTMLElement).focus();
+  }
+  
+  return successful;
+}
