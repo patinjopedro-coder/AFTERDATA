@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type POSStatus = 'PENDIENTE' | 'ACTIVO' | 'SUSPENDIDO' | 'CANCELADO' | 'N#A' | 'SIN ESTATUS' | 'RECUPERADO' | 'DISPONIBLE';
+export type POSStatus = 'PENDIENTE' | 'ACTIVO' | 'SUSPENDIDO' | 'CANCELADO' | 'N#A' | 'SIN ESTATUS' | 'RECUPERADO' | 'DISPONIBLE' | 'ENTREGADO';
 
 export type OperatingSystem = 'ANDROID' | 'LINUX' | 'DESCONOCIDO';
 

@@ -91,7 +91,8 @@ export const Casillero: React.FC<CasilleroProps> = ({
     if (loggedInUser) {
       suggestions.add(loggedInUser);
       // Look up in usersProfiles for the full name or matching key
-      Object.entries(usersProfiles).forEach(([key, profile]) => {
+      Object.entries(usersProfiles).forEach(([key, profileVal]) => {
+        const profile = profileVal as UserProfile;
         const keyUpper = key.toUpperCase().trim();
         if (keyUpper === loggedInUser || profile.nombreCompleto?.toUpperCase().trim().includes(loggedInUser)) {
           if (profile.nombreCompleto) {
@@ -559,7 +560,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
               banco: getColVal(idxBanco).toUpperCase(),
               simNumber: getColVal(idxSimcard).toUpperCase(),
               operadora: getColVal(idxOperadora).toUpperCase() as any,
-              responsable: getColVal(idxResponsable).toUpperCase(),
+              responsable: getColVal(idxResponsable).toUpperCase() || 'PEDRO PATIÑO',
               observaciones: getColVal(idxObservacion),
               serialSustituto: getColVal(idxSerialSaliente).toUpperCase(),
               modeloSustituto: detectModelFromSerial(getColVal(idxSerialSaliente)),

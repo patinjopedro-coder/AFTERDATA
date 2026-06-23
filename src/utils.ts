@@ -230,3 +230,114 @@ function fallbackCopyToClipboard(text: string): boolean {
   
   return successful;
 }
+
+export interface ExportRecord {
+  idNum: number;
+  idStr: string;
+  isSust: boolean;
+  item: POSItem;
+}
+
+/**
+ * Splits POSItems with active substitutions into two export rows (original and substitute)
+ * and sorts the result by base ID ascending.
+ */
+export function prepareExportRecords(serials: POSItem[]): ExportRecord[] {
+  const rows: ExportRecord[] = [];
+
+  serials.forEach(s => {
+    rows.push({
+      idNum: s.id,
+      idStr: String(s.id),
+      isSust: false,
+      item: s
+    });
+
+    if (s.esSustitucion && s.serialSustituto) {
+      const sustItem: POSItem = {
+        ...s,
+        id: s.id,
+        serial: s.serialSustituto,
+        observaciones: `SUSTITUTO DE ${s.serial}`,
+        forro: false,
+        bateria: false,
+        cargador: false,
+        caja: false,
+        sim: !!s.simSustituto,
+        simNumber: s.simSustitutoNumber || '',
+        operadora: '',
+        modeloManual: s.modeloSustituto || '',
+        esSustitucion: true,
+        serialSustituto: s.serial,
+      };
+      rows.push({
+        idNum: s.id,
+        idStr: `${s.id}-SUST`,
+        isSust: true,
+        item: sustItem
+      });
+    }
+  });
+
+  rows.sort((a, b) => {
+    if (a.idNum !== b.idNum) {
+      return a.idNum - b.idNum;
+    }
+    return a.isSust ? 1 : -1;
+  });
+
+  return rows;
+}
+
+/**
+ * Re-groups split CSV import records by their base ID and merges substitution rows
+ * back into single POSItem objects.
+ */
+export function mergeImportedRecords(records: { id: number; idStr: string; isSustRow: boolean; item: POSItem }[]): POSItem[] {
+  const groups: Record<number, { id: number; idStr: string; isSustRow: boolean; item: POSItem }[]> = {};
+  const ungrouped: { id: number; idStr: string; isSustRow: boolean; item: POSItem }[] = [];
+
+  records.forEach(rec => {
+    if (rec.id > 0) {
+      if (!groups[rec.id]) {
+        groups[rec.id] = [];
+      }
+      groups[rec.id].push(rec);
+    } else {
+      ungrouped.push(rec);
+    }
+  });
+
+  const mergedItems: POSItem[] = [];
+
+  Object.keys(groups).forEach(idStrKey => {
+    const idNum = parseInt(idStrKey);
+    const group = groups[idNum];
+    if (group.length === 1) {
+      mergedItems.push(group[0].item);
+    } else if (group.length >= 2) {
+      const originalRec = group.find(r => !r.isSustRow) || group[0];
+      const sustRec = group.find(r => r.isSustRow) || group[1];
+
+      const mergedItem: POSItem = {
+        ...originalRec.item,
+        esSustitucion: true,
+        serialSustituto: sustRec.item.serial,
+        simSustituto: sustRec.item.sim,
+        simSustitutoNumber: sustRec.item.simNumber,
+        modeloSustituto: sustRec.item.modeloManual,
+        fechaSalida: sustRec.item.fechaSalida || originalRec.item.fechaSalida,
+        fechaSalidaCliente: sustRec.item.fechaSalidaCliente || originalRec.item.fechaSalidaCliente,
+        guiaSalidaCliente: sustRec.item.guiaSalidaCliente || originalRec.item.guiaSalidaCliente,
+        destinoSalida: sustRec.item.destinoSalida || originalRec.item.destinoSalida,
+      };
+      mergedItems.push(mergedItem);
+    }
+  });
+
+  ungrouped.forEach(rec => {
+    mergedItems.push(rec.item);
+  });
+
+  return mergedItems;
+}

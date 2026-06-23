@@ -87,6 +87,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       { key: 'razonSocial', label: 'Razón Social' },
       { key: 'destino', label: 'Destino / Origen' },
       { key: 'ticket', label: 'Ticket' },
+      { key: 'responsable', label: 'Responsable' },
       { key: 'banco', label: 'Banco' },
       { key: 'bsf', label: 'Costo' },
       { key: 'observaciones', label: 'Observaciones' },
@@ -109,11 +110,17 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                   <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{f.label}</label>
                   <input
                     type="text"
+                    list={f.key === 'banco' ? 'editBancoList' : undefined}
                     value={(editDraft[f.key] as string) || ''}
                     onChange={e => setEditDraft(d => ({ ...d, [f.key]: e.target.value.toUpperCase() }))}
                     className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
                     style={{ borderRadius: '4px' }}
                   />
+                  {f.key === 'banco' && (
+                    <datalist id="editBancoList">
+                      {uniqueBancos.map(b => <option key={b} value={b} />)}
+                    </datalist>
+                  )}
                 </div>
               );
             })}
@@ -363,6 +370,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         razonSocial: razonSocial.toUpperCase().trim(),
         destino: destino.toUpperCase().trim(),
         observaciones: '',
+        responsable: 'PEDRO PATIÑO',
         forro: accForro,
         bateria: accBateria,
         cargador: accCargador,
@@ -658,6 +666,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     return Array.from(new Set(serials.map(s => s.remitente))).filter(Boolean);
   }, [serials]);
 
+  // Suggested Unique Bancos for Datalist
+  const uniqueBancos = useMemo(() => {
+    return Array.from(new Set(serials.map(s => s.banco).filter(Boolean))).sort();
+  }, [serials]);
+
   return (
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 text-slate-800 gestion-general-tab">
       
@@ -800,8 +813,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             </select>
           </div>
 
-          {/* Fila 6: Modelo Negocio y Sin Costo */}
-          <div className="flex flex-col gap-1">
+          {/* Fila 6: Modelo Negocio */}
+          <div className="flex flex-col gap-1 col-span-2">
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo Negocio</label>
             <select
               value={modeloNegocio}
@@ -812,27 +825,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               <option value="BASICO">BÁSICO</option>
               <option value="COMODATO">COMODATO</option>
             </select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">¿Sin Costo?</label>
-            <div className="flex items-center h-[38px] bg-slate-100 px-3 border border-transparent rounded-lg shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]">
-              <input
-                type="checkbox"
-                id="formSinCosto"
-                checked={sinCosto}
-                onChange={e => {
-                  setSinCosto(e.target.checked);
-                  if (e.target.checked) {
-                    setCostoBsf('');
-                    setCostoUsdt('');
-                  }
-                }}
-                className="rounded text-green-600 bg-white border-slate-300 focus:ring-0 cursor-pointer w-4 h-4 mr-2"
-              />
-              <label htmlFor="formSinCosto" className="text-[10px] font-bold uppercase tracking-wider text-slate-700 cursor-pointer select-none">
-                SIN COSTO
-              </label>
-            </div>
           </div>
 
           {/* Fila 7: Costo y al lado BANCO */}
@@ -851,11 +843,15 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Banco</label>
             <input
               type="text"
+              list="formBancoList"
               value={banco}
               onChange={e => setBanco(e.target.value)}
               placeholder=""
               className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
             />
+            <datalist id="formBancoList">
+              {uniqueBancos.map(b => <option key={b} value={b} />)}
+            </datalist>
           </div>
         </div>
 
@@ -919,6 +915,23 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             >
               <span>SIM</span>
               {accSim && <Check size={12} />}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const newVal = !sinCosto;
+                setSinCosto(newVal);
+                if (newVal) {
+                  setCostoBsf('');
+                  setCostoUsdt('');
+                }
+              }}
+              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors cursor-pointer border accessory-btn ${
+                sinCosto ? 'active' : ''
+              }`}
+            >
+              <span>SIN COSTO</span>
+              {sinCosto && <Check size={12} />}
             </button>
           </div>
         </div>

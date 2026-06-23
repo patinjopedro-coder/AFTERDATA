@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { POSItem, EnvioExterno, ModelConfig, POSStatus, UserProfile, StandbyItem } from './types';
 import { INITIAL_SERIALS, INITIAL_MODELS } from './data';
 import { getDBItem, setDBItem } from './db';
-import { sanitizeSerials, formatRif } from './utils';
+import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords } from './utils';
 import { GestionGeneral } from './components/GestionGeneral';
 import { LogoIcon } from './components/LogoIcon';
 import { Casillero } from './components/Casillero';
@@ -336,7 +336,13 @@ export default function App() {
             const idxCruceBatchId = parsedHeaders.findIndex(h => h.includes('CRUCEBATCHID'));
             const idxAddedFromCruce = parsedHeaders.findIndex(h => h.includes('ADDEDFROMCRUCE'));
 
-            const importedItems: POSItem[] = [];
+            interface ParsedRecord {
+              id: number;
+              idStr: string;
+              isSustRow: boolean;
+              item: POSItem;
+            }
+            const parsedRecords: ParsedRecord[] = [];
 
             for (let i = headerLineIndex + 1; i < lines.length; i++) {
               const cols = lines[i].split(separator).map(c => c.replace(/^"|"$/g, '').trim());
@@ -365,10 +371,12 @@ export default function App() {
               const rawDate = cols[idxFecha] || defaultLocal;
               const formatDisplayDate = rawDate.split('-').reverse().join('/');
 
-              const rawIdVal = idxID !== -1 && cols[idxID] && !isNaN(parseInt(cols[idxID])) ? parseInt(cols[idxID]) : 0;
+              const idStr = idxID !== -1 ? cols[idxID].trim() : '';
+              const rawIdVal = idStr && !isNaN(parseInt(idStr)) ? parseInt(idStr) : 0;
+              const isSustRow = idStr.toUpperCase().endsWith('-SUST');
               const statusVal = (idxStatus !== -1 ? cols[idxStatus].toUpperCase() : 'PENDIENTE') as POSStatus;
 
-              importedItems.push({
+              const recordItem: POSItem = {
                 id: rawIdVal,
                 serial: cleanSerial,
                 date: rawDate,
@@ -381,7 +389,7 @@ export default function App() {
                 rif: idxRif !== -1 ? formatRif(cols[idxRif]) : '',
                 razonSocial: idxRazon !== -1 ? cols[idxRazon].toUpperCase() : '',
                 observaciones: idxObs !== -1 ? cols[idxObs] : '',
-                responsable: idxResp !== -1 ? cols[idxResp] : '',
+                responsable: (idxResp !== -1 ? cols[idxResp] : '') || 'PEDRO PATIÑO',
                 forro: idxForro !== -1 ? (cols[idxForro]?.toLowerCase() === 'true') : false,
                 bateria: idxBateria !== -1 ? (cols[idxBateria]?.toLowerCase() === 'true') : false,
                 cargador: idxCargador !== -1 ? (cols[idxCargador]?.toLowerCase() === 'true') : false,
@@ -408,8 +416,17 @@ export default function App() {
                 usdt: idxUsdt !== -1 ? cols[idxUsdt]?.toUpperCase() : '',
                 cruceBatchId: idxCruceBatchId !== -1 ? cols[idxCruceBatchId] : '',
                 addedFromCruce: idxAddedFromCruce !== -1 ? (cols[idxAddedFromCruce]?.toLowerCase() === 'true') : false
+              };
+
+              parsedRecords.push({
+                id: rawIdVal,
+                idStr,
+                isSustRow,
+                item: recordItem
               });
             }
+
+            const importedItems = mergeImportedRecords(parsedRecords);
 
             if (importedItems.length > 0) {
               // Ensure absolute uniqueness across the imported array
@@ -814,11 +831,13 @@ export default function App() {
   };
 
   const handleExportFullCSVBackup = () => {
+    const exportRecords = prepareExportRecords(serials);
     let csv = "sep=;\nID;SERIAL_CRUCE;SERIAL_CASILLERO;STATUS;REMITENTE;GUI_ENTRADA;IS_CASILLERO;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;SIM_SUSTITUTO;SIM_SUSTITUTO_NUMBER;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;FECHA_CONFIRMADA;TICKET;ADDED_FROM_CRUCE;BANCO;BSF;USDT;CRUCE_BATCH_ID;FECHA_INGRESO\n";
-    serials.forEach(s => {
+    exportRecords.forEach(r => {
+      const s = r.item;
       const serialCruce = !s.isCasillero ? s.serial : '';
       const serialCasillero = s.isCasillero ? s.serial : '';
-      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
+      csv += `"${r.idStr}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });

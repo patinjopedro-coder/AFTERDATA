@@ -74,19 +74,25 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     const names = new Set<string>();
     if (usersProfiles) {
       Object.keys(usersProfiles).forEach(key => {
-        if (key) {
-          names.add(key.toUpperCase().trim());
-        }
         const p = usersProfiles[key];
-        if (p && p.nombreCompleto) {
-          names.add(p.nombreCompleto.toUpperCase().trim());
+        if (p && p.isUsuario) {
+          if (key) {
+            names.add(key.toUpperCase().trim());
+          }
+          if (p.nombreCompleto) {
+            names.add(p.nombreCompleto.toUpperCase().trim());
+          }
         }
       });
     }
-    if (serials) {
+    if (serials && usersProfiles) {
       serials.forEach(s => {
         if (s && s.remitente) {
-          names.add(s.remitente.toUpperCase().trim());
+          const upperRemitente = s.remitente.toUpperCase().trim();
+          const p = usersProfiles[upperRemitente];
+          if (p && p.isUsuario) {
+            names.add(upperRemitente);
+          }
         }
       });
     }
@@ -866,21 +872,21 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       <div className="flex items-center gap-2 font-sans text-[11px]">
                         {/* Inline custom select */}
                         <select
-                          value={dbMatch?.status || 'N#A'}
+                          value={dbMatch?.status || 'SIN ESTATUS'}
                           onChange={(e) => updateSerialStatus(serial, e.target.value as POSStatus)}
                           className={`text-[10px] font-extrabold px-1.5 py-1 rounded border uppercase outline-none cursor-pointer tracking-wider font-sans ${
                             dbMatch 
-                              ? (['CANCELADO', 'N#A', 'RECUPERADO'].includes(dbMatch.status) ? 'status-select-green' : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(dbMatch.status) ? 'status-select-orange' : 'bg-slate-500 text-white')
+                              ? (['CANCELADO', 'N#A', 'RECUPERADO', 'DISPONIBLE'].includes(dbMatch.status) ? 'status-select-green' : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'ENTREGADO'].includes(dbMatch.status) ? 'status-select-orange' : 'bg-slate-500 text-white')
                               : 'bg-slate-100 border-slate-200 text-slate-700'
                           }`}
                         >
-                          <option value="SIN ESTATUS">SIN ESTATUS</option>
-                          <option value="ACTIVO">ACTIVO</option>
-                          <option value="PENDIENTE">PENDIENTE</option>
-                          <option value="RECUPERADO">RECUPERADO</option>
-                          <option value="CANCELADO">CANCELADO</option>
-                          <option value="SUSPENDIDO">SUSPENDIDO</option>
-                          <option value="N#A">N#A</option>
+                          {!['DISPONIBLE', 'ENTREGADO'].includes(dbMatch?.status || '') && (
+                            <option value={dbMatch?.status} disabled hidden>
+                              {dbMatch?.status}
+                            </option>
+                          )}
+                          <option value="DISPONIBLE">DISPONIBLE</option>
+                          <option value="ENTREGADO">ENTREGADO</option>
                         </select>
 
                         <span className={`px-2 py-1 rounded-md text-[10px] font-extrabold uppercase tracking-wider font-sans ${
@@ -1299,7 +1305,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   <div className="space-y-2">
                     <label className="text-[11px] font-extrabold text-slate-700 block uppercase">ASIGNAR UN STATUS GRUPAL:</label>
                     <div className="grid grid-cols-2 gap-1.5">
-                      {(['ACTIVO', 'PENDIENTE', 'RECUPERADO', 'CANCELADO', 'SUSPENDIDO', 'N#A'] as POSStatus[]).map(statusValue => (
+                      {(['DISPONIBLE', 'ENTREGADO'] as POSStatus[]).map(statusValue => (
                         <button
                           key={statusValue}
                           onClick={() => handleAssignBulkStatus(statusValue)}

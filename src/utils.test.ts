@@ -5,7 +5,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { formatRif, sanitizeSerials } from './utils';
+import { formatRif, sanitizeSerials, prepareExportRecords, mergeImportedRecords } from './utils';
 import { getTerminalModel } from './data';
 import { POSItem, ModelConfig } from './types';
 
@@ -119,5 +119,141 @@ describe('getTerminalModel data function', () => {
     const res = getTerminalModel('', mockModels);
     assert.strictEqual(res.modelo, '-');
     assert.strictEqual(res.so, 'DESCONOCIDO');
+  });
+});
+
+describe('prepareExportRecords & mergeImportedRecords utilities', () => {
+  test('should prepare export records correctly by splitting substitutions and sorting them', () => {
+    const mockSerials: POSItem[] = [
+      {
+        id: 2,
+        serial: 'ORIGINAL-2',
+        date: '2026-06-22',
+        displayDate: '22/06/2026',
+        status: 'PENDIENTE',
+        remitente: 'REMITENTE-A',
+        source: 'GUI-A',
+        isCasillero: false,
+        esSustitucion: true,
+        serialSustituto: 'SUST-2',
+        simSustituto: true,
+        simSustitutoNumber: '123456',
+        modeloSustituto: 'MODEL-X',
+        fechaSalida: '2026-06-23'
+      },
+      {
+        id: 1,
+        serial: 'NORMAL-1',
+        date: '2026-06-22',
+        displayDate: '22/06/2026',
+        status: 'DISPONIBLE',
+        remitente: 'REMITENTE-B',
+        source: 'GUI-B',
+        isCasillero: false
+      }
+    ];
+
+    const exportRecords = prepareExportRecords(mockSerials);
+
+    assert.strictEqual(exportRecords.length, 3);
+
+    // Sorted by ID ascending: ID 1 comes first
+    assert.strictEqual(exportRecords[0].idNum, 1);
+    assert.strictEqual(exportRecords[0].idStr, '1');
+    assert.strictEqual(exportRecords[0].isSust, false);
+    assert.strictEqual(exportRecords[0].item.serial, 'NORMAL-1');
+
+    // Next is ID 2 original
+    assert.strictEqual(exportRecords[1].idNum, 2);
+    assert.strictEqual(exportRecords[1].idStr, '2');
+    assert.strictEqual(exportRecords[1].isSust, false);
+    assert.strictEqual(exportRecords[1].item.serial, 'ORIGINAL-2');
+
+    // Next is ID 2 substitute
+    assert.strictEqual(exportRecords[2].idNum, 2);
+    assert.strictEqual(exportRecords[2].idStr, '2-SUST');
+    assert.strictEqual(exportRecords[2].isSust, true);
+    assert.strictEqual(exportRecords[2].item.serial, 'SUST-2');
+    assert.strictEqual(exportRecords[2].item.modeloManual, 'MODEL-X');
+    assert.strictEqual(exportRecords[2].item.sim, true);
+    assert.strictEqual(exportRecords[2].item.simNumber, '123456');
+  });
+
+  test('should merge split import records back into POSItems correctly', () => {
+    const rawImported: { id: number; idStr: string; isSustRow: boolean; item: POSItem }[] = [
+      {
+        id: 1,
+        idStr: '1',
+        isSustRow: false,
+        item: {
+          id: 1,
+          serial: 'NORMAL-1',
+          date: '2026-06-22',
+          displayDate: '22/06/2026',
+          status: 'DISPONIBLE',
+          remitente: 'REMITENTE-B',
+          source: 'GUI-B',
+          isCasillero: false
+        }
+      },
+      {
+        id: 2,
+        idStr: '2',
+        isSustRow: false,
+        item: {
+          id: 2,
+          serial: 'ORIGINAL-2',
+          date: '2026-06-22',
+          displayDate: '22/06/2026',
+          status: 'PENDIENTE',
+          remitente: 'REMITENTE-A',
+          source: 'GUI-A',
+          isCasillero: false
+        }
+      },
+      {
+        id: 2,
+        idStr: '2-SUST',
+        isSustRow: true,
+        item: {
+          id: 2,
+          serial: 'SUST-2',
+          date: '2026-06-22',
+          displayDate: '22/06/2026',
+          status: 'PENDIENTE',
+          remitente: 'REMITENTE-A',
+          source: 'GUI-A',
+          isCasillero: false,
+          sim: true,
+          simNumber: '123456',
+          modeloManual: 'MODEL-X',
+          fechaSalida: '2026-06-23',
+          fechaSalidaCliente: '2026-06-24',
+          guiaSalidaCliente: 'GUIA-OUT-1',
+          destinoSalida: 'DEST-OUT-1'
+        }
+      }
+    ];
+
+    const merged = mergeImportedRecords(rawImported);
+
+    assert.strictEqual(merged.length, 2);
+
+    const item1 = merged.find(i => i.id === 1);
+    assert.ok(item1);
+    assert.strictEqual(item1.serial, 'NORMAL-1');
+
+    const item2 = merged.find(i => i.id === 2);
+    assert.ok(item2);
+    assert.strictEqual(item2.serial, 'ORIGINAL-2');
+    assert.strictEqual(item2.esSustitucion, true);
+    assert.strictEqual(item2.serialSustituto, 'SUST-2');
+    assert.strictEqual(item2.simSustituto, true);
+    assert.strictEqual(item2.simSustitutoNumber, '123456');
+    assert.strictEqual(item2.modeloSustituto, 'MODEL-X');
+    assert.strictEqual(item2.fechaSalida, '2026-06-23');
+    assert.strictEqual(item2.fechaSalidaCliente, '2026-06-24');
+    assert.strictEqual(item2.guiaSalidaCliente, 'GUIA-OUT-1');
+    assert.strictEqual(item2.destinoSalida, 'DEST-OUT-1');
   });
 });
