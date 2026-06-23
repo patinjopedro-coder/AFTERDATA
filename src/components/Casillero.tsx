@@ -980,6 +980,14 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             </span>
                           </div>
 
+                          {/* OPERADORA */}
+                          <div className="p-2 flex items-center justify-between">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Operadora:</span>
+                            <span className="text-[13px] font-bold font-arial text-slate-900 uppercase">
+                              {s.operadora || 'SIN ASIGNAR'}
+                            </span>
+                          </div>
+
                           {/* REMITENTE */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Remitente:</span>
@@ -1178,7 +1186,11 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               type="text"
                               disabled={isRecuperado || !!s.entregadoTecnico}
                               value={s.responsable || ''}
-                              onChange={e => handleUpdateTextVal(s.id, 'responsable', e.target.value.toUpperCase())}
+                              onChange={e => {
+                                const val = e.target.value;
+                                const processed = val.toUpperCase() === 'PEDRO' ? 'PEDRO PATIÑO' : val.toUpperCase();
+                                handleUpdateTextVal(s.id, 'responsable', processed);
+                              }}
                               list="responsableList"
                               placeholder=""
                               className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 font-arial uppercase focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${

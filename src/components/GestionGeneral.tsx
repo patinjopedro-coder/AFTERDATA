@@ -112,7 +112,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                     type="text"
                     list={f.key === 'banco' ? 'editBancoList' : undefined}
                     value={(editDraft[f.key] as string) || ''}
-                    onChange={e => setEditDraft(d => ({ ...d, [f.key]: e.target.value.toUpperCase() }))}
+                    onChange={e => {
+                      const val = e.target.value;
+                      const processed = (f.key === 'responsable' && val.toUpperCase() === 'PEDRO') ? 'PEDRO PATIÑO' : val.toUpperCase();
+                      setEditDraft(d => ({ ...d, [f.key]: processed }));
+                    }}
                     className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
                     style={{ borderRadius: '4px' }}
                   />
