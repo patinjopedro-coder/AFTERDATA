@@ -426,7 +426,7 @@
       "banco": "BANCO DE VENEZUELA",
       "cruceBatchId": "LOTE - 06/06/2026 08:33:11",
       "sinCosto": false,
-      "responsable": "PEDRO PATIÑ",
+      "responsable": "PEDRO PATIÑO ",
       "history": [
         "06/06/2026 16:15:59 | [Responsable] cambió de \"vacío\" a \"P\"",
         "06/06/2026 16:15:59 | [Responsable] cambió de \"P\" a \"PD\"",
@@ -585,7 +585,19 @@
         "22/06/2026 22:46:56 | [Responsable] cambió de \"PEDRO PA\" a \"PEDRO P\"",
         "22/06/2026 22:46:56 | [Responsable] cambió de \"PEDRO P\" a \"PEDRO\"",
         "22/06/2026 22:46:58 | [Responsable] cambió de \"PEDRO\" a \"PEDRO PATIÑO\"",
-        "22/06/2026 22:46:58 | [Responsable] cambió de \"PEDRO PATIÑO\" a \"PEDRO PATIÑ\""
+        "22/06/2026 22:46:58 | [Responsable] cambió de \"PEDRO PATIÑO\" a \"PEDRO PATIÑ\"",
+        "22/06/2026 22:47:01 | [Responsable] cambió de \"PEDRO PATIÑ\" a \"vacío\"",
+        "22/06/2026 22:47:01 | [Responsable] cambió de \"vacío\" a \"P\"",
+        "22/06/2026 22:47:01 | [Responsable] cambió de \"P\" a \"PE\"",
+        "22/06/2026 22:47:01 | [Responsable] cambió de \"PE\" a \"PED\"",
+        "22/06/2026 22:47:02 | [Responsable] cambió de \"PED\" a \"PEDR\"",
+        "22/06/2026 22:47:02 | [Responsable] cambió de \"PEDR\" a \"PEDRO PATIÑO\"",
+        "22/06/2026 22:47:02 | [Responsable] cambió de \"PEDRO PATIÑO\" a \"PEDRO PATIÑO P\"",
+        "22/06/2026 22:47:02 | [Responsable] cambió de \"PEDRO PATIÑO P\" a \"PEDRO PATIÑO PA\"",
+        "22/06/2026 22:47:02 | [Responsable] cambió de \"PEDRO PATIÑO PA\" a \"PEDRO PATIÑO PAT\"",
+        "22/06/2026 22:47:02 | [Responsable] cambió de \"PEDRO PATIÑO PAT\" a \"PEDRO PATIÑO PA\"",
+        "22/06/2026 22:47:03 | [Responsable] cambió de \"PEDRO PATIÑO PA\" a \"PEDRO PATIÑO P\"",
+        "22/06/2026 22:47:03 | [Responsable] cambió de \"PEDRO PATIÑO P\" a \"PEDRO PATIÑO\""
       ],
       "simSustituto": true,
       "entregadoDisglobal": true,
@@ -1446,7 +1458,7 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "casillero",
+  "currentTab": "standby",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",

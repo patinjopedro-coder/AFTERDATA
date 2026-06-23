@@ -1405,6 +1405,7 @@ export default function App() {
               standbyList={standbyList}
               setStandbyList={setStandbyList}
               serials={serials}
+              setSerials={setSerials}
             />
           </div>
 

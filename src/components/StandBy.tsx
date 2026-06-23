@@ -6,18 +6,21 @@ interface StandByProps {
   standbyList: StandbyItem[];
   setStandbyList: React.Dispatch<React.SetStateAction<StandbyItem[]>>;
   serials: import('../types').POSItem[];
+  setSerials?: React.Dispatch<React.SetStateAction<import('../types').POSItem[]>>;
 }
 
 export const StandBy: React.FC<StandByProps> = ({
   standbyList,
   setStandbyList,
-  serials
+  serials,
+  setSerials
 }) => {
   const [serialsInput, setSerialsInput] = useState('');
   const [guiasInput, setGuiasInput] = useState('');
   const [comentario, setComentario] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'TODOS' | 'PENDIENTE' | 'PROCESADO'>('TODOS');
+  const [dismissedDerivedIds, setDismissedDerivedIds] = useState<string[]>([]);
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,6 +89,7 @@ export const StandBy: React.FC<StandByProps> = ({
     if (!serials) return [];
     return serials
       .filter(s => s.isCasillero && s.status !== 'RECUPERADO' && !s.fechaConfirmada && (!s.esSustitucion || (!s.serialSustituto || !s.fechaSalida)))
+      .filter(s => !dismissedDerivedIds.includes(`CAS-${s.id}`))
       .map(s => {
         let reason = 'PENDIENTE CONFIRMACIÓN SALIDA';
         if (s.esSustitucion && (!s.serialSustituto || !s.fechaSalida)) {
@@ -101,7 +105,7 @@ export const StandBy: React.FC<StandByProps> = ({
           isDerived: true
         };
       });
-  }, [serials]);
+  }, [serials, dismissedDerivedIds]);
 
   // Combine stateful and derived items
   const allItems = useMemo(() => {
@@ -331,13 +335,44 @@ export const StandBy: React.FC<StandByProps> = ({
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           {(item as any).isDerived ? (
-                            <span className="bg-slate-900 text-white text-[8px] px-2 py-0.5 font-bold rounded-none uppercase font-mono inline-block">
-                              CASILLERO
-                            </span>
+                            <div className="flex flex-col items-center gap-1">
+                              <span className="bg-slate-900 text-white text-[8px] px-2 py-0.5 font-bold rounded-none uppercase font-mono inline-block">
+                                CASILLERO
+                              </span>
+                              <div className="flex items-center gap-1 justify-center mt-1">
+                                <button
+                                  onClick={() => {
+                                    if (window.confirm(`¿Ocultar este registro de Stand-by?`)) {
+                                      setDismissedDerivedIds(prev => [...prev, item.id]);
+                                    }
+                                  }}
+                                  className="text-slate-500 hover:text-slate-800 transition-colors px-1 py-0.5 cursor-pointer rounded hover:bg-slate-100 text-[10px] font-bold"
+                                  title="Ocultar de la lista"
+                                >
+                                  Ocultar
+                                </button>
+                                <span className="text-slate-300">|</span>
+                                <button
+                                  onClick={() => {
+                                    const serialId = parseInt(item.id.replace('CAS-', ''));
+                                    const serialObj = serials.find(s => s.id === serialId);
+                                    if (window.confirm(`¿Eliminar definitivamente el equipo "${serialObj?.serial || ''}" de la base de datos logística?`)) {
+                                      if (setSerials) {
+                                        setSerials(prev => prev.filter(s => s.id !== serialId));
+                                      }
+                                    }
+                                  }}
+                                  className="text-red-600 hover:text-red-800 transition-colors px-1 py-0.5 cursor-pointer rounded hover:bg-red-50 text-[10px] font-bold"
+                                  title="Eliminar de Casillero"
+                                >
+                                  Eliminar
+                                </button>
+                              </div>
+                            </div>
                           ) : (
                             <button
                               onClick={() => handleDelete(item.id)}
-                              className="text-slate-450 hover:text-red-600 transition-colors p-1.5 cursor-pointer rounded hover:bg-slate-100"
+                              className="text-slate-455 hover:text-red-600 transition-colors p-1.5 cursor-pointer rounded hover:bg-slate-100"
                               title="Eliminar de stand-by"
                             >
                               <Trash2 size={13} />
