@@ -437,7 +437,7 @@
       "rif": "J-010223123",
       "razonSocial": "MC DONALDS",
       "destino": "PORTUGUESA",
-      "observaciones": "SUSTITUCION",
+      "observaciones": "",
       "forro": true,
       "bateria": true,
       "cargador": true,
@@ -450,11 +450,11 @@
       "entregadoTecnico": true,
       "esSustitucion": true,
       "serialSustituto": "4465411214",
-      "fechaSalida": "",
+      "fechaSalida": "2026-06-13",
       "fechaSalidaCliente": "2026-06-13",
       "guiaSalidaCliente": "",
       "destinoSalida": "",
-      "fechaConfirmada": false,
+      "fechaConfirmada": true,
       "ticket": "178",
       "bsf": "",
       "usdt": "",
@@ -632,12 +632,17 @@
         "22/06/2026 22:47:02 | [Responsable] cambió de \"PEDRO PATIÑO PA\" a \"PEDRO PATIÑO PAT\"",
         "22/06/2026 22:47:02 | [Responsable] cambió de \"PEDRO PATIÑO PAT\" a \"PEDRO PATIÑO PA\"",
         "22/06/2026 22:47:03 | [Responsable] cambió de \"PEDRO PATIÑO PA\" a \"PEDRO PATIÑO P\"",
-        "22/06/2026 22:47:03 | [Responsable] cambió de \"PEDRO PATIÑO P\" a \"PEDRO PATIÑO\""
+        "22/06/2026 22:47:03 | [Responsable] cambió de \"PEDRO PATIÑO P\" a \"PEDRO PATIÑO\"",
+        "24/06/2026 15:38:09 | [Observaciones] cambió de \"SUSTITUCION\" a \"+\"",
+        "24/06/2026 15:38:10 | [Observaciones] cambió de \"+\" a \"vacío\"",
+        "24/06/2026 15:39:05 | [Entregado a Disglobal] cambió de \"true\" a \"false\"",
+        "24/06/2026 15:39:05 | [Entregado A] cambió de \"CLIENTE1\" a \"vacío\""
       ],
       "simSustituto": true,
-      "entregadoDisglobal": true,
-      "entregadoA": "CLIENTE1",
-      "simSustitutoNumber": ""
+      "entregadoDisglobal": false,
+      "entregadoA": "",
+      "simSustitutoNumber": "",
+      "notaReparacion": "SUSTITUCION"
     },
     {
       "id": 18,
@@ -1507,7 +1512,7 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "estadisticas",
+  "currentTab": "casillero",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 24/06/2026 10:19:12",

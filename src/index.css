@@ -1838,3 +1838,32 @@ body .saliente-recibido-confirmado-blue * {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
+
+/* Subtle green hover effect for Casillero rows */
+.casillero-table tbody tr:hover {
+  background-color: #f0fdf4 !important; /* soft light green (Tailwind green-50) */
+}
+
+/* Make all text elements turn black on hover in Casillero, except specific status buttons */
+.casillero-table tbody tr:hover td,
+.casillero-table tbody tr:hover td *:not(button):not(button *):not(input[type="checkbox"]) {
+  color: #000000 !important;
+}
+
+/* Also ensure SVG icons inside non-button elements turn black */
+.casillero-table tbody tr:hover td *:not(button):not(button *) svg,
+.casillero-table tbody tr:hover td *:not(button):not(button *) svg * {
+  stroke: #000000 !important;
+  color: #000000 !important;
+}
+
+/* Disable grayscale filters and opacities on hover */
+.casillero-table tbody tr:hover td {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.casillero-table tbody tr:hover td * {
+  filter: none !important;
+  opacity: 1 !important;
+}
