@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { POSItem, POSStatus, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
-import { formatRif, trackAndLogChanges, copyToClipboard } from '../utils';
+import { formatRif, trackAndLogChanges, copyToClipboard, downloadBlob } from '../utils';
 import { 
   FileText, CheckSquare, Square, Search, Layers, 
   Trash2, Filter, ChevronLeft, ChevronRight, User, 
@@ -659,16 +659,10 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
     const d = new Date();
     const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `exportacion_gestion_${localDate}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const filename = `exportacion_gestion_${localDate}.csv`;
+    downloadBlob(blob, filename);
   };
 
   // Suggested Unique Remitentes for Datalist

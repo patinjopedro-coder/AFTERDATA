@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { POSItem, EnvioExterno, ModelConfig, POSStatus, UserProfile, StandbyItem } from './types';
 import { INITIAL_SERIALS, INITIAL_MODELS } from './data';
 import { getDBItem, setDBItem } from './db';
-import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords } from './utils';
+import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords, downloadBlob } from './utils';
+
 import { GestionGeneral } from './components/GestionGeneral';
 import { LogoIcon } from './components/LogoIcon';
 import { Casillero } from './components/Casillero';
@@ -505,18 +506,10 @@ export default function App() {
       });
 
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const filename = includeCasillero ? `disglobal_tracking_report_${localDate}.csv` : `disglobal_tracking_report_sin_casillero_${localDate}.csv`;
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
       return;
     }
 
@@ -565,18 +558,10 @@ export default function App() {
       });
 
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const filename = `casillero_report_${localDate}.csv`;
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
       return;
     }
 
@@ -599,52 +584,35 @@ export default function App() {
           };
         });
 
-      const combined = [
-        ...standbyList.map(item => ({
-          date: item.date,
-          serial: item.serial || '',
-          guia: item.guia || '',
-          comentario: item.comentario || '',
-          status: item.status,
-          processedDate: item.processedDate || ''
-        })),
-        ...derived
-      ];
+      const listCombined = [...standbyList, ...derived];
 
-      const filtered = combined.filter(item => {
+      const searchLowObj = globalSearch.toLowerCase();
+      const filtered = listCombined.filter(item => {
         if (!globalSearch) return true;
         return (
-          item.serial.toLowerCase().includes(searchLow) ||
-          item.guia.toLowerCase().includes(searchLow) ||
-          item.comentario.toLowerCase().includes(searchLow)
+          item.serial.toLowerCase().includes(searchLowObj) ||
+          item.guia.toLowerCase().includes(searchLowObj) ||
+          item.comentario.toLowerCase().includes(searchLowObj)
         );
       });
 
-      let csv = "sep=;\nFECHA_STANDBY;SERIAL;GUIA_CAMINO;COMENTARIO;ESTADO;FECHA_LLEGADA\n";
+      let csv = "sep=;\nFECHA;SERIAL;GUIA;COMENTARIO;ESTADO;FECHA_PROCESADO\n";
       filtered.forEach(item => {
         csv += [
           item.date,
-          item.serial,
-          item.guia,
-          item.comentario,
+          item.serial || '',
+          item.guia || '',
+          item.comentario || '',
           item.status,
           item.processedDate
         ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
       });
 
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const filename = `standby_report_${localDate}.csv`;
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
       return;
     }
 
@@ -685,18 +653,10 @@ export default function App() {
       });
 
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const filename = `envios_externos_report_${localDate}.csv`;
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
       return;
     }
 
@@ -727,18 +687,10 @@ export default function App() {
       });
 
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const filename = `simcards_anuladas_report_${localDate}.csv`;
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
       return;
     }
 
@@ -787,18 +739,10 @@ export default function App() {
       });
 
       const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
       const d = new Date();
       const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const filename = `usuarios_directorio_report_${localDate}.csv`;
-
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, filename);
       return;
     }
 
@@ -821,16 +765,10 @@ export default function App() {
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
     const d = new Date();
     const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `report_${localDate}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const filename = `report_${localDate}.csv`;
+    downloadBlob(blob, filename);
   };
 
   const handleExportJSON = () => {
@@ -844,16 +782,10 @@ export default function App() {
     };
     const jsonStr = JSON.stringify(dataObj, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
     const d = new Date();
     const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `pedro_disglobal_backup_${localDate}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const filename = `pedro_disglobal_backup_${localDate}.json`;
+    downloadBlob(blob, filename);
   };
 
   const handleExportFullCSVBackup = () => {
@@ -867,21 +799,14 @@ export default function App() {
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
     const d = new Date();
     const localDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `backup_completo_disglobal_${localDate}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const filename = `backup_completo_disglobal_${localDate}.csv`;
+    downloadBlob(blob, filename);
   };
 
   // -------------------------------------------------------------
   // HISTORY TOOLTIP LOGIC (POP OVERLAY ON HOVER)
-  // -------------------------------------------------------------
   const showHistory = (serial: string, anchor: HTMLElement) => {
     const rect = anchor.getBoundingClientRect();
     setHistoryTooltip({

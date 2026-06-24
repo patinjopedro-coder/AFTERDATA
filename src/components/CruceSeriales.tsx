@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, POSStatus, ModelConfig, CruceItem, CMSItem } from '../types';
 import { getDBItem, setDBItem, getLocalItem, setLocalItem } from '../db';
-import { copyToClipboard } from '../utils';
+import { copyToClipboard, downloadBlob } from '../utils';
 import { 
   FileCheck, ArrowRightLeft, Check, Import, Send, Trash2, Edit2, Play, Search, Database, Layers, X, Clipboard
 } from 'lucide-react';
@@ -597,14 +597,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     }
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `reporte_cruzado_${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const filename = `reporte_cruzado_${new Date().toISOString().split('T')[0]}.csv`;
+    downloadBlob(blob, filename);
   };
 
   // Aesthetic light pastel style badges with pure WHITE text inside

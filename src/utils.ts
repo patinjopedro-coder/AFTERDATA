@@ -342,3 +342,23 @@ export function mergeImportedRecords(records: { id: number; idStr: string; isSus
 
   return mergedItems;
 }
+
+/**
+ * Helper to download a Blob safely in browser environments,
+ * preventing Chrome/Edge's synchronous URL revocation filename bug.
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Defer revocation to avoid Chrome/Edge download filename fallback to UUID
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 250);
+}
+

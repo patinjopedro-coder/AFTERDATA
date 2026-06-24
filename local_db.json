@@ -433,7 +433,7 @@
       "remitente": "ALIMENTOS ANDREA",
       "source": "199587778",
       "isCasillero": true,
-      "selected": false,
+      "selected": true,
       "rif": "J-010223123",
       "razonSocial": "MC DONALDS",
       "destino": "PORTUGUESA",
@@ -648,7 +648,7 @@
       "remitente": "PEDROP",
       "source": "2026101101",
       "isCasillero": true,
-      "selected": false,
+      "selected": true,
       "rif": "V-22015173",
       "razonSocial": "PATINOS",
       "destino": "CARACAS",
@@ -1507,7 +1507,7 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "cruce",
+  "currentTab": "estadisticas",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 24/06/2026 10:19:12",

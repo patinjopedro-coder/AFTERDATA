@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Layers, Search, Trash2, Download, Plus, Calendar, CardSim, Clipboard } from 'lucide-react';
-import { copyToClipboard } from '../utils';
+import { copyToClipboard, downloadBlob } from '../utils';
 
 interface SimBatch {
   id: string;
@@ -80,14 +80,8 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `anulacion_sims_${batch.title.replace(/[\/:\s]/g, '_')}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const filename = `anulacion_sims_${batch.title.replace(/[\/:\s]/g, '_')}.csv`;
+    downloadBlob(blob, filename);
   };
 
   // Selected Batch data

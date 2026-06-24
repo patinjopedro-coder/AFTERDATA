@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
-import { copyToClipboard } from '../utils';
+import { copyToClipboard, downloadBlob } from '../utils';
 import { 
   BarChart3, Calendar, FileDown, Search, 
   Layers, Cpu, Smartphone, CardSim, Users, Compass, Check,
@@ -488,14 +488,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
 
   const downloadCSV = (csvStr: string, name: string) => {
     const blob = new Blob(["\uFEFF" + csvStr], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, name);
   };
 
   const handleExportPeriod = (period: 'hoy' | 'semana' | 'quincena' | 'mes' | 'trimestre' | 'anual', statusGroup: 'entregados' | 'disponibles' | 'total') => {
