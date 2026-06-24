@@ -43,9 +43,8 @@
 /* Page Background with clean soft off-white canvas (#f8fafc) and faint grid pattern */
 .dashboard-bg {
   background-color: #f8fafc !important;
-  background-image: linear-gradient(rgba(0, 0, 0, 0.065) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.065) 1px, transparent 1px) !important;
-  background-size: 20px 20px !important;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.025) 1px, transparent 0) !important;
+  background-size: 24px 24px !important;
 }
 
 /* Custom minimal scrollbars */
@@ -73,7 +72,7 @@ input,
 textarea,
 select,
 button {
-  font-family: "Arial", Helvetica, sans-serif !important;
+  font-family: "Inter", sans-serif !important;
 }
 
 /* ==========================================================================
@@ -1125,7 +1124,7 @@ button.bulk-btn:hover {
 .font-arial textarea,
 .font-arial select,
 .font-arial button {
-  font-family: Arial, Helvetica, sans-serif !important;
+  font-family: "Inter", sans-serif !important;
 }
 
 /* Force uniform font sizes inside font-arial containers, keeping headers and metric numbers clean */
@@ -1364,9 +1363,8 @@ button.stats-sims-btn:hover * {
 
 /* Custom Status Filter Buttons in Gestion General */
 button.status-filter-btn {
-  font-family: Arial, Helvetica, sans-serif !important;
-  font-weight: 900 !important;
-  /* negritas extra bold */
+  font-family: "Inter", sans-serif !important;
+  font-weight: 700 !important;
   text-transform: uppercase !important;
   font-size: 11px !important;
   /* letras más pequeñas/delgadas */
@@ -1520,39 +1518,38 @@ button.custom-entregado-btn:hover {
    ========================================================================== */
 
 /* 1. Global Reset to Square Corners (excluding SVG elements and circular elements) */
+/* ==========================================================================
+   MATHEMATICAL GRID & SQUARE STYLE OVERRIDES - Redesigned for Premium SaaS Look
+   ========================================================================== */
+
+/* 1. Global Reset to Soft Rounded Corners for a modern clean appearance */
 *:not(svg):not(path):not(rect):not(circle):not(line):not(polyline):not(polygon):not(ellipse):not(.rounded-full):not([class*="rounded-full"]):not(.notification-container span):not(.avatar):not(span.w-1\.5):not(span.w-2\.5):not(span.w-2) {
-  border-radius: 0px !important;
+  border-radius: 8px;
 }
 
-/* Ensure circular status dots, avatars, and notification bubbles remain round */
-.rounded-full,
-[class*="rounded-full"],
-.notification-container span,
-.avatar,
-.w-9.h-9.rounded-full,
-span.w-1.h-1.rounded-full,
-span.w-1\.5.h-1\.5.rounded-full,
-span.w-2.h-2.rounded-full,
-span.w-2\.5.h-2\.5.rounded-full {
-  border-radius: 9999px !important;
+/* Aside, cards, and modal dialogs */
+aside, 
+.dark-panel, 
+.bg-white:not(button):not(input):not(textarea):not(select):not(.active-tab):not(.accessory-btn):not(.user-btn),
+div[style*="rgba(0,0,0,0.45)"]>div {
+  border-radius: 16px !important;
 }
 
-/* 2. Remove all hover animations, translations, transitions, and scaling effects on static elements only */
-*:hover:not(button):not(a):not(.group):not([class*="hover:"]),
-*:focus:not(button):not(input):not(select):not(textarea),
-div:not(button):not(.animate-fade-in):not(.animate-fade-in-overlay):not(.animate-logo-entrance):not(.animate-logo-float):not(.pos-screen-glow):not(.login-screen-anim):not(.login-checkmark-anim):not(.logo-d-path):not(.connection-line-path):not(.checkmark-group),
-span:not(button):not([class*="transition"]):not(.animate-fade-in),
-tr:not(button):not([class*="transition"]),
-input:not(:focus):not([class*="transition"]),
-select:not(:focus):not([class*="transition"]),
-textarea:not(:focus):not([class*="transition"]) {
-  transform: none !important;
-  transition: none !important;
-  animation-duration: 0s !important;
-  animation-delay: 0s !important;
+/* Inputs, buttons, and select tags */
+input, 
+textarea, 
+select, 
+button,
+.accessory-btn,
+.status-filter-btn,
+.pagination-btn,
+.bulk-btn,
+.desglose-btn,
+.metric-btn {
+  border-radius: 8px !important;
 }
 
-/* Premium dynamic button animations */
+/* 2. Soft animations and transitions */
 button,
 .sidebar-btn,
 .metric-btn,
@@ -1573,283 +1570,133 @@ button:hover:not(:disabled):not(.active-tab):not(.toggle-active),
 .status-filter-btn:hover:not(.active-filter),
 .accessory-btn:hover:not(.active) {
   transform: translateY(-1.5px) !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
 button:active:not(:disabled),
 .sidebar-btn:active,
 .metric-btn:active {
-  transform: translateY(0px) scale(0.97) !important;
+  transform: translateY(0px) scale(0.98) !important;
 }
 
-/* 3. Strip soft shadows for a clean flat mathematical grid layout */
+/* 3. Re-enable soft shadows for premium visual depth */
 .dark-panel,
 .bg-white,
-[class*="bg-white"],
-.gestion-general-tab .dark-panel,
-.gestion-general-tab .bg-white.rounded-xl,
-.casillero-table tbody tr,
-.casillero-table tbody tr:hover,
-button,
-input,
-select,
-textarea {
-  box-shadow: none !important;
+[class*="bg-white"] {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -4px rgba(0, 0, 0, 0.02) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
 }
 
-/* 4. Table card layouts in Casillero: Eliminate card gaps and curved cell edges for a true table grid */
+.gestion-general-tab .dark-panel {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+}
+
+/* 4. Elegant Tables */
 .casillero-table {
-  border-collapse: collapse !important;
-  border-spacing: 0 !important;
-  margin-top: 0 !important;
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 10px !important;
+  margin-top: -10px !important;
   width: 100% !important;
 }
 
 .casillero-table tbody tr {
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
-  box-shadow: none !important;
+  background-color: #ffffff !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  transition: all 0.2s ease !important;
 }
 
 .casillero-table tbody tr:hover {
-  transform: none !important;
-  box-shadow: none !important;
+  background-color: #f8fafc !important;
+  transform: translateY(-1.5px) !important;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.06) !important;
 }
 
 .casillero-table tbody tr td {
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
-  border-radius: 0px !important;
-  padding-top: 12px !important;
-  padding-bottom: 12px !important;
+  border-top: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
 }
 
 .casillero-table tbody tr td:first-child {
-  border-left: 1px solid rgba(203, 213, 225, 0.8) !important;
-  border-top-left-radius: 0px !important;
-  border-bottom-left-radius: 0px !important;
+  border-left: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-top-left-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
 }
 
 .casillero-table tbody tr td:last-child {
-  border-right: 1px solid rgba(203, 213, 225, 0.8) !important;
-  border-top-right-radius: 0px !important;
-  border-bottom-right-radius: 0px !important;
+  border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+  border-top-right-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
 }
 
-/* Standard tables in General Management, Stand-by, and Model Configuration tabs */
+/* Standard Tables in General Management, Stand-by, and Model Configuration tabs */
 table {
-  border-collapse: collapse !important;
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02) !important;
 }
 
 table th,
 table td {
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  border: none !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 12px 16px !important;
 }
 
-/* 5. Inputs and Buttons style update: crisp straight borders with fine outlines */
+table tr:last-child td {
+  border-bottom: none !important;
+}
+
+table thead tr {
+  background-color: #f8fafc !important;
+}
+
+/* 5. Inputs and Buttons style update: elegant borders and shadows */
 input,
 textarea,
 select,
 .search-input,
 .casillero-input {
-  border: 1px solid rgba(148, 163, 184, 0.5) !important;
+  border: 1px solid #cbd5e1 !important;
   background-color: #ffffff !important;
   color: #0f172a !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.02) !important;
 }
 
 input:focus,
 textarea:focus,
 select:focus {
-  border-color: #0f172a !important;
+  border-color: #3b82f6 !important;
   background-color: #ffffff !important;
-  box-shadow: none !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  outline: none !important;
 }
 
-/* Accessory buttons: Crisp square toggles */
+/* Accessory buttons: Crisp rounded toggles */
 .accessory-btn {
-  border: 1px solid rgba(148, 163, 184, 0.5) !important;
-  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  background-color: #f8fafc !important;
   color: #475569 !important;
 }
 
 .accessory-btn.active {
-  background-color: #16a34a !important;
-  border-color: #16a34a !important;
+  background-color: #22c55e !important;
+  border-color: #22c55e !important;
   color: #ffffff !important;
-  box-shadow: none !important;
-}
-
-/* Modals background and border overrides for clean grids */
-div[style*="rgba(0,0,0,0.45)"]>div,
-div[style*="rgba(0,0,0,0.45)"]>div * {
-  border-radius: 0px !important;
-}
-
-
-/* Toggles and buttons styling in Cruce de Seriales */
-.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active),
-.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) {
-  background-color: #3f3f46 !important;
-  color: #ffffff !important;
-  border: 1px solid #3f3f46 !important;
-  border-radius: 0px !important;
-  box-shadow: none !important;
-}
-
-.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active):hover,
-.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active):hover {
-  background-color: #27272a !important;
-  border-color: #27272a !important;
-}
-
-.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg,
-.cruce-tab-container button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg *,
-.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg,
-.fixed button:not(.btn-blue):not(.btn-green):not(.btn-orange):not(.btn-red):not(.toggle-inactive):not(.toggle-active) svg * {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-/* Specific Active / Inactive states for visual toggles and secondary buttons */
-.cruce-tab-container .toggle-active,
-.fixed .toggle-active {
-  background-color: #3f3f46 !important;
-  color: #ffffff !important;
-  border: 1px solid #3f3f46 !important;
-}
-
-.cruce-tab-container .toggle-inactive,
-.fixed .toggle-inactive {
-  background-color: #ffffff !important;
-  color: #000000 !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
-.cruce-tab-container .toggle-inactive:hover,
-.fixed .toggle-inactive:hover {
-  background-color: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-}
-
-.cruce-tab-container .toggle-active svg,
-.cruce-tab-container .toggle-active svg *,
-.fixed .toggle-active svg,
-.fixed .toggle-active svg * {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-.cruce-tab-container .toggle-inactive svg,
-.cruce-tab-container .toggle-inactive svg *,
-.fixed .toggle-inactive svg,
-.fixed .toggle-inactive svg * {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-/* Force dropdown options list to always have black text on white background (no white-on-white) */
-select option,
-select optgroup,
-select option:checked,
-select option:hover {
-  color: #000000 !important;
-  background-color: #ffffff !important;
-}
-
-/* Strip neon active glow/box-shadow from filters and buttons */
-button:active,
-button:focus,
-button.active-filter,
-button.status-filter-btn.active-filter,
-button.status-btn-todos.active-filter,
-button.status-btn-orange.active-filter,
-button.status-btn-green.active-filter,
-button.status-btn-gray.active-filter {
-  box-shadow: none !important;
-  outline: none !important;
-  transform: none !important;
-}
-
-/* Raw transparent button resets (no background, no borders) */
-.btn-transparent,
-button.btn-transparent,
-button.btn-transparent:hover,
-button.btn-transparent:active,
-button.btn-transparent:focus,
-button.btn-transparent * {
-  background-color: transparent !important;
-  border: none !important;
-  color: inherit !important;
-  box-shadow: none !important;
-  outline: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* ==========================================================================
-   METRIC BUTTONS ULTIMATE OVERRIDES (ESTADISTICAS TAB)
-   ========================================================================== */
-
-/* Resting state (white background, soft border, black text & icons) */
-html body .estadisticas-tab-container button.metric-btn {
-  background-color: #ffffff !important;
-  border: 1px solid rgba(203, 213, 225, 0.8) !important;
-  color: #000000 !important;
-}
-
-html body .estadisticas-tab-container button.metric-btn * {
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-/* Hover state (dark gray background, soft border, white text & icons) */
-html body .estadisticas-tab-container button.metric-btn:hover {
-  background-color: #1f2937 !important;
-  border-color: #1f2937 !important;
-  color: #ffffff !important;
-}
-
-html body .estadisticas-tab-container button.metric-btn:hover * {
-  color: #ffffff !important;
-  stroke: #ffffff !important;
-}
-
-/* Number badge (transparent background, no borders, larger bold font) */
-html body .estadisticas-tab-container button.metric-btn span.font-mono {
-  background-color: transparent !important;
-  border: none !important;
-  color: #000000 !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-}
-
-html body .estadisticas-tab-container button.metric-btn:hover span.font-mono {
-  background-color: transparent !important;
-  border: none !important;
-  color: #ffffff !important;
-}
-
-/* ==========================================================================
-   SHADOWS AND HOVER EFFECTS (ESTADISTICAS TAB)
-   ========================================================================== */
-
-/* Apply soft shadows to metric buttons */
-.estadisticas-tab-container button.metric-btn {
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.estadisticas-tab-container button.metric-btn:hover {
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15) !important;
-  transform: translateY(-1px) !important;
 }
 
 /* Soft premium shadows for all charts and containers in stats */
 .estadisticas-tab-container .bg-white:not(button):not(input):not(select) {
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03) !important;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -4px rgba(0, 0, 0, 0.02) !important;
+  border-radius: 16px !important;
 }
 
 /* Lifting animation and deepened shadow on hover for clickable cards */
@@ -1864,43 +1711,25 @@ html body .estadisticas-tab-container button.metric-btn:hover span.font-mono {
   transform: translateY(-2px) !important;
 }
 
-/* Custom premium overrides for desglose buttons in stats */
-html body .estadisticas-tab-container button.desglose-btn {
-  background-color: #ffffff !important;
-  border: 1px solid #000000 !important;
-  color: #000000 !important;
-}
-
-html body .estadisticas-tab-container button.desglose-btn * {
-  background-color: transparent !important;
-  color: #000000 !important;
-  stroke: #000000 !important;
-}
-
-html body .estadisticas-tab-container button.desglose-btn:hover {
-  background-color: #f1f5f9 !important;
-}
-
-html body .estadisticas-tab-container button.desglose-btn:hover * {
-  background-color: transparent !important;
-  color: #000000 !important;
-  stroke: #000000 !important;
+/* Status Filter Pill Chips */
+button.status-filter-btn {
+  border-radius: 9999px !important;
+  padding: 6px 14px !important;
+  font-size: 10px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 /* Highlighter yellow styling for delivered to Disglobal cases - Minimalist version */
 .casillero-table tbody tr.entregado-highlight {
   background-color: #fefdf0 !important;
-  /* Extremely soft, warm cream-yellow background */
 }
 
 .casillero-table tbody tr.entregado-highlight:hover {
   background-color: #fefbe8 !important;
-  /* Slightly more yellow on hover, still very soft */
 }
 
 .casillero-table tbody tr.entregado-highlight td:first-child {
   border-left: 4px solid #eab308 !important;
-  /* Sleek yellow accent bar on the left edge */
 }
 
 @keyframes subtle-green-pulse {
@@ -1937,6 +1766,75 @@ button.custom-entregado-btn.saliente-recibido-active:hover {
 
 body .saliente-recibido-active,
 body .saliente-recibido-active * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Custom styling for confirmed rows */
+.tr-confirmada td:nth-child(1),
+.tr-confirmada td:nth-child(2),
+.tr-confirmada td:nth-child(3),
+.tr-confirmada td:nth-child(5),
+.tr-confirmada td:nth-child(6),
+.tr-confirmada td:nth-child(7),
+.tr-confirmada td:nth-child(8) {
+  filter: grayscale(100%) opacity(0.75);
+}
+
+/* Grayscale only the accessories list inside the 4th column, not the receive button */
+.tr-confirmada td:nth-child(4) > div > div:first-of-type {
+  filter: grayscale(100%) opacity(0.75);
+}
+
+@keyframes subtle-blue-pulse {
+  0% {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4);
+  }
+
+  50% {
+    background-color: #1d4ed8;
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.15);
+  }
+
+  100% {
+    background-color: #2563eb;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
+button.custom-entregado-btn.saliente-recibido-confirmado-blue {
+  animation: subtle-blue-pulse 2s infinite ease-in-out !important;
+  background-color: #2563eb !important;
+  border: 1px solid #2563eb !important;
+  color: #ffffff !important;
+}
+
+button.custom-entregado-btn.saliente-recibido-confirmado-blue:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+body .saliente-recibido-confirmado-blue,
+body .saliente-recibido-confirmado-blue * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+/* Force visibility of text labels inside Statistics metric buttons */
+.estadisticas-tab-container button.metric-btn span,
+.estadisticas-tab-container button.metric-btn svg,
+.estadisticas-tab-container button.metric-btn svg * {
+  color: #0f172a !important;
+  stroke: #0f172a !important;
+}
+
+.estadisticas-tab-container button.metric-btn:hover span,
+.estadisticas-tab-container button.metric-btn:hover svg,
+.estadisticas-tab-container button.metric-btn:hover svg * {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }

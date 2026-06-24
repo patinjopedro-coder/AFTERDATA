@@ -148,6 +148,12 @@ export const Casillero: React.FC<CasilleroProps> = ({
       if (s.serial === 'POR RECIBIR' && draft.serial && draft.serial !== 'POR RECIBIR') {
         draft.salienteSinRecibir = false;
       }
+      // Keep fechaSalida and fechaSalidaCliente in sync
+      if (draft.fechaSalida !== s.fechaSalida) {
+        draft.fechaSalidaCliente = draft.fechaSalida;
+      } else if (draft.fechaSalidaCliente !== s.fechaSalidaCliente) {
+        draft.fechaSalida = draft.fechaSalidaCliente;
+      }
       return trackAndLogChanges(s, draft);
     }));
     setEditingItem(null);
@@ -215,6 +221,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 <option value="N#A">N#A</option>
                 <option value="RECUPERADO">RECUPERADO</option>
                 <option value="DISPONIBLE">DISPONIBLE</option>
+                <option value="ENTREGADO">ENTREGADO</option>
                 <option value="SIN ESTATUS">SIN ESTATUS</option>
               </select>
             </div>
@@ -382,7 +389,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
 
     let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;SIM_SUSTITUTO;SIM_SUSTITUTO_NUMBER;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID;ENTREGADO_DISGLOBAL;ENTREGADO_A\n";
     targets.forEach(s => {
-      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}";"${!!s.entregadoDisglobal}";"${s.entregadoA || ''}"\n`;
+      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.notaReparacion || s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}";"${!!s.entregadoDisglobal}";"${s.entregadoA || ''}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -392,7 +399,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
     const link = document.createElement("a");
     link.href = url;
     link.download = `historico_casillero_${localDate}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -406,7 +415,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
 
     let csv = "sep=;\nID;FECHA_ENTRADA;SERIAL;ESTATUS;REMITENTE;GUIA_ENTRADA;RIF;RAZON_SOCIAL;DESTINO;OBSERVACIONES;RESPONSABLE;FORRO;BATERIA;CARGADOR;CAJA;SIM;SIM_NUMBER;OPERADORA;MODELO_MANUAL;MODELO_NEGOCIO;ENTREGADO_TECNICO;ES_SUSTITUCION;SERIAL_SUSTITUTO;SIM_SUSTITUTO;SIM_SUSTITUTO_NUMBER;FECHA_SALIDA;FECHA_SALIDA_CLIENTE;GUIA_SALIDA_CLIENTE;DESTINO_SALIDA;TICKET;BATCH_ID;ENTREGADO_DISGLOBAL;ENTREGADO_A\n";
     targets.forEach(s => {
-      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}";"${!!s.entregadoDisglobal}";"${s.entregadoA || ''}"\n`;
+      csv += `"${s.id}";"${s.displayDate || s.date || ''}";"${s.serial}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.notaReparacion || s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${s.ticket || ''}";"${s.cruceBatchId || ''}";"${!!s.entregadoDisglobal}";"${s.entregadoA || ''}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -416,7 +425,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
     const link = document.createElement("a");
     link.href = url;
     link.download = `recuperados_casillero_${localDate}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -561,10 +572,17 @@ export const Casillero: React.FC<CasilleroProps> = ({
               simNumber: getColVal(idxSimcard).toUpperCase(),
               operadora: getColVal(idxOperadora).toUpperCase() as any,
               responsable: getColVal(idxResponsable).toUpperCase() || 'PEDRO PATIÑO',
-              observaciones: getColVal(idxObservacion),
+              observaciones: (() => {
+                const val = getColVal(idxObservacion);
+                return (val === 'RECUPERACION' || val === 'SUSTITUCION') ? '' : val;
+              })(),
+              notaReparacion: (() => {
+                const val = getColVal(idxObservacion);
+                return (val === 'RECUPERACION' || val === 'SUSTITUCION') ? val : '';
+              })(),
               serialSustituto: getColVal(idxSerialSaliente).toUpperCase(),
               modeloSustituto: detectModelFromSerial(getColVal(idxSerialSaliente)),
-              esSustitucion: !!getColVal(idxSerialSaliente),
+              esSustitucion: !!getColVal(idxSerialSaliente) || (getColVal(idxObservacion) === 'SUSTITUCION'),
               fechaSalida: getColVal(idxFechaSalida),
               fechaSalidaCliente: getColVal(idxFechaSalida),
               guiaSalidaCliente: getColVal(idxGuiaSalida).toUpperCase(),
@@ -744,7 +762,11 @@ export const Casillero: React.FC<CasilleroProps> = ({
   const handleUpdateTextVal = (id: number, key: keyof POSItem, text: string) => {
     setSerials(prev => prev.map(s => {
       if (s.id === id) {
-        return trackAndLogChanges(s, { [key]: text });
+        let updates: Partial<POSItem> = { [key]: text };
+        if (key === 'fechaSalidaCliente') {
+          updates.fechaSalida = text;
+        }
+        return trackAndLogChanges(s, updates);
       }
       return s;
     }));
@@ -879,7 +901,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                   const modelInfo = getTerminalModel(s.serial, modelosDB);
                   const isNew = s.date && (Math.floor((Date.now() - new Date(s.date).getTime()) / 86400000) <= 7);
                   const isRepetido = serials.filter(o => o.serial === s.serial).length > 1;
-                  const isRecuperado = s.observaciones === 'RECUPERACION';
+                  const isRecuperado = s.notaReparacion === 'RECUPERACION';
 
                   const serialColorClass = 'text-slate-800';
 
@@ -887,7 +909,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                     <tr 
                       key={s.id} 
                       className={`hover:bg-slate-50 transition-colors align-top border-b border-slate-100 ${s.selected ? 'bg-blue-50/50' : ''} ${s.addedFromCruce ? 'border-l-2 border-l-slate-400' : ''} ${
-                        s.fechaConfirmada ? 'bg-slate-100/90 text-slate-400 filter grayscale opacity-75' : ''
+                        s.fechaConfirmada ? 'tr-confirmada bg-slate-100/90 text-slate-400' : ''
                       } ${s.entregadoDisglobal ? 'entregado-highlight' : ''}`}
                     >
                       {/* SELECTOR */}
@@ -1121,7 +1143,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               onClick={() => toggleBooleanRef(s.id, 'entregadoTecnico')}
                               className={`w-full py-1.5 px-3 rounded-lg text-[10px] font-bold uppercase transition-colors flex items-center justify-center gap-1.5 mt-1 cursor-pointer border ${
                                 s.entregadoTecnico 
-                                  ? 'saliente-recibido-active custom-entregado-btn shadow-sm' 
+                                  ? (s.fechaConfirmada 
+                                      ? 'saliente-recibido-confirmado-blue custom-entregado-btn shadow-sm' 
+                                      : 'saliente-recibido-active custom-entregado-btn shadow-sm')
                                   : 'bg-slate-800 hover:bg-slate-700 border-slate-800 text-white shadow-sm'
                               } ${isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
                             >
@@ -1138,12 +1162,12 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Nota de reparación o estado físico</label>
                           <select
                             disabled={!!s.entregadoTecnico}
-                            value={s.observaciones || ''}
+                            value={s.notaReparacion || ''}
                             onChange={e => {
                               const val = e.target.value;
                               setSerials(prev => prev.map(o => {
                                 if (o.id === s.id) {
-                                  let updated = { ...o, observaciones: val };
+                                  let updated = { ...o, notaReparacion: val };
                                   if (val === 'RECUPERACION') {
                                     updated.status = 'RECUPERADO';
                                     updated.esSustitucion = false;
@@ -1238,109 +1262,93 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               </select>
                             </div>
                           </div>
+
+                          <div className="mt-2 flex flex-col gap-1 border-t border-slate-100 pt-2">
+                            <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Observaciones</label>
+                            <textarea
+                              disabled={isRecuperado || !!s.entregadoTecnico}
+                              value={s.observaciones || ''}
+                              onChange={e => handleUpdateTextVal(s.id, 'observaciones', e.target.value)}
+                              rows={3}
+                              className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 font-arial focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all resize-none casillero-input ${
+                                (isRecuperado || s.entregadoTecnico) ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                              }`}
+                              style={{ borderRadius: '8px' }}
+                            />
+                          </div>
                         </div>
                       </td>
 
                       {/* ADAPTACIÓN DE SUSTITUCIONES */}
                       <td className="py-4 px-3 text-xs w-52">
                         <div className="flex flex-col gap-1.5 pr-2">
-                          <label className={`flex items-center gap-2 text-[10px] uppercase font-bold tracking-wider select-none cursor-pointer ${isRecuperado ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            <input
-                              type="checkbox"
-                              disabled={isRecuperado}
-                              checked={!!s.esSustitucion}
+                          <div>
+                            <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Prefijo de Modelo</label>
+                            <select
+                              disabled={isRecuperado || !!s.fechaConfirmada}
+                              value={s.modeloSustituto || ''}
                               onChange={e => {
+                                const val = e.target.value;
                                 setSerials(prev => prev.map(o => {
                                   if (o.id === s.id) {
                                     return { 
                                       ...o, 
-                                      esSustitucion: e.target.checked, 
-                                      serialSustituto: e.target.checked ? o.serialSustituto : '',
-                                      fechaSalida: e.target.checked ? o.fechaSalida : ''
+                                      modeloSustituto: val,
+                                      esSustitucion: !!(val || o.serialSustituto || o.fechaSalida)
                                     };
                                   }
                                   return o;
                                 }));
                               }}
-                              className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                              className={`w-full text-xs font-arial font-semibold p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
+                                (isRecuperado || s.fechaConfirmada) ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                              }`}
+                            >
+                              <option value="">SELECCIONAR MODELO</option>
+                              {Object.keys(modelosDB).sort().map(key => (
+                                <option key={key} value={key}>
+                                  {key} - {modelosDB[key].modelo}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="mt-1.5">
+                            <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Serial Sustituto</label>
+                            <input
+                              type="text"
+                              disabled={isRecuperado || !!s.fechaConfirmada}
+                              value={s.serialSustituto || ''}
+                              onChange={e => {
+                                const text = e.target.value.toUpperCase();
+                                const autoModel = detectModelFromSerial(text);
+                                setSerials(prev => prev.map(o => {
+                                  if (o.id === s.id) {
+                                    const nextModel = autoModel || (text ? o.modeloSustituto : '');
+                                    return trackAndLogChanges(o, {
+                                      serialSustituto: text,
+                                      modeloSustituto: nextModel,
+                                      esSustitucion: !!(text || nextModel || o.fechaSalida)
+                                    });
+                                  }
+                                  return o;
+                                }));
+                              }}
+                              placeholder=""
+                              className={`w-full text-xs font-arial font-semibold p-1.5 mt-0.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
+                                (isRecuperado || s.fechaConfirmada) ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
+                              }`}
                             />
-                            <span>Sustitución</span>
-                          </label>
+                          </div>
 
-                          {s.esSustitucion && (
-                            <div className="space-y-1.5 bg-slate-50 p-2 rounded border border-slate-100">
-                              <div>
-                                <label className="text-[9px] text-slate-500 block uppercase font-extrabold tracking-wider">Prefijo de Modelo</label>
-                                <select
-                                  disabled={isRecuperado}
-                                  value={s.modeloSustituto || ''}
-                                  onChange={e => handleUpdateTextVal(s.id, 'modeloSustituto', e.target.value)}
-                                  className={`w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
-                                    isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
-                                  }`}
-                                >
-                                  <option value="">SELECCIONAR MODELO</option>
-                                  {Object.keys(modelosDB).sort().map(key => (
-                                    <option key={key} value={key}>
-                                      {key} - {modelosDB[key].modelo}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                              <div>
-                                <label className="text-[9px] text-slate-500 block uppercase">Serial Sustituto</label>
-                                <input
-                                  type="text"
-                                  disabled={isRecuperado}
-                                  value={s.serialSustituto || ''}
-                                  onChange={e => {
-                                    const text = e.target.value.toUpperCase();
-                                    const autoModel = detectModelFromSerial(text);
-                                    setSerials(prev => prev.map(o => {
-                                      if (o.id === s.id) {
-                                        const nextModel = autoModel || (text ? o.modeloSustituto : '');
-                                        return trackAndLogChanges(o, {
-                                          serialSustituto: text,
-                                          modeloSustituto: nextModel
-                                        });
-                                      }
-                                      return o;
-                                    }));
-                                  }}
-                                  placeholder=""
-                                  className={`w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
-                                    isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
-                                  }`}
-                                />
-                              </div>
-                              <div>
-                                <label className="text-[9px] text-slate-500 block uppercase font-bold text-left">Fecha Salida</label>
-                                <input
-                                  type="date"
-                                  disabled={isRecuperado}
-                                  value={s.fechaSalida || ''}
-                                  onChange={e => handleUpdateTextVal(s.id, 'fechaSalida', e.target.value)}
-                                  className={`w-full text-xs font-arial font-semibold p-1.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
-                                    isRecuperado ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''
-                                  }`}
-                                />
-                              </div>
-                            </div>
-                          )}
 
-                          {/* SUSTITUCIÓN LOG TAG REVELATION */}
-                          {!s.esSustitucion && (
-                            <span className="text-[10px] text-slate-500 block">
-                              Sin sustitución de equipo asociada.
-                            </span>
-                          )}
 
                           {/* SIM Sustituto */}
                           <div className="flex flex-col gap-1 mt-1.5 border-t border-slate-100 pt-1.5">
-                            <label className={`flex items-center gap-2 text-[10px] select-none cursor-pointer text-slate-500 font-bold uppercase ${isRecuperado ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                            <label className={`flex items-center gap-2 text-[10px] select-none cursor-pointer text-slate-500 font-bold uppercase ${(isRecuperado || s.fechaConfirmada) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                               <input
                                 type="checkbox"
-                                disabled={isRecuperado}
+                                disabled={isRecuperado || !!s.fechaConfirmada}
                                 checked={!!s.simSustituto}
                                 onChange={e => {
                                   setSerials(prev => prev.map(o => {
@@ -1357,12 +1365,12 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             {s.simSustituto && (
                               <input
                                 type="text"
-                                disabled={isRecuperado}
+                                disabled={isRecuperado || !!s.fechaConfirmada}
                                 value={s.simSustitutoNumber || ''}
                                 onChange={e => handleUpdateTextVal(s.id, 'simSustitutoNumber', e.target.value.toUpperCase())}
                                 placeholder="NÚMERO SIM"
                                 className={`w-full text-[10px] font-arial p-1.5 bg-slate-100 border border-transparent rounded text-amber-600 uppercase font-semibold focus:outline-none focus:ring-2 focus:ring-slate-200 casillero-input ${
-                                  isRecuperado ? 'opacity-55 cursor-not-allowed bg-slate-200 border-slate-350' : ''
+                                  (isRecuperado || s.fechaConfirmada) ? 'opacity-55 cursor-not-allowed bg-slate-200 border-slate-350' : ''
                                 }`}
                               />
                             )}
@@ -1425,11 +1433,11 @@ export const Casillero: React.FC<CasilleroProps> = ({
                                   setSerials(prev => prev.map(o => {
                                     if (o.id === s.id) {
                                       const defaultOut = o.fechaSalidaCliente || currentTodayStr();
-                                      return { 
-                                        ...o, 
+                                      return trackAndLogChanges(o, { 
                                         fechaConfirmada: e.target.checked, 
-                                        fechaSalidaCliente: e.target.checked ? defaultOut : o.fechaSalidaCliente 
-                                      };
+                                        fechaSalidaCliente: e.target.checked ? defaultOut : o.fechaSalidaCliente,
+                                        fechaSalida: e.target.checked ? defaultOut : o.fechaSalida
+                                      });
                                     }
                                     return o;
                                   }));

@@ -84,7 +84,9 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
     const link = document.createElement('a');
     link.href = url;
     link.download = `anulacion_sims_${batch.title.replace(/[\/:\s]/g, '_')}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 

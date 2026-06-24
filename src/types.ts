@@ -21,6 +21,7 @@ export interface POSItem {
   razonSocial?: string;
   destino?: string;
   observaciones?: string;
+  notaReparacion?: string;
   responsable?: string;
   forro?: boolean;
   bateria?: boolean;

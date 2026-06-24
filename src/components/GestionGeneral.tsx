@@ -208,6 +208,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <option value="CANCELADO">CANCELADO</option>
                 <option value="N#A">N#A</option>
                 <option value="RECUPERADO">RECUPERADO</option>
+                <option value="DISPONIBLE">DISPONIBLE</option>
+                <option value="ENTREGADO">ENTREGADO</option>
                 <option value="SIN ESTATUS">SIN ESTATUS</option>
               </select>
             </div>
@@ -625,10 +627,12 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       case 'PENDIENTE': 
       case 'ACTIVO': 
       case 'SUSPENDIDO': 
+      case 'ENTREGADO': 
         return 'bg-amber-100 text-amber-800 border-none font-bold shadow-xs';
       case 'CANCELADO': 
       case 'N#A': 
       case 'RECUPERADO':
+      case 'DISPONIBLE':
         return 'bg-emerald-100 text-emerald-800 border-none font-bold shadow-xs';
       case 'SIN ESTATUS':
       default:
@@ -651,7 +655,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     targets.forEach(s => {
       const serialCruce = !s.isCasillero ? s.serial : '';
       const serialCasillero = s.isCasillero ? s.serial : '';
-      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${!!s.sinCosto}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
+      csv += `"${s.id}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.notaReparacion || s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${!!s.sinCosto}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -661,7 +665,9 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     const link = document.createElement("a");
     link.href = url;
     link.download = `exportacion_gestion_${localDate}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -971,6 +977,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <option value="N#A">N#A</option>
                 <option value="RECUPERADO">RECUPERADO</option>
                 <option value="DISPONIBLE">DISPONIBLE</option>
+                <option value="ENTREGADO">ENTREGADO</option>
                 <option value="SIN ESTATUS">SIN ESTATUS</option>
               </select>
               
@@ -1124,7 +1131,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
                     // Availability Indicator
                     const isDisponible = s.status === 'CANCELADO' || s.status === 'N#A' || s.status === 'RECUPERADO' || s.status === 'DISPONIBLE';
-                    const isEntregado = s.status === 'PENDIENTE' || s.status === 'ACTIVO' || s.status === 'SUSPENDIDO';
+                    const isEntregado = s.status === 'PENDIENTE' || s.status === 'ACTIVO' || s.status === 'SUSPENDIDO' || s.status === 'ENTREGADO';
 
                     return (
                       <tr 
@@ -1157,9 +1164,9 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                               title="Click para copiar serial"
                             >
                               <span className={`w-2 h-2 shrink-0 ${
-                                ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(s.status)
+                                ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'ENTREGADO'].includes(s.status)
                                   ? 'bg-orange-500'
-                                  : ['CANCELADO', 'N#A', 'RECUPERADO'].includes(s.status)
+                                  : ['CANCELADO', 'N#A', 'RECUPERADO', 'DISPONIBLE'].includes(s.status)
                                     ? 'bg-green-600'
                                     : 'bg-slate-400'
                               }`} style={{ borderRadius: '0px' }}></span>
@@ -1204,7 +1211,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                             value={s.status}
                             onChange={e => handleUpdateStatus(s.id, e.target.value as POSStatus)}
                             className={`text-xs px-2 py-1 rounded-none font-bold uppercase ${
-                              ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(s.status)
+                              ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'ENTREGADO'].includes(s.status)
                                 ? 'status-select-orange'
                                 : ['CANCELADO', 'N#A', 'RECUPERADO', 'DISPONIBLE'].includes(s.status)
                                   ? 'status-select-green'
@@ -1218,6 +1225,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                             <option value="N#A">N#A</option>
                             <option value="RECUPERADO">RECUPERADO</option>
                             <option value="DISPONIBLE">DISPONIBLE</option>
+                            <option value="ENTREGADO">ENTREGADO</option>
                             <option value="SIN ESTATUS">SIN ESTATUS</option>
                           </select>
                         </td>

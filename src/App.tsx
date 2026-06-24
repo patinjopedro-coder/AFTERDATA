@@ -388,7 +388,14 @@ export default function App() {
                 selected: false,
                 rif: idxRif !== -1 ? formatRif(cols[idxRif]) : '',
                 razonSocial: idxRazon !== -1 ? cols[idxRazon].toUpperCase() : '',
-                observaciones: idxObs !== -1 ? cols[idxObs] : '',
+                observaciones: (() => {
+                  const val = idxObs !== -1 ? cols[idxObs] : '';
+                  return (val === 'RECUPERACION' || val === 'SUSTITUCION') ? '' : val;
+                })(),
+                notaReparacion: (() => {
+                  const val = idxObs !== -1 ? cols[idxObs] : '';
+                  return (val === 'RECUPERACION' || val === 'SUSTITUCION') ? val : '';
+                })(),
                 responsable: (idxResp !== -1 ? cols[idxResp] : '') || 'PEDRO PATIÑO',
                 forro: idxForro !== -1 ? (cols[idxForro]?.toLowerCase() === 'true') : false,
                 bateria: idxBateria !== -1 ? (cols[idxBateria]?.toLowerCase() === 'true') : false,
@@ -506,7 +513,9 @@ export default function App() {
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
       return;
     }
@@ -542,7 +551,7 @@ export default function App() {
           s.rif || '',
           s.razonSocial || '',
           s.destino || '',
-          s.observaciones || '',
+          s.notaReparacion || s.observaciones || '',
           s.responsable || '',
           s.forro ? 'SI' : 'NO',
           s.bateria ? 'SI' : 'NO',
@@ -564,7 +573,9 @@ export default function App() {
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
       return;
     }
@@ -630,7 +641,9 @@ export default function App() {
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
       return;
     }
@@ -654,8 +667,10 @@ export default function App() {
         return true;
       });
 
-      let csv = "sep=;\nFECHA_ENVIO;GUIA;SERIAL;RIF;RAZON_SOCIAL;DESTINO;TICKET;SOLICITANTE\n";
+      let csv = "sep=;\nFECHA_ENVIO;GUIA;SERIAL;RIF;RAZON_SOCIAL;DESTINO;TICKET;SOLICITANTE;FECHA_INGRESO\n";
       filtered.forEach(e => {
+        const matchPOS = serials.find(s => s.serial === e.serial);
+        const fechaIngreso = matchPOS ? (matchPOS.displayDate || matchPOS.date || '') : '';
         csv += [
           e.fecha,
           e.guia,
@@ -664,7 +679,8 @@ export default function App() {
           e.razonSocial || '',
           e.destino || '',
           e.ticket || '',
-          e.solicitante || ''
+          e.solicitante || '',
+          fechaIngreso
         ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
       });
 
@@ -677,7 +693,9 @@ export default function App() {
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
       return;
     }
@@ -717,7 +735,9 @@ export default function App() {
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
       return;
     }
@@ -775,7 +795,9 @@ export default function App() {
       const link = document.createElement("a");
       link.href = url;
       link.download = filename;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       URL.revokeObjectURL(url);
       return;
     }
@@ -805,7 +827,9 @@ export default function App() {
     const link = document.createElement("a");
     link.href = url;
     link.download = `report_${localDate}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -826,7 +850,9 @@ export default function App() {
     const link = document.createElement("a");
     link.href = url;
     link.download = `pedro_disglobal_backup_${localDate}.json`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -837,7 +863,7 @@ export default function App() {
       const s = r.item;
       const serialCruce = !s.isCasillero ? s.serial : '';
       const serialCasillero = s.isCasillero ? s.serial : '';
-      csv += `"${r.idStr}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
+      csv += `"${r.idStr}";"${serialCruce}";"${serialCasillero}";"${s.status}";"${s.remitente}";"${s.source || ''}";"${!!s.isCasillero}";"${s.rif || ''}";"${s.razonSocial || ''}";"${s.destino || ''}";"${s.notaReparacion || s.observaciones || ''}";"${s.responsable || ''}";"${!!s.forro}";"${!!s.bateria}";"${!!s.cargador}";"${!!s.caja}";"${!!s.sim}";"${s.simNumber || ''}";"${s.operadora || ''}";"${s.modeloManual || ''}";"${s.modeloNegocio || ''}";"${!!s.entregadoTecnico}";"${!!s.esSustitucion}";"${s.serialSustituto || ''}";"${!!s.simSustituto}";"${s.simSustitutoNumber || ''}";"${s.fechaSalida || ''}";"${s.fechaSalidaCliente || ''}";"${s.guiaSalidaCliente || ''}";"${s.destinoSalida || ''}";"${!!s.fechaConfirmada}";"${s.ticket || ''}";"${!!s.addedFromCruce}";"${s.banco || ''}";"${s.bsf || ''}";"${s.usdt || ''}";"${s.cruceBatchId || ''}";"${s.date}"\n`;
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -847,7 +873,9 @@ export default function App() {
     const link = document.createElement("a");
     link.href = url;
     link.download = `backup_completo_disglobal_${localDate}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
@@ -1137,15 +1165,6 @@ export default function App() {
                 title="Exportar CSV"
               >
                 <Download size={15} className="text-black" />
-              </button>
-
-              <button
-                onClick={handleExportJSON}
-                className="p-2 bg-white text-black hover:bg-slate-100 border border-black flex items-center justify-center transition-all cursor-pointer header-action-btn"
-                style={{ borderRadius: '0px' }}
-                title="Exportar JSON"
-              >
-                <Terminal size={15} className="text-black" />
               </button>
 
               <button

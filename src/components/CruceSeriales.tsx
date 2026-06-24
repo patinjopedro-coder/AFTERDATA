@@ -381,6 +381,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       else if (rawStatus.includes('SUSPENDIDO')) finalStatus = 'SUSPENDIDO';
       else if (rawStatus.includes('CANCELADO')) finalStatus = 'CANCELADO';
       else if (rawStatus.includes('RECUPERADO')) finalStatus = 'RECUPERADO';
+      else if (rawStatus.includes('ENTREGADO')) finalStatus = 'ENTREGADO';
+      else if (rawStatus.includes('DISPONIBLE')) finalStatus = 'DISPONIBLE';
       else if (rawStatus.includes('N/A') || rawStatus === 'NA' || rawStatus.includes('N#A')) finalStatus = 'N#A';
       else if (rawStatus === 'SIN ESTATUS') finalStatus = 'SIN ESTATUS';
 
@@ -425,6 +427,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       else if (rawStatus.includes('SUSPENDIDO')) finalStatus = 'SUSPENDIDO';
       else if (rawStatus.includes('CANCELADO')) finalStatus = 'CANCELADO';
       else if (rawStatus.includes('RECUPERADO')) finalStatus = 'RECUPERADO';
+      else if (rawStatus.includes('ENTREGADO')) finalStatus = 'ENTREGADO';
+      else if (rawStatus.includes('DISPONIBLE')) finalStatus = 'DISPONIBLE';
       else if (rawStatus.includes('N/A') || rawStatus === 'NA' || rawStatus.includes('N#A')) finalStatus = 'N#A';
       else if (rawStatus === 'SIN ESTATUS') finalStatus = 'SIN ESTATUS';
 
@@ -479,6 +483,9 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           // Inmutablemente actualizar el elemento existente
           const existing = copy[idx];
           let updatedItem = { ...existing, cruceBatchId: newBatchId };
+          if (finalStatus && finalStatus !== 'SIN ESTATUS' && finalStatus !== 'N#A') {
+            updatedItem.status = finalStatus;
+          }
 
           if ('isCMS' in match && match.isCMS) {
             if (match.remitente) updatedItem = { ...updatedItem, remitente: match.remitente };
@@ -580,12 +587,13 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     const allSetKeys = Array.from(new Set([...emailUniques, ...fisicoUniques]));
     if (allSetKeys.length === 0) return;
 
-    let csv = "sep=;\nSERIAL;ESTADO\n";
+    let csv = "sep=;\nSERIAL;ESTADO;FECHA_INGRESO\n";
 
     for (const s of allSetKeys) {
       const matchMaster = lookupValidador(s);
       const status = matchMaster?.status || 'N#A';
-      csv += `"${s}";"${status}"\n`;
+      const date = matchMaster && 'date' in matchMaster ? (matchMaster.date || '') : '';
+      csv += `"${s}";"${status}";"${date}"\n`;
     }
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
@@ -593,7 +601,9 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     const link = document.createElement('a');
     link.href = url;
     link.download = `reporte_cruzado_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 

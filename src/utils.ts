@@ -119,7 +119,7 @@ export function exportToExcel(data: Record<string, any>[], filename: string): vo
 export function trackAndLogChanges(original: POSItem, updatedFields: Partial<POSItem>): POSItem {
   const fieldsToTrack: (keyof POSItem)[] = [
     'serial', 'status', 'remitente', 'rif', 'razonSocial', 'banco', 'ticket', 'destino', 
-    'observaciones', 'bsf', 'usdt', 'date', 'modeloManual', 'modeloNegocio', 'simNumber', 'operadora', 'responsable', 'sinCosto', 'salienteSinRecibir', 'simSustituto', 'simSustitutoNumber', 'entregadoDisglobal', 'entregadoA'
+    'observaciones', 'notaReparacion', 'bsf', 'usdt', 'date', 'modeloManual', 'modeloNegocio', 'simNumber', 'operadora', 'responsable', 'sinCosto', 'salienteSinRecibir', 'simSustituto', 'simSustitutoNumber', 'entregadoDisglobal', 'entregadoA'
   ];
   
   const changes: string[] = [];
@@ -142,6 +142,7 @@ export function trackAndLogChanges(original: POSItem, updatedFields: Partial<POS
           ticket: 'Ticket',
           destino: 'Destino',
           observaciones: 'Observaciones',
+          notaReparacion: 'Nota Reparación / Estado Físico',
           bsf: 'Monto BsF',
           usdt: 'Monto USDT',
           date: 'Fecha Ingreso',

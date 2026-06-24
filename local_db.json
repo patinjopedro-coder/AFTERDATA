@@ -1,6 +1,41 @@
 {
   "serialesDB": [
     {
+      "id": 31,
+      "serial": "ABC1000K",
+      "date": "2026-06-24",
+      "displayDate": "24/06/2026",
+      "status": "ENTREGADO",
+      "remitente": "PEDRO PATIÑO",
+      "source": "CRUCE DE CORREO Y FISICO",
+      "isCasillero": false,
+      "selected": false,
+      "rif": "",
+      "razonSocial": "",
+      "destino": "",
+      "observaciones": "DISPONIBLE - No encontrado en lista IMS",
+      "forro": false,
+      "bateria": false,
+      "cargador": false,
+      "caja": false,
+      "sim": false,
+      "simNumber": "",
+      "operadora": "DISPONIBLE",
+      "modeloManual": "",
+      "modeloNegocio": "",
+      "entregadoTecnico": false,
+      "esSustitucion": false,
+      "serialSustituto": "",
+      "fechaSalida": "",
+      "fechaSalidaCliente": "",
+      "guiaSalidaCliente": "",
+      "destinoSalida": "",
+      "fechaConfirmada": false,
+      "ticket": "",
+      "addedFromCruce": true,
+      "cruceBatchId": "LOTE - 24/06/2026 10:19:12"
+    },
+    {
       "id": 30,
       "serial": "TEST_SERIAL_MATCH_1",
       "date": "2026-06-13",
@@ -412,7 +447,7 @@
       "operadora": "MOVISTAR",
       "modeloManual": "G2",
       "modeloNegocio": "COMODATO",
-      "entregadoTecnico": false,
+      "entregadoTecnico": true,
       "esSustitucion": true,
       "serialSustituto": "4465411214",
       "fechaSalida": "",
@@ -601,7 +636,8 @@
       ],
       "simSustituto": true,
       "entregadoDisglobal": true,
-      "entregadoA": "CLIENTE1"
+      "entregadoA": "CLIENTE1",
+      "simSustitutoNumber": ""
     },
     {
       "id": 18,
@@ -1195,7 +1231,7 @@
       "fechaSalidaCliente": "2025-04-10",
       "guiaSalidaCliente": "GUIACLIE001",
       "destinoSalida": "VALENCIA",
-      "fechaConfirmada": false,
+      "fechaConfirmada": true,
       "ticket": "",
       "responsable": "PEDRO PATIÑO",
       "history": [
@@ -1456,12 +1492,25 @@
       "ubicacion": "",
       "telefono": "",
       "genero": "FEMENINO"
+    },
+    "CLIENTE1": {
+      "remitenteId": "CLIENTE1",
+      "nombreCompleto": "CLIENTE1",
+      "isUsuario": true,
+      "isCliente": false,
+      "area": "",
+      "cargo": "",
+      "rif": "",
+      "razonSocial": "",
+      "ubicacion": "",
+      "telefono": "",
+      "genero": "FEMENINO"
     }
   },
-  "currentTab": "standby",
+  "currentTab": "cruce",
   "simCardBatchesDB": [],
   "standbyListDB": [],
-  "activeCruceBatchIdDB": "LOTE - 07/06/2026 02:49:34",
-  "cruce_emailText": "",
-  "cruce_fisicoText": ""
+  "activeCruceBatchIdDB": "LOTE - 24/06/2026 10:19:12",
+  "cruce_emailText": "ABC1000K",
+  "cruce_fisicoText": "ABC1000K"
 }

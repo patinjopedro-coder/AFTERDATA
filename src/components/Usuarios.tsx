@@ -75,9 +75,9 @@ const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10
     <g mask="url(#female-avatar-mask-v3)">
       {/* Background Hair (Long, loose hair behind shoulders) */}
       {/* Left Back Hair (Shadow) */}
-      <path d="M 32 35 C 26 45, 22 60, 24 78 C 26 84, 40 90, 50 90 L 50 35 Z" fill="#0f172a" />
+      <path d="M 34 35 C 33 45, 32 60, 32 78 C 32 84, 40 90, 50 90 L 50 35 Z" fill="#0f172a" />
       {/* Right Back Hair (Highlight) */}
-      <path d="M 50 35 L 50 90 C 60 90, 74 84, 76 78 C 78 60, 74 45, 68 35 Z" fill="#1e293b" />
+      <path d="M 50 35 L 50 90 C 60 90, 68 84, 68 78 C 68 60, 67 45, 66 35 Z" fill="#1e293b" />
 
       {/* Neck base with shadow on the left */}
       <path d="M 43 48 C 43 48, 42 53, 42 58 L 50 58 L 50 48 Z" fill="#e8a38c" />
@@ -99,23 +99,21 @@ const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10
       {/* White Shirt Highlight (Right) - Slimmer Shoulders */}
       <path d="M 50 58 C 70 58, 78 75, 82 100 L 50 100 Z" fill="#ffffff" />
       
-      {/* Exposed V-Neck skin area */}
-      {/* Left skin shadow */}
-      <path d="M 42 58 L 50 68 L 50 58 Z" fill="#e8a38c" />
-      {/* Right skin highlight */}
-      <path d="M 50 58 L 50 68 L 58 58 Z" fill="#fcd5c0" />
-
-      {/* V-Neck Collar Bands */}
-      {/* Left band (Shadow) */}
-      <path d="M 40 58 L 50 71 L 50 68 L 42 58 Z" fill="#e2e8f0" />
-      {/* Right band (Highlight) */}
-      <path d="M 50 71 L 60 58 L 58 58 L 50 68 Z" fill="#ffffff" />
+      {/* Collar Shadow (Left) */}
+      <path d="M 50 58 L 37 58 L 44 66 Z" fill="#e2e8f0" />
+      {/* Collar Highlight (Right) */}
+      <path d="M 50 58 L 63 58 L 56 66 Z" fill="#ffffff" />
+      
+      {/* Black Tie Knot */}
+      <path d="M 47.5 62 L 52.5 62 L 51.5 67 L 48.5 67 Z" fill="#111827" />
+      {/* Black Tie Body */}
+      <path d="M 48.5 67 L 51.5 67 L 53 98 L 50 100 L 47 98 Z" fill="#111827" />
 
       {/* Foreground Hair (Long, loose strands flowing in front of shoulders with pointy ends) */}
       {/* Left Front Hair (Shadow) */}
-      <path d="M 50 20 C 36 20, 30 30, 30 46 C 30 58, 31 68, 34 78 L 35 78 C 36 68, 36 58, 36 44 C 36 32, 42 29, 50 29 Z" fill="#0f172a" />
+      <path d="M 50 20 C 38 20, 34 30, 34 46 C 34 58, 34.5 68, 35 78 L 36 78 C 37.5 68, 37.5 58, 37 44 C 37 32, 43 29, 50 29 Z" fill="#0f172a" />
       {/* Right Front Hair (Highlight) */}
-      <path d="M 50 20 C 64 20, 70 30, 70 46 C 70 58, 69 68, 66 78 L 65 78 C 64 68, 64 58, 64 44 C 64 32, 58 29, 50 29 Z" fill="#1e293b" />
+      <path d="M 50 20 C 62 20, 66 30, 66 46 C 66 58, 65.5 68, 65 78 L 64 78 C 62.5 68, 62.5 58, 63 44 C 63 32, 57 29, 50 29 Z" fill="#1e293b" />
     </g>
   </svg>
 );

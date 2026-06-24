@@ -151,7 +151,9 @@ export const StandBy: React.FC<StandByProps> = ({
     const link = document.createElement('a');
     link.href = url;
     link.download = `standby_reporte_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
 
