@@ -48,6 +48,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<POSItem | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<POSItem>>({});
+  const [isBatchSearchOpen, setIsBatchSearchOpen] = useState(false);
+  const [batchSearchInput, setBatchSearchInput] = useState('');
 
   const handleCopyText = async (text: string, key: string) => {
     await copyToClipboard(text);
@@ -265,6 +267,123 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               className="px-4 py-2 text-xs font-bold uppercase bg-[#0a0a0a] hover:bg-slate-800 text-white cursor-pointer"
               style={{ borderRadius: '4px' }}
             >Guardar Cambios</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderBatchSearchModal = () => {
+    if (!isBatchSearchOpen) return null;
+
+    const searchSerials = batchSearchInput
+      .split(/[\n,;\s]+/)
+      .map(s => s.trim().toUpperCase())
+      .filter(Boolean);
+
+    const results = searchSerials.map(searchSerial => {
+      const match = serials.find(s => s.serial.trim().toUpperCase() === searchSerial);
+      return {
+        serial: searchSerial,
+        found: !!match,
+        status: match ? match.status : 'NO REGISTRADO',
+        date: match ? (match.displayDate || match.date.split('-').reverse().join('/')) : '-'
+      };
+    });
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div className="bg-white w-full max-w-4xl mx-4 shadow-2xl flex flex-col" style={{ borderRadius: '4px', border: '1px solid #e2e8f0', height: '80vh', maxHeight: '600px' }}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 shrink-0">
+            <div className="flex items-center gap-2">
+              <Search size={16} className="text-slate-900" />
+              <span className="text-xs font-black uppercase tracking-wider text-slate-900">Búsqueda por Lote</span>
+            </div>
+            <button onClick={() => { setIsBatchSearchOpen(false); setBatchSearchInput(''); }} className="p-1 hover:bg-slate-100 cursor-pointer" style={{ borderRadius: '4px' }}>
+              <X size={16} className="text-slate-600" />
+            </button>
+          </div>
+
+          <div className="flex-1 p-5 grid grid-cols-1 md:grid-cols-2 gap-5 overflow-hidden min-h-0">
+            {/* Columna Izquierda: Input */}
+            <div className="flex flex-col gap-2 h-full">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                Pegue la lista de seriales (uno por línea, o separados por comas/espacios)
+              </label>
+              <textarea
+                value={batchSearchInput}
+                onChange={e => setBatchSearchInput(e.target.value)}
+                placeholder="Ingrese los seriales aquí..."
+                className="flex-1 w-full text-xs p-3 bg-slate-50 border border-slate-200 text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300 resize-none font-mono"
+                style={{ borderRadius: '4px' }}
+              />
+              <div className="flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase shrink-0">
+                <span>Cantidad ingresada: {searchSerials.length}</span>
+                <button 
+                  onClick={() => setBatchSearchInput('')} 
+                  className="text-red-500 hover:text-red-700 cursor-pointer font-bold"
+                >
+                  Limpiar
+                </button>
+              </div>
+            </div>
+
+            {/* Columna Derecha: Resultados */}
+            <div className="flex flex-col gap-2 h-full overflow-hidden">
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider shrink-0">
+                Resultados de la búsqueda
+              </label>
+              <div className="flex-1 border border-slate-200 bg-slate-50 overflow-y-auto" style={{ borderRadius: '4px' }}>
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-slate-250 text-[9px] text-slate-500 font-bold uppercase tracking-wider sticky top-0 z-10">
+                      <th className="py-2 px-3">Serial</th>
+                      <th className="py-2 px-3">Status</th>
+                      <th className="py-2 px-3">Fecha Ingreso</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {results.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className="text-center py-10 text-slate-400 font-mono">
+                          Ingrese seriales a la izquierda para ver su información.
+                        </td>
+                      </tr>
+                    ) : (
+                      results.map((res, index) => (
+                        <tr key={index} className="hover:bg-slate-100 bg-white">
+                          <td className="py-2 px-3 font-semibold font-mono tracking-wider uppercase text-slate-800">
+                            {res.serial}
+                          </td>
+                          <td className="py-2 px-3">
+                            <span className={`inline-block px-1.5 py-0.5 rounded-none text-[10px] font-bold ${
+                              res.status === 'NO REGISTRADO' 
+                                ? 'bg-rose-100 text-rose-800' 
+                                : getStatusColor(res.status as POSStatus)
+                            }`}>
+                              {res.status}
+                            </span>
+                          </td>
+                          <td className="py-2 px-3 font-bold font-mono text-slate-700">
+                            {res.date}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2 shrink-0">
+            <button
+              onClick={() => { setIsBatchSearchOpen(false); setBatchSearchInput(''); }}
+              className="px-4 py-2 text-xs font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >
+              Cerrar
+            </button>
           </div>
         </div>
       </div>
@@ -1010,6 +1129,16 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <FileSpreadsheet size={12} />
                 EXPORTAR CSV
               </button>
+
+              <button
+                onClick={() => setIsBatchSearchOpen(true)}
+                className="btn-blue bg-blue-600 hover:bg-blue-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-blue-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
+                style={{ color: '#ffffff' }}
+                title="Búsqueda por lote de seriales"
+              >
+                <Search size={12} />
+                BÚSQUEDA POR LOTE
+              </button>
             </div>
           </div>
 
@@ -1345,6 +1474,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       </div>
 
       {renderEditModal()}
+      {renderBatchSearchModal()}
     </div>
   );
 };

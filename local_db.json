@@ -1220,10 +1220,10 @@
       "razonSocial": "EMPRESA X",
       "destino": "MARACAY",
       "observaciones": "",
-      "forro": false,
-      "bateria": false,
-      "cargador": false,
-      "caja": false,
+      "forro": true,
+      "bateria": true,
+      "cargador": true,
+      "caja": true,
       "sim": true,
       "simNumber": "8901234567890",
       "operadora": "MOVISTAR",
@@ -1512,7 +1512,7 @@
       "genero": "FEMENINO"
     }
   },
-  "currentTab": "casillero",
+  "currentTab": "general",
   "simCardBatchesDB": [],
   "standbyListDB": [],
   "activeCruceBatchIdDB": "LOTE - 24/06/2026 10:19:12",
