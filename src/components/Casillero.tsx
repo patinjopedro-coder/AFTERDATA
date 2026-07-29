@@ -41,6 +41,21 @@ export const Casillero: React.FC<CasilleroProps> = ({
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 1500);
   };
+
+  const getTagClass = (value?: string) => {
+    const normalized = (value || '').toUpperCase().trim();
+    switch (normalized) {
+      case 'COMODATO':
+        return 'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700';
+      case 'BASICO':
+        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600';
+      case 'CASILLERO':
+        return 'inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700';
+      default:
+        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500';
+    }
+  };
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 50;
 
@@ -985,9 +1000,14 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           {/* 2. MODELO DE NEGOCIO */}
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mod. Negocio:</span>
-                            <span className="text-[13px] font-bold font-arial text-slate-900 uppercase">
-                              {s.modeloNegocio || 'SIN ASIGNAR'}
-                            </span>
+                            <div className="flex flex-wrap items-center justify-end gap-1">
+                              {s.isCasillero && <span className={getTagClass('CASILLERO')}>CASILLERO</span>}
+                              {s.modeloNegocio ? (
+                                <span className={getTagClass(s.modeloNegocio)}>{s.modeloNegocio}</span>
+                              ) : (
+                                <span className={getTagClass('')}>SIN ASIGNAR</span>
+                              )}
+                            </div>
                           </div>
 
                           {/* OPERADORA */}

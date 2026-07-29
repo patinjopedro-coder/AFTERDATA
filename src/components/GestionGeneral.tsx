@@ -49,6 +49,20 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [editingItem, setEditingItem] = useState<POSItem | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<POSItem>>({});
   const [isBatchSearchOpen, setIsBatchSearchOpen] = useState(false);
+
+  const getTagClass = (value?: string) => {
+    const normalized = (value || '').toUpperCase().trim();
+    switch (normalized) {
+      case 'COMODATO':
+        return 'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700';
+      case 'BASICO':
+        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600';
+      case 'CASILLERO':
+        return 'inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700';
+      default:
+        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500';
+    }
+  };
   const [batchSearchInput, setBatchSearchInput] = useState('');
 
   const handleCopyText = async (text: string, key: string) => {
@@ -1300,11 +1314,19 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                                 </span>
                               )}
                             </span>
-                            {(s.ticket || s.isCasillero) && (
-                              <div className="text-[9px] text-slate-500 font-semibold font-arial uppercase pl-3.5">
-                                {s.ticket && `TKT: ${s.ticket}`}
-                                {s.ticket && s.isCasillero && ' | '}
-                                {s.isCasillero && 'CASILLERO'}
+                            {(s.ticket || s.isCasillero || s.modeloNegocio) && (
+                              <div className="flex flex-wrap items-center gap-1 pl-3.5">
+                                {s.ticket && (
+                                  <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-600">
+                                    TKT: {s.ticket}
+                                  </span>
+                                )}
+                                {s.isCasillero && (
+                                  <span className={getTagClass('CASILLERO')}>CASILLERO</span>
+                                )}
+                                {s.modeloNegocio && (
+                                  <span className={getTagClass(s.modeloNegocio)}>{s.modeloNegocio}</span>
+                                )}
                               </div>
                             )}
                           </div>
