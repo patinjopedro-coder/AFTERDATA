@@ -868,7 +868,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             </datalist>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Ubicación de Origen</label>
+            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Origen</label>
             <input
               type="text"
               value={destino}
@@ -963,7 +963,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               className={`w-full text-sm p-2.5 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 col-span-2">
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Banco</label>
             <input
               type="text"
