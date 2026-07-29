@@ -671,7 +671,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button 
                 onClick={() => setEmailViewMode(prev => prev === 'visual' ? 'edit' : 'visual')}
                 disabled={emailText === ''}
-                className={`px-2.5 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-slate-200 shadow-sm rounded-md cursor-pointer transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-2.5 py-1 text-[10px] font-bold uppercase bg-white text-black border border-slate-200 shadow-sm rounded-full header-action-btn cursor-pointer transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${
                   emailViewMode === 'visual' 
                     ? '' 
                     : ''
@@ -687,7 +687,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setEmailViewMode('edit');
                 }}
                 disabled={emailText === ''}
-                className="px-2 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-slate-200 shadow-sm rounded-md cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-2 py-1 text-[10px] font-bold uppercase bg-white text-black border border-slate-200 shadow-sm rounded-full header-action-btn cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Limpiar campo correo"
               >
                 <Trash2 size={10} />
@@ -767,7 +767,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button 
                 onClick={() => setFisicoViewMode(prev => prev === 'visual' ? 'edit' : 'visual')}
                 disabled={fisicoText === ''}
-                className={`px-2.5 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-slate-200 shadow-sm rounded-md cursor-pointer transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${
+                className={`px-2.5 py-1 text-[10px] font-bold uppercase bg-white text-black border border-slate-200 shadow-sm rounded-full header-action-btn cursor-pointer transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${
                   fisicoViewMode === 'visual' 
                     ? '' 
                     : ''
@@ -783,7 +783,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setFisicoViewMode('edit');
                 }}
                 disabled={fisicoText === ''}
-                className="px-2 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-slate-200 shadow-sm rounded-md cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-2 py-1 text-[10px] font-bold uppercase bg-white text-black border border-slate-200 shadow-sm rounded-full header-action-btn cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Limpiar campo físico"
               >
                 <Trash2 size={10} />
@@ -951,7 +951,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
           <button
             onClick={limpiarTodo}
-            className="px-4 py-2 toggle-inactive text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 justify-center"
+            className="px-4 py-2 bg-white text-black border border-slate-200 rounded-full header-action-btn text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 justify-center cursor-pointer"
           >
             <Trash2 size={13} />
             <span>Limpiar Campos</span>

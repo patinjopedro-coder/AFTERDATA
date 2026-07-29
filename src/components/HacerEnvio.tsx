@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { EnvioExterno, POSItem } from '../types';
 import { formatRif, copyToClipboard } from '../utils';
-import { Send, FileSymlink, Trash2, Search, ClipboardList, Check } from 'lucide-react';
+import { Trash2, Search, ClipboardList, Check } from 'lucide-react';
 
 interface HacerEnvioProps {
   enviosExternos: EnvioExterno[];
@@ -123,105 +123,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
   }, [enviosExternos, search]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 text-slate-800">
-      
-      {/* FORMULARIO DE CREACIÓN */}
-      <div className="lg:col-span-1 dark-panel p-5 flex flex-col gap-4">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <FileSymlink className="text-slate-900 w-5 h-5" />
-          <h3 className="font-bold text-sm tracking-wider text-slate-900">REGISTRAR ENVÍO</h3>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Fecha Salida</label>
-            <input
-              type="date"
-              value={fecha}
-              onChange={e => setFecha(e.target.value)}
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 font-semibold uppercase focus:outline-none focus:ring-2 focus:ring-slate-200"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Número de Guía de Salida</label>
-            <input
-              type="text"
-              value={guia}
-              onChange={e => setGuia(e.target.value)}
-              placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 uppercase font-mono focus:outline-none focus:ring-2 focus:ring-slate-200"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial del Equipo (POS)</label>
-            <input
-              type="text"
-              value={serial}
-              onChange={e => setSerial(e.target.value)}
-              placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 uppercase font-mono focus:outline-none focus:ring-2 focus:ring-slate-200"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Cédula / RIF</label>
-            <input
-              type="text"
-              value={rif}
-              onChange={e => setRif(e.target.value)}
-              placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-slate-200"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Razón Social Cliente</label>
-            <input
-              type="text"
-              value={razonSocial}
-              onChange={e => setRazonSocial(e.target.value)}
-              placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-slate-200"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Destino</label>
-            <input
-              type="text"
-              value={destino}
-              onChange={e => setDestino(e.target.value)}
-              placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-slate-200"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Nro de Ticket</label>
-            <input
-              type="text"
-              value={ticket}
-              onChange={e => setTicket(e.target.value)}
-              placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 uppercase font-mono focus:outline-none focus:ring-2 focus:ring-slate-200"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white-force rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer border border-transparent shadow-sm"
-          >
-            <Send size={12} className="text-white-force" />
-            <span className="text-white-force">Registrar Envío</span>
-          </button>
-        </form>
-
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-slate-800">
 
       {/* REGISTRO DE ENVÍOS ALMACENADOS */}
       <div className="lg:col-span-3 flex flex-col gap-4">

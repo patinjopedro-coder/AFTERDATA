@@ -1511,6 +1511,34 @@
       "telefono": "",
       "genero": "FEMENINO"
     }
+    ,
+    "GENYERLING": {
+      "remitenteId": "GENYERLING",
+      "nombreCompleto": "Genyerling",
+      "isUsuario": true,
+      "isCliente": false,
+      "area": "",
+      "cargo": "SUPERVISORA NEXGO",
+      "rif": "",
+      "razonSocial": "",
+      "ubicacion": "",
+      "telefono": "",
+      "genero": ""
+    }
+    ,
+    "MURACHI": {
+      "remitenteId": "MURACHI",
+      "nombreCompleto": "Murachi",
+      "isUsuario": true,
+      "isCliente": false,
+      "area": "",
+      "cargo": "OPERADORA NEXGO",
+      "rif": "",
+      "razonSocial": "",
+      "ubicacion": "",
+      "telefono": "",
+      "genero": ""
+    }
   },
   "currentTab": "general",
   "simCardBatchesDB": [],

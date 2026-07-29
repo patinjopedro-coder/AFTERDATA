@@ -832,7 +832,6 @@ export const Casillero: React.FC<CasilleroProps> = ({
             title="Filtrar por entregados a usuarios de Disglobal"
           >
             <Check size={14} className={filterEntregadosDisglobal ? 'text-white' : 'text-slate-700'} />
-            <span>{filterEntregadosDisglobal ? 'FILTRADO: DISGLOBAL' : 'VER DISGLOBAL'}</span>
           </button>
 
           <button

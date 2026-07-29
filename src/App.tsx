@@ -8,7 +8,7 @@ import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords,
 import { GestionGeneral } from './components/GestionGeneral';
 import { LogoIcon } from './components/LogoIcon';
 import { Casillero } from './components/Casillero';
-import { HacerEnvio } from './components/HacerEnvio';
+// HacerEnvio removed from main UI
 import { CruceSeriales } from './components/CruceSeriales';
 import { EquiposEnviados } from './components/EquiposEnviados';
 import { Modelos } from './components/Modelos';
@@ -25,6 +25,7 @@ import {
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
   Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut
 } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 export default function App() {
   // -------------------------------------------------------------
@@ -79,6 +80,17 @@ export default function App() {
   // Notifications Menu State
   const [showNotificationsMenu, setShowNotificationsMenu] = useState(false);
 
+  // Registros (audit trail) state
+  const [registros, setRegistros] = useState<Array<{time:string; action:string; target:string; details?:string}>>([]);
+  const prevSerialsRef = useRef<POSItem[]>([]);
+  const prevEnviosRef = useRef<EnvioExterno[]>([]);
+
+  const pushRegistro = (action: string, target: string, details?: string) => {
+    const time = new Date().toISOString();
+    setRegistros(prev => [{ time, action, target, details }, ...prev]);
+  };
+
+
   // -------------------------------------------------------------
   // LOAD ALL DATA FROM INDEXEDDB ON MOUNT
   // db.ts handles automatic migration from localStorage automatically
@@ -117,7 +129,11 @@ export default function App() {
           return item;
         });
         setSerials(sanitizeSerials(cleanedSerials));
+        // initialize prev refs
+        prevSerialsRef.current = sanitizeSerials(cleanedSerials);
         setEnviosExternos(Array.isArray(loadedEnvios) ? loadedEnvios : []);
+        // initialize prev envios ref
+        prevEnviosRef.current = Array.isArray(loadedEnvios) ? loadedEnvios : [];
         setModelosDB(loadedModelos && typeof loadedModelos === 'object' ? loadedModelos : INITIAL_MODELS);
         setUsersProfiles(loadedProfiles && typeof loadedProfiles === 'object' ? loadedProfiles : {});
         setCurrentTab(typeof loadedTab === 'string' ? loadedTab : 'general');
@@ -935,6 +951,32 @@ export default function App() {
     }
   }, [uniqueBatches, activeCruceBatchId, isLoading]);
 
+  // Detect changes to serials and record simple registros
+  useEffect(() => {
+    const prev = prevSerialsRef.current || [];
+    const added = serials.filter(s => !prev.some(p => p.id === s.id));
+    const removed = prev.filter(p => !serials.some(s => s.id === p.id));
+    added.forEach(a => pushRegistro('AGREGADO_SERIAL', a.serial || String(a.id), JSON.stringify({ id: a.id })));
+    removed.forEach(r => pushRegistro('ELIMINADO_SERIAL', r.serial || String(r.id), JSON.stringify({ id: r.id })));
+    prevSerialsRef.current = serials.slice();
+    // persist registros to DB quickly
+    setDBItem('registrosDB', registros);
+  }, [serials]);
+
+  useEffect(() => {
+    const prev = prevEnviosRef.current || [];
+    const added = enviosExternos.filter(e => !prev.some(p => p.guia === e.guia && p.serial === e.serial));
+    const removed = prev.filter(p => !enviosExternos.some(e => e.guia === p.guia && e.serial === p.serial));
+    added.forEach(a => pushRegistro('AGREGADO_ENVIO', a.serial || '', `guia:${a.guia}`));
+    removed.forEach(r => pushRegistro('ELIMINADO_ENVIO', r.serial || '', `guia:${r.guia}`));
+    prevEnviosRef.current = enviosExternos.slice();
+  }, [enviosExternos]);
+
+  // persist registros whenever they change
+  useEffect(() => {
+    setDBItem('registrosDB', registros);
+  }, [registros]);
+
   // -------------------------------------------------------------
   // LOADING SCREEN
   // -------------------------------------------------------------
@@ -968,6 +1010,13 @@ export default function App() {
     );
   }
 
+  const storedUserRaw = localStorage.getItem('disglobal_username') || 'PEDRO';
+  const currentUserKey = storedUserRaw.toUpperCase();
+  const currentProfile = usersProfiles[currentUserKey] || { nombreCompleto: storedUserRaw, cargo: '' };
+  const displayName = (currentProfile.nombreCompleto || storedUserRaw).toUpperCase();
+  const displayCargo = (currentProfile.cargo || '').toUpperCase();
+  const displayInitial = (currentProfile.nombreCompleto ? currentProfile.nombreCompleto.charAt(0) : storedUserRaw.charAt(0)).toUpperCase();
+
   return (
     <div className="min-h-screen bg-[#08080a] text-zinc-300 flex font-sans antialiased overflow-hidden h-screen">
 
@@ -997,13 +1046,13 @@ export default function App() {
             {[
               { id: 'general', label: 'Gestión General', icon: Home },
               { id: 'casillero', label: 'Casillero', icon: Flag },
-              { id: 'hacerEnvio', label: 'Hacer Envío', icon: ArrowUpRight },
               { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
               { id: 'standby', label: 'Stand-by', icon: Clock },
               { id: 'envios', label: 'Equipos Enviados', icon: FileSpreadsheet },
               { id: 'simcards', label: 'Gestión de SIM-Cards', icon: CardSim },
               { id: 'modelos', label: 'Modelos Registrados', icon: Smartphone },
               { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
+              { id: 'registros', label: 'Registros', icon: FileText },
               { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users }
             ].map(t => {
               const Icon = t.icon;
@@ -1058,13 +1107,13 @@ export default function App() {
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
               {currentTab === 'general' && 'Gestión General de Seriales'}
               {currentTab === 'casillero' && 'Control de Casillero'}
-              {currentTab === 'hacerEnvio' && 'Envío Logístico'}
               {currentTab === 'cruce' && 'Cruce Inteligente de Seriales'}
               {currentTab === 'standby' && 'Equipos en Camino (Stand-by)'}
               {currentTab === 'envios' && 'Equipos Despachados / Enviados'}
               {currentTab === 'simcards' && 'Gestión de SIM-Cards / Historial de Anulaciones'}
               {currentTab === 'modelos' && 'Configuración de Modelos'}
               {currentTab === 'estadisticas' && 'Métricas y Estadísticas'}
+              {currentTab === 'registros' && 'Registros del Sistema'}
               {currentTab === 'usuarios' && 'Directorio de Remitentes'}
             </h2>
           </div>
@@ -1185,22 +1234,22 @@ export default function App() {
                 onClick={() => setShowUserMenu(!showUserMenu)}
               >
                 <div className="text-right hidden sm:block">
-                  <div className="text-[14px] font-bold text-slate-800 uppercase font-arial leading-none">PEDRO</div>
-                  <div className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wider font-arial leading-none">ESPECIALISTA EN NEXGO</div>
+                    <div className="text-[14px] font-bold text-slate-800 uppercase font-arial leading-none">{displayName}</div>
+                    <div className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wider font-arial leading-none">{displayCargo}</div>
                 </div>
 
                 {/* Profile Image Circle representation */}
-                <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-300 shadow-sm select-none">
-                  P
-                </div>
+                  <div className="w-9 h-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs border border-slate-300 shadow-sm select-none">
+                    {displayInitial}
+                  </div>
               </div>
 
               {/* Dropdown Menu */}
               {showUserMenu && (
                 <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl w-48 z-50 animate-fade-in overflow-hidden">
                   <div className="p-3 border-b border-slate-100">
-                    <div className="text-[14px] font-bold text-slate-800 uppercase font-arial">PEDRO</div>
-                    <div className="text-[11px] font-bold text-slate-400 mt-1 uppercase font-arial">ESPECIALISTA EN NEXGO</div>
+                      <div className="text-[14px] font-bold text-slate-800 uppercase font-arial">{displayName}</div>
+                      <div className="text-[11px] font-bold text-slate-400 mt-1 uppercase font-arial">{displayCargo}</div>
                   </div>
                   <button
                     onClick={handleLogout}
@@ -1319,14 +1368,28 @@ export default function App() {
             />
           </div>
 
-          <div className={currentTab === 'hacerEnvio' ? '' : 'hidden'}>
-            <HacerEnvio
-              enviosExternos={enviosExternos}
-              setEnviosExternos={setEnviosExternos}
-              serials={serials}
-              setSerials={setSerials}
-              activeCruceBatchId={activeCruceBatchId}
-            />
+          {/* HacerEnvio removed from nav - kept logic elsewhere if needed */}
+
+          <div className={currentTab === 'registros' ? '' : 'hidden'}>
+            <div className="p-6">
+              <div className="bg-white rounded-xl border p-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold uppercase text-sm">Registros del Sistema</h3>
+                </div>
+                <div className="mt-3 space-y-2 max-h-96 overflow-auto">
+                  {registros.length === 0 ? (
+                    <div className="text-sm text-slate-400 uppercase font-bold">No hay registros</div>
+                  ) : (
+                    registros.map((r, i) => (
+                      <div key={i} className="p-2 border rounded-md bg-white">
+                        <div className="text-[11px] text-slate-500">{new Date(r.time).toLocaleString()}</div>
+                        <div className="text-[13px] font-mono font-bold uppercase mt-1">{r.action} — {r.target} {r.details ? `(${r.details})` : ''}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className={currentTab === 'cruce' ? '' : 'hidden'}>
