@@ -1,9 +1,16 @@
-import { supabase } from './supabase'
+import { supabase, SUPABASE_TABLE_NAME, getSupabaseConfigError } from './supabase'
 
 // Función para guardar un nuevo registro
 export async function guardarRegistro(datosNuevoEquipo) {
+  const configError = getSupabaseConfigError()
+  if (configError || !supabase) {
+    console.error(configError || 'No hay cliente de Supabase inicializado.')
+    alert('Falta la configuración de Supabase. Revisa VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.')
+    return
+  }
+
   const { data, error } = await supabase
-    .from('registros')
+    .from(SUPABASE_TABLE_NAME)
     .insert([
       {
         serial: datosNuevoEquipo.serial,
@@ -23,8 +30,14 @@ export async function guardarRegistro(datosNuevoEquipo) {
 
 // Función para cargar los registros en pantalla
 export async function obtenerRegistros() {
+  const configError = getSupabaseConfigError()
+  if (configError || !supabase) {
+    console.error(configError || 'No hay cliente de Supabase inicializado.')
+    return []
+  }
+
   const { data, error } = await supabase
-    .from('registros')
+    .from(SUPABASE_TABLE_NAME)
     .select('*')
     .order('created_at', { ascending: false })
 

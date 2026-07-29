@@ -1,7 +1,21 @@
 import { createClient } from '@supabase/supabase-js'
 
 // Estas líneas leen automáticamente las variables que guardamos en Vercel y en tu entorno local
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim()
+const rawSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim()
+const rawTableName = import.meta.env.VITE_SUPABASE_TABLE_NAME?.trim() || 'registros'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+const supabaseUrl = rawSupabaseUrl?.replace(/\/+$/, '') || ''
+const supabaseAnonKey = rawSupabaseAnonKey || ''
+
+export const SUPABASE_TABLE_NAME = rawTableName
+
+export const supabase = supabaseUrl && supabaseAnonKey
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null
+
+export function getSupabaseConfigError() {
+  if (!supabaseUrl) return 'Falta VITE_SUPABASE_URL en las variables de entorno.'
+  if (!supabaseAnonKey) return 'Falta VITE_SUPABASE_ANON_KEY en las variables de entorno.'
+  return null
+}
