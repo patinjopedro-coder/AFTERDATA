@@ -212,10 +212,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     const hit = maestroMap[cleanSerial];
     if (hit) return hit;
 
-    // Default fallback rule if not registered: Status N#A and classified as DISPONIBLE
+    // Default fallback rule if not registered: status SIN ESTATUS with gray badge
     return {
       serial: cleanSerial,
-      status: 'N#A' as POSStatus,
+      status: 'SIN ESTATUS' as POSStatus,
       operadora: 'DISPONIBLE',
       simNumber: '',
       ticket: ''
@@ -374,8 +374,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       const serialNum = sLines[i];
       if (!serialNum) continue;
 
-      const rawStatus = stLines[i] || 'N#A';
-      let finalStatus: POSStatus = 'N#A';
+      const rawStatus = stLines[i] || 'SIN ESTATUS';
+      let finalStatus: POSStatus = 'SIN ESTATUS';
       if (rawStatus.includes('PENDIENTE')) finalStatus = 'PENDIENTE';
       else if (rawStatus.includes('ACTIVO')) finalStatus = 'ACTIVO';
       else if (rawStatus.includes('SUSPENDIDO')) finalStatus = 'SUSPENDIDO';
@@ -421,8 +421,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       const serialNum = sLines[i];
       if (!serialNum) continue;
 
-      const rawStatus = stLines[i] || 'PENDIENTE';
-      let finalStatus: POSStatus = 'PENDIENTE';
+      const rawStatus = stLines[i] || 'SIN ESTATUS';
+      let finalStatus: POSStatus = 'SIN ESTATUS';
       if (rawStatus.includes('ACTIVO')) finalStatus = 'ACTIVO';
       else if (rawStatus.includes('SUSPENDIDO')) finalStatus = 'SUSPENDIDO';
       else if (rawStatus.includes('CANCELADO')) finalStatus = 'CANCELADO';
@@ -591,7 +591,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
     for (const s of allSetKeys) {
       const matchMaster = lookupValidador(s);
-      const status = matchMaster?.status || 'N#A';
+      const status = matchMaster?.status || 'SIN ESTATUS';
       const date = matchMaster && 'date' in matchMaster ? (matchMaster.date || '') : '';
       csv += `"${s}";"${status}";"${date}"\n`;
     }
@@ -704,15 +704,6 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 placeholder="Pegue aquí el listado de seriales que le han llegado al correo (separados por líneas, comas o puntos)..."
                 className="w-full flex-1 min-h-[220px] text-xs font-semibold p-3.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 placeholder-slate-400 transition-all font-sans"
               />
-              <button
-                onClick={() => {
-                  if (emailText.trim()) setEmailViewMode('visual');
-                }}
-                disabled={!emailText.trim()}
-                className="w-full py-1.5 btn-blue disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold uppercase cursor-pointer transition-all"
-              >
-                Procesar y Hacer Match
-              </button>
             </div>
           ) : (
             <div className="flex-1 flex flex-col gap-1 pr-1.5 space-y-1.5">

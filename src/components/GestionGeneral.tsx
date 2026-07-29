@@ -819,7 +819,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         </div>
 
         {/* GRID DE INGRESO DE DATOS COMPACTO */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
           {/* Fila 1: Guía y Serial */}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">N° Guía (Entrada)</label>
@@ -977,11 +977,10 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               {uniqueBancos.map(b => <option key={b} value={b} />)}
             </datalist>
           </div>
-        </div>
 
         {/* ACCESORIOS GESTION COMPLETA */}
-        <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+          <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
             <button
               type="button"
               onClick={() => setAccForro(!accForro)}
@@ -1061,7 +1060,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         </div>
 
         {/* Número SIM: placed below the accessory buttons, enabled only when SIM is checked */}
-        <div className="mt-3">
+        <div className="col-span-3 mt-3">
           <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Número SIM</label>
           <input
             type="text"
@@ -1074,6 +1073,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             }`}
           />
         </div>
+      </div>
 
         <button
           onClick={handleRegister}

@@ -994,9 +994,6 @@ export default function App() {
           <p className="text-slate-800 font-mono text-xs uppercase tracking-[0.2em]">
             Cargando base de datos...
           </p>
-          <p className="text-slate-500 font-mono text-[10px] tracking-wider">
-            TRACKING · IndexedDB
-          </p>
         </div>
         <div className="flex gap-1.5 mt-2">
           {[0, 1, 2].map(i => (
@@ -1049,7 +1046,7 @@ export default function App() {
               { id: 'casillero', label: 'Casillero', icon: Flag },
               { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
               { id: 'standby', label: 'Stand-by', icon: Clock },
-              { id: 'envios', label: 'Equipos Enviados', icon: FileSpreadsheet },
+              { id: 'envios', label: 'Equipos Enviados', icon: Send },
               { id: 'simcards', label: 'Gestión de SIM-Cards', icon: CardSim },
               { id: 'modelos', label: 'Modelos Registrados', icon: Smartphone },
               { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
@@ -1078,18 +1075,8 @@ export default function App() {
         </div>
 
         {/* Estatus en el pie del Sidebar */}
-        <div className={`border-t border-slate-200 pt-4 p-4 text-[9px] text-slate-400 font-mono flex flex-col gap-1.5 ${isSidebarCollapsed ? 'items-center' : ''}`}>
-          {!isSidebarCollapsed ? (
-            <>
-              <span>© {new Date().getFullYear()} TRACKING</span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-600"></span>
-                Storage: IndexedDB
-              </span>
-            </>
-          ) : (
-            <span className="w-2.5 h-2.5 rounded-full bg-green-600 animate-pulse" title="Storage Connected"></span>
-          )}
+        <div className="border-t border-slate-200 pt-4 p-4 text-[9px] text-slate-400 font-mono flex flex-col gap-1.5">
+          <span>© {new Date().getFullYear()} TRACKING</span>
         </div>
       </aside>
 

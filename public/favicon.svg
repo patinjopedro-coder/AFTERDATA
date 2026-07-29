@@ -1,38 +1,17 @@
-<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Letra 'D' de fondo -->
-  <path 
-    d="M 25 25 H 46 M 74 25 H 75 A 40 40 0 0 1 75 105 H 35 A 10 10 0 0 1 25 95 V 35" 
-    stroke="#1e293b" 
-    stroke-width="5.5" 
-    stroke-linecap="round" 
-    stroke-linejoin="round"
-  />
-  
-  <!-- Dispositivo POS (Punto de Venta) -->
-  <g stroke="#1e293b" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round">
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="24" fill="#0f172a" />
+  <g stroke="#ffffff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
     <!-- Cuerpo del POS -->
-    <rect x="42" y="38" width="36" height="58" rx="6" fill="none" />
-    <!-- Rollo de papel superior -->
-    <path d="M 48 38 V 34 C 48 32 50 30 52 30 H 68 C 70 30 72 32 72 34 V 38" fill="none" />
-    <!-- Líneas del papel -->
-    <path d="M 52 30 V 15 M 60 30 V 15 M 68 30 V 15" />
+    <rect x="38" y="40" width="44" height="56" rx="10" />
     <!-- Pantalla -->
-    <rect x="48" y="46" width="24" height="22" rx="3" fill="none" />
+    <rect x="46" y="48" width="28" height="18" rx="4" />
+    <!-- Papel térmico / impresora -->
+    <path d="M 44 40 V 32 C 44 28 48 24 52 24 H 68 C 72 24 76 28 76 32 V 40" />
+    <path d="M 52 24 V 18 M 60 24 V 18" />
+    <!-- Base y botón de pago -->
+    <path d="M 38 96 H 82" />
+    <rect x="50" y="72" width="8" height="8" rx="2" fill="#ffffff" />
+    <rect x="64" y="72" width="8" height="8" rx="2" fill="#ffffff" />
   </g>
-  
-  <!-- Botones del teclado -->
-  <g fill="#1e293b">
-    <!-- Fila 1 -->
-    <rect x="48" y="73" width="4" height="4" rx="1" />
-    <rect x="58" y="73" width="4" height="4" rx="1" />
-    <rect x="68" y="73" width="4" height="4" rx="1" />
-    <!-- Fila 2 -->
-    <rect x="48" y="80" width="4" height="4" rx="1" />
-    <rect x="58" y="80" width="4" height="4" rx="1" />
-    <rect x="68" y="80" width="4" height="4" rx="1" />
-    <!-- Fila 3 -->
-    <rect x="48" y="87" width="4" height="4" rx="1" />
-    <rect x="58" y="87" width="4" height="4" rx="1" />
-    <rect x="68" y="87" width="4" height="4" rx="1" />
-  </g>
+  <circle cx="54" cy="88" r="3" fill="#ffffff" />
 </svg>
