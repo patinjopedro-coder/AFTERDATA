@@ -1092,38 +1092,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
           <div className="flex flex-wrap items-center gap-3 pb-3 border-b border-slate-100 w-full">
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider min-w-[110px]">Acciones en lote:</span>
             <div className="flex flex-wrap gap-1.5 items-center flex-1 justify-end">
-              <select
-                value={bulkStatus}
-                onChange={e => setBulkStatus(e.target.value as POSStatus)}
-                className="bulk-select focus:outline-none cursor-pointer"
-              >
-                <option value="PENDIENTE">PENDIENTE</option>
-                <option value="ACTIVO">ACTIVO</option>
-                <option value="SUSPENDIDO">SUSPENDIDO</option>
-                <option value="CANCELADO">CANCELADO</option>
-                <option value="N#A">N#A</option>
-                <option value="RECUPERADO">RECUPERADO</option>
-                <option value="DISPONIBLE">DISPONIBLE</option>
-                <option value="ENTREGADO">ENTREGADO</option>
-                <option value="SIN ESTATUS">SIN ESTATUS</option>
-              </select>
-              
-              <button
-                onClick={applyBulkStatusToPage}
-                className="btn-blue bg-blue-600 hover:bg-blue-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-blue-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force"
-                style={{ color: '#ffffff' }}
-              >
-                APLICAR A PÁGINA
-              </button>
-              
-              <button
-                onClick={applyBulkStatusToSelected}
-                className="btn-blue bg-blue-600 hover:bg-blue-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-blue-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force"
-                style={{ color: '#ffffff' }}
-              >
-                APLICAR A SELECCIONADOS
-              </button>
-              
               <button
                 onClick={deleteSelectedSerials}
                 className="btn-red bg-red-500 hover:bg-red-600 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-red-500 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
@@ -1153,45 +1121,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <Search size={12} />
                 BÚSQUEDA POR LOTE
               </button>
-            </div>
-          </div>
-
-          {/* Fila 2: Filtros de Estado */}
-          <div className="flex flex-wrap items-center gap-3 w-full">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider min-w-[110px]">Filtrar por estado:</span>
-            <div className="flex flex-wrap gap-1.5 items-center flex-1">
-              {(['TODOS', 'PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'CANCELADO', 'RECUPERADO', 'DISPONIBLE', 'N#A', 'SIN ESTATUS'] as const).map(f => {
-                const count = serials.filter(s => {
-                  const modelInfo = getTerminalModel(s.serial, modelosDB);
-                  const matchesGlobal = !globalSearch || 
-                    s.serial.toLowerCase().includes(globalSearch.toLowerCase()) || 
-                    s.remitente.toLowerCase().includes(globalSearch.toLowerCase()) ||
-                    modelInfo.modelo.toLowerCase().includes(globalSearch.toLowerCase());
-                  return matchesGlobal && (f === 'TODOS' || s.status === f);
-                }).length;
-
-                const isActive = statusFilter === f;
-                let customClass = "";
-                if (f === 'TODOS') {
-                  customClass = "status-btn-todos";
-                } else if (f === 'PENDIENTE' || f === 'ACTIVO' || f === 'SUSPENDIDO') {
-                  customClass = "status-btn-orange";
-                } else if (f === 'CANCELADO' || f === 'RECUPERADO' || f === 'DISPONIBLE' || f === 'N#A') {
-                  customClass = "status-btn-green";
-                } else if (f === 'SIN ESTATUS') {
-                  customClass = "status-btn-gray";
-                }
-
-                return (
-                  <button
-                    key={f}
-                    onClick={() => { setStatusFilter(f); setCurrentPage(1); }}
-                    className={`status-filter-btn ${customClass} ${isActive ? 'active-filter' : ''}`}
-                  >
-                    {f === 'SIN ESTATUS' ? 'SIN EST' : f} ({count})
-                  </button>
-                );
-              })}
             </div>
           </div>
 
@@ -1314,15 +1243,12 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                                 </span>
                               )}
                             </span>
-                            {(s.ticket || s.isCasillero || s.modeloNegocio) && (
+                            {(s.ticket || s.modeloNegocio) && (
                               <div className="flex flex-wrap items-center gap-1 pl-3.5">
                                 {s.ticket && (
                                   <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-600">
                                     TKT: {s.ticket}
                                   </span>
-                                )}
-                                {s.isCasillero && (
-                                  <span className={getTagClass('CASILLERO')}>CASILLERO</span>
                                 )}
                                 {s.modeloNegocio && (
                                   <span className={getTagClass(s.modeloNegocio)}>{s.modeloNegocio}</span>

@@ -615,79 +615,40 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   return (
     <div className="flex flex-col gap-5 text-slate-800 pb-16 font-arial cruce-tab-container">
       
-      {/* SECCIÓN VALIDADOR / HOJA DE CONTROL: ENVIADO HACIA LOGICA IMS / CMS */}
-      <div className="dark-panel p-5 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div>
-          <h3 className="text-base font-black text-slate-800 flex items-center gap-2">
-            <Database className="w-5 h-5 animate-pulse" style={{ color: '#0d9488' }} />
-            BASES DE DATOS (IMS / CMS)
-          </h3>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            {imsCargado && (
-              <div className="flex items-center justify-center mr-1" title="Base IMS cargada y activa">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 shadow-[0_0_8px_#10b981]"></span>
-                </span>
-              </div>
-            )}
-            <button 
-              onClick={() => {
-                setImsSerialsRaw('');
-                setImsStatusRaw('');
-                setIsIMSModalOpen(true);
-              }}
-              className="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer select-none border-none btn-green"
-            >
-              <Database size={13} className="text-white" />
-              <span>IMS</span>
-            </button>
-            {imsCargado && (
-              <button 
-                onClick={() => {
-                  if (window.confirm("¿Está seguro de que desea limpiar la base de datos IMS cargada?")) {
-                    setDatosMaestro([]);
-                  }
-                }}
-                className="p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer select-none border-none btn-red"
-                title="Limpiar Base IMS"
-              >
-                <Trash2 size={15} />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <button 
-              onClick={() => {
-                setCMSSerialsRaw('');
-                setCMSStatusRaw('');
-                setCMSRemitenteRaw('');
-                setCMSFechaRaw('');
-                setIsCMSModalOpen(true);
-              }}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2 cursor-pointer select-none border-none btn-blue"
-            >
-              <Database size={13} className="text-white" />
-              <span>CMS</span>
-            </button>
-            {CMSCargado && (
-              <button 
-                onClick={() => {
-                  if (window.confirm("¿Está seguro de que desea limpiar la base de datos CMS cargada?")) {
-                    setDatosCMS([]);
-                  }
-                }}
-                className="p-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer select-none border-none btn-red"
-                title="Limpiar Base CMS"
-              >
-                <Trash2 size={15} />
-              </button>
-            )}
-          </div>
+      {/* PARAMETROS DE RECONCILIACIÓN DE DATOS */}
+      <div className="dark-panel p-5 mb-4">
+        <div className="relative">
+          <label className="text-xs font-extrabold text-blue-600 block mb-1.5 uppercase">REMITENTE:</label>
+          <input
+            type="text"
+            value={remitenteCorreo}
+            onChange={e => {
+              setRemitenteCorreo(e.target.value.toUpperCase());
+              setShowMainSuggestions(true);
+            }}
+            onFocus={() => setShowMainSuggestions(true)}
+            onBlur={() => {
+              setTimeout(() => setShowMainSuggestions(false), 200);
+            }}
+            placeholder="Introduce remitente asignado (ej. VALIDADOR, DISGLOBAL)..."
+            className="w-full text-xs font-semibold p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-800 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
+          />
+          {showMainSuggestions && mainSuggestions.length > 0 && (
+            <div className="absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+              {mainSuggestions.map((suggestion) => (
+                <div
+                  key={suggestion}
+                  onMouseDown={() => {
+                    setRemitenteCorreo(suggestion);
+                    setShowMainSuggestions(false);
+                  }}
+                  className="px-3.5 py-2 hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer uppercase border-b border-slate-50 last:border-b-0"
+                >
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -710,10 +671,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button 
                 onClick={() => setEmailViewMode(prev => prev === 'visual' ? 'edit' : 'visual')}
                 disabled={emailText === ''}
-                className={`px-2.5 py-1 text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-white shadow-sm rounded-md cursor-pointer transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${
                   emailViewMode === 'visual' 
-                    ? 'toggle-active' 
-                    : 'toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed'
+                    ? '' 
+                    : ''
                 }`}
               >
                 {emailViewMode === 'visual' ? <Edit2 size={10} /> : <Play size={10} />}
@@ -726,7 +687,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setEmailViewMode('edit');
                 }}
                 disabled={emailText === ''}
-                className="px-2 py-1 toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-2 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-white shadow-sm rounded-md cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Limpiar campo correo"
               >
                 <Trash2 size={10} />
@@ -806,10 +767,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               <button 
                 onClick={() => setFisicoViewMode(prev => prev === 'visual' ? 'edit' : 'visual')}
                 disabled={fisicoText === ''}
-                className={`px-2.5 py-1 text-[10px] font-bold uppercase cursor-pointer transition-all flex items-center gap-1 ${
+                className={`px-2.5 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-white shadow-sm rounded-md cursor-pointer transition-all flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed ${
                   fisicoViewMode === 'visual' 
-                    ? 'toggle-active' 
-                    : 'toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed'
+                    ? '' 
+                    : ''
                 }`}
               >
                 {fisicoViewMode === 'visual' ? <Edit2 size={10} /> : <Play size={10} />}
@@ -822,7 +783,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                   setFisicoViewMode('edit');
                 }}
                 disabled={fisicoText === ''}
-                className="px-2 py-1 toggle-inactive disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                className="px-2 py-1 text-[10px] font-bold uppercase bg-white text-slate-900 border border-white shadow-sm rounded-md cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                 title="Limpiar campo físico"
               >
                 <Trash2 size={10} />
@@ -915,18 +876,6 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 <span>LISTA DE SERIALES PLANA</span>
               </button>
 
-              {/* ASIGNACION DE STATUS GRUPAL BUTTON */}
-              <button
-                onClick={() => {
-                  setSelectedSerialsBulk(new Set());
-                  setIsBulkModalOpen(true);
-                }}
-                disabled={fisicoUniques.length === 0}
-                className="w-full text-xs font-extrabold uppercase py-2.5 btn-orange transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                <Layers size={13} className="text-white" />
-                <span>ASIGNACION DE STATUS GRUPAL</span>
-              </button>
               <button
                 onClick={handleAddMatchesToGeneral}
                 disabled={coincidencias.length === 0}
@@ -939,43 +888,6 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           )}
         </div>
 
-      </div>
-
-      {/* PARAMETROS DE RECONCILIACIÓN DE DATOS */}
-      <div className="dark-panel p-5">
-        <div className="relative">
-          <label className="text-xs font-extrabold text-blue-600 block mb-1.5 uppercase">REMITENTE:</label>
-          <input
-            type="text"
-            value={remitenteCorreo}
-            onChange={e => {
-              setRemitenteCorreo(e.target.value.toUpperCase());
-              setShowMainSuggestions(true);
-            }}
-            onFocus={() => setShowMainSuggestions(true)}
-            onBlur={() => {
-              setTimeout(() => setShowMainSuggestions(false), 200);
-            }}
-            placeholder="Introduce remitente asignado (ej. VALIDADOR, DISGLOBAL)..."
-            className="w-full text-xs font-semibold p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-800 focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all font-semibold uppercase"
-          />
-          {showMainSuggestions && mainSuggestions.length > 0 && (
-            <div className="absolute left-0 right-0 z-30 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-              {mainSuggestions.map((suggestion) => (
-                <div
-                  key={suggestion}
-                  onMouseDown={() => {
-                    setRemitenteCorreo(suggestion);
-                    setShowMainSuggestions(false);
-                  }}
-                  className="px-3.5 py-2 hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer uppercase border-b border-slate-50 last:border-b-0"
-                >
-                  {suggestion}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* METRICAS DE INTERSECCIÓN Y BOTONES ACCIÓN */}

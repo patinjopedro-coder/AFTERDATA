@@ -1001,7 +1001,6 @@ export const Casillero: React.FC<CasilleroProps> = ({
                           <div className="p-2 flex items-center justify-between">
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Mod. Negocio:</span>
                             <div className="flex flex-wrap items-center justify-end gap-1">
-                              {s.isCasillero && <span className={getTagClass('CASILLERO')}>CASILLERO</span>}
                               {s.modeloNegocio ? (
                                 <span className={getTagClass(s.modeloNegocio)}>{s.modeloNegocio}</span>
                               ) : (
