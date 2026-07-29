@@ -411,7 +411,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [rif, setRif] = useState('');
   const [razonSocial, setRazonSocial] = useState('');
   const [destino, setDestino] = useState('');
-  const [simNumber, setSimNumber] = useState('NO POSEE');
+  const [simNumber, setSimNumber] = useState('');
   const [modeloManual, setModeloManual] = useState('');
   const [ticket, setTicket] = useState('');
   const [operadora, setOperadora] = useState<'MOVISTAR' | 'MOVILNET' | 'DIGITEL' | ''>('');
@@ -922,20 +922,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             />
           </div>
 
-          {/* Fila 5: Sim Card y Operadora */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Número SIM</label>
-            <input
-              type="text"
-              value={simNumber}
-              onChange={e => setSimNumber(e.target.value)}
-              placeholder=""
-              disabled={!accSim}
-              className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${
-                !accSim ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            />
-          </div>
+          {/* Número SIM moved below accessory buttons (see below) */}
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Operadora</label>
             <select
@@ -1041,7 +1028,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 const newVal = !accSim;
                 setAccSim(newVal);
                 if (!newVal) {
-                  setSimNumber('NO POSEE');
+                  setSimNumber('');
                 } else {
                   setSimNumber('');
                 }
@@ -1071,6 +1058,21 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               {sinCosto && <Check size={12} />}
             </button>
           </div>
+        </div>
+
+        {/* Número SIM: placed below the accessory buttons, enabled only when SIM is checked */}
+        <div className="mt-3">
+          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Número SIM</label>
+          <input
+            type="text"
+            value={simNumber}
+            onChange={e => setSimNumber(e.target.value)}
+            placeholder=""
+            disabled={!accSim}
+            className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${
+              !accSim ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          />
         </div>
 
         <button

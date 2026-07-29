@@ -25,7 +25,7 @@ import {
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
   Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut
 } from 'lucide-react';
-import { FileText } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 
 export default function App() {
   // -------------------------------------------------------------
@@ -81,13 +81,14 @@ export default function App() {
   const [showNotificationsMenu, setShowNotificationsMenu] = useState(false);
 
   // Registros (audit trail) state
-  const [registros, setRegistros] = useState<Array<{time:string; action:string; target:string; details?:string}>>([]);
+  const [registros, setRegistros] = useState<Array<{time:string; action:string; target:string; actor?:string; details?:string}>>([]);
   const prevSerialsRef = useRef<POSItem[]>([]);
   const prevEnviosRef = useRef<EnvioExterno[]>([]);
 
   const pushRegistro = (action: string, target: string, details?: string) => {
     const time = new Date().toISOString();
-    setRegistros(prev => [{ time, action, target, details }, ...prev]);
+    const actor = (localStorage.getItem('disglobal_username') || 'PEDRO');
+    setRegistros(prev => [{ time, action, target, actor, details }, ...prev]);
   };
 
 
@@ -1052,7 +1053,7 @@ export default function App() {
               { id: 'simcards', label: 'Gestión de SIM-Cards', icon: CardSim },
               { id: 'modelos', label: 'Modelos Registrados', icon: Smartphone },
               { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
-              { id: 'registros', label: 'Registros', icon: FileText },
+              { id: 'registros', label: 'Registros', icon: Pencil },
               { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users }
             ].map(t => {
               const Icon = t.icon;
@@ -1377,15 +1378,20 @@ export default function App() {
                   <h3 className="font-bold uppercase text-sm">Registros del Sistema</h3>
                 </div>
                 <div className="mt-3 space-y-2 max-h-96 overflow-auto">
-                  {registros.length === 0 ? (
-                    <div className="text-sm text-slate-400 uppercase font-bold">No hay registros</div>
+                  {registros.filter(r => r.action === 'AGREGADO_SERIAL' || r.action === 'ELIMINADO_SERIAL').length === 0 ? (
+                    <div className="text-sm text-slate-400 uppercase font-bold">No hay registros de seriales</div>
                   ) : (
-                    registros.map((r, i) => (
-                      <div key={i} className="p-2 border rounded-md bg-white">
-                        <div className="text-[11px] text-slate-500">{new Date(r.time).toLocaleString()}</div>
-                        <div className="text-[13px] font-mono font-bold uppercase mt-1">{r.action} — {r.target} {r.details ? `(${r.details})` : ''}</div>
-                      </div>
-                    ))
+                    registros
+                      .filter(r => r.action === 'AGREGADO_SERIAL' || r.action === 'ELIMINADO_SERIAL')
+                      .map((r, i) => (
+                        <div key={i} className="p-2 border rounded-md bg-white">
+                          <div className="text-[11px] text-slate-500">{new Date(r.time).toLocaleString()}</div>
+                          <div className="text-[13px] font-mono font-bold mt-1">
+                            {r.action === 'AGREGADO_SERIAL' ? 'AÑADIDO' : 'ELIMINADO'} — <span className="uppercase">{r.target}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-600 mt-1">Autor: {r.actor ? (r.actor.charAt(0).toUpperCase() + r.actor.slice(1).toLowerCase()) : 'DESCONOCIDO'}</div>
+                        </div>
+                      ))
                   )}
                 </div>
               </div>
