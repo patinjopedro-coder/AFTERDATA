@@ -628,14 +628,13 @@ export default function App() {
             (e.rif && e.rif.toLowerCase().includes(searchLow)) ||
             (e.razonSocial && e.razonSocial.toLowerCase().includes(searchLow)) ||
             (e.destino && e.destino.toLowerCase().includes(searchLow)) ||
-            (e.ticket && e.ticket.toLowerCase().includes(searchLow)) ||
-            (e.solicitante && e.solicitante.toLowerCase().includes(searchLow));
+            (e.ticket && e.ticket.toLowerCase().includes(searchLow));
           if (!matches) return false;
         }
         return true;
       });
 
-      let csv = "sep=;\nFECHA_ENVIO;GUIA;SERIAL;RIF;RAZON_SOCIAL;DESTINO;TICKET;SOLICITANTE;FECHA_INGRESO\n";
+      let csv = "sep=;\nFECHA_ENVIO;GUIA;SERIAL;RIF;RAZON_SOCIAL;DESTINO;TICKET;FECHA_INGRESO\n";
       filtered.forEach(e => {
         const matchPOS = serials.find(s => s.serial === e.serial);
         const fechaIngreso = matchPOS ? (matchPOS.displayDate || matchPOS.date || '') : '';
@@ -647,7 +646,6 @@ export default function App() {
           e.razonSocial || '',
           e.destino || '',
           e.ticket || '',
-          e.solicitante || '',
           fechaIngreso
         ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(";") + "\n";
       });

@@ -64,7 +64,6 @@ export interface EnvioExterno {
   razonSocial?: string;
   destino?: string;
   ticket?: string;
-  solicitante?: string;
 }
 
 export interface ModelConfig {

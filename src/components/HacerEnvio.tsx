@@ -34,7 +34,6 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
   const [razonSocial, setRazonSocial] = useState('');
   const [destino, setDestino] = useState('');
   const [ticket, setTicket] = useState('');
-  const [solicitante, setSolicitante] = useState('');
 
   const [search, setSearch] = useState('');
 
@@ -52,8 +51,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
       rif: formatRif(rif),
       razonSocial: razonSocial.trim().toUpperCase(),
       destino: destino.trim().toUpperCase(),
-      ticket: ticket.trim().toUpperCase(),
-      solicitante: solicitante.trim().toUpperCase()
+      ticket: ticket.trim().toUpperCase()
     };
 
     setEnviosExternos(prev => [...prev, nuevo]);
@@ -76,7 +74,6 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
       banco: '',
       simNumber: '',
       operadora: 'DIGITEL',
-      responsable: solicitante.trim().toUpperCase(),
       observaciones: 'Generado desde Envíos sin Saliente',
       serialSustituto: serial.trim().toUpperCase(),
       esSustitucion: true,
@@ -103,9 +100,6 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
     setRazonSocial('');
     setDestino('');
     setTicket('');
-    setSolicitante('');
-
-    alert('Envío sin saliente registrado con éxito. Se ha añadido a Casillero.');
   };
 
   const handleDelete = (index: number) => {
@@ -124,8 +118,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
         (e.rif && e.rif.toLowerCase().includes(sLow)) ||
         (e.razonSocial && e.razonSocial.toLowerCase().includes(sLow)) ||
         (e.destino && e.destino.toLowerCase().includes(sLow)) ||
-        (e.ticket && e.ticket.toLowerCase().includes(sLow)) ||
-        (e.solicitante && e.solicitante.toLowerCase().includes(sLow));
+        (e.ticket && e.ticket.toLowerCase().includes(sLow));
     });
   }, [enviosExternos, search]);
 
@@ -219,17 +212,6 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-semibold">Solicitante</label>
-            <input
-              type="text"
-              value={solicitante}
-              onChange={e => setSolicitante(e.target.value)}
-              placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-lg text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-slate-200"
-            />
-          </div>
-
           <button
             type="submit"
             className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white-force rounded-lg text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer border border-transparent shadow-sm"
@@ -274,14 +256,13 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
                   <th className="py-3 px-4">Razón Social Cliente</th>
                   <th className="py-3 px-4">Destino</th>
                   <th className="py-3 px-4 text-center">Ticket</th>
-                  <th className="py-3 px-4">Solicitante</th>
                   <th className="py-3 px-4 w-12 text-center">Eliminar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-12 text-slate-400 text-xs font-mono">
+                    <td colSpan={8} className="text-center py-12 text-slate-400 text-xs font-mono">
                       No hay registros de envíos sin saliente que coincidan con la búsqueda.
                     </td>
                   </tr>
@@ -313,7 +294,6 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
                         <td className="py-3 px-4 uppercase font-bold text-slate-800 font-arial">{e.razonSocial || '-'}</td>
                         <td className="py-3 px-4 uppercase text-slate-800 font-sans">{e.destino || '-'}</td>
                         <td className="py-3 px-4 text-center text-amber-700">{e.ticket || '-'}</td>
-                        <td className="py-3 px-4 uppercase text-slate-650 font-sans">{e.solicitante || '-'}</td>
                         <td className="py-3 px-4 text-center">
                           <button
                             onClick={() => handleDelete(originalIndex)}
