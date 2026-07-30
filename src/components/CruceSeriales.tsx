@@ -43,6 +43,55 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   // CMS state
   const [datosCMS, setDatosCMS] = useState<CMSItem[]>([]);
 
+  // IMDS state - 4 campos: seriales, status, fecha, remitente
+  const [isIMDSOpen, setIsIMDSOpen] = useState(false);
+  const [imdsSeriales, setImdsSeriales] = useState('');
+  const [imdsStatus, setImdsStatus] = useState('ACTIVO');
+  const [imdsFecha, setImdsFecha] = useState('');
+  const [imdsRemitente, setImdsRemitente] = useState('');
+
+  // Función para procesar IMDS y agregar a GestionGeneral
+  const handleIMDSProcess = () => {
+    const rawLines = imdsSeriales.split(/[\n,;\s]+/).filter(s => s.trim());
+    if (rawLines.length === 0) {
+      alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
+      return;
+    }
+
+    const fecha = imdsFecha || new Date().toISOString().split('T')[0];
+    const displayDate = fecha.split('-').reverse().join('/');
+    const remitente = imdsRemitente.trim().toUpperCase() || 'IMDS';
+
+    const maxId = serials.reduce((max, s) => Math.max(max, s.id), 0);
+    let currentId = maxId;
+
+    const newItems = rawLines.map(s => {
+      currentId++;
+      return {
+        id: currentId,
+        serial: s.toUpperCase().trim(),
+        date: fecha,
+        displayDate: displayDate,
+        status: imdsStatus as POSStatus,
+        remitente: remitente,
+        source: 'IMDS',
+        isCasillero: false,
+        selected: false,
+        responsable: 'PEDRO PATIÑO'
+      };
+    });
+
+    setSerials(prev => [...prev, ...newItems]);
+    alert(`Se procesaron ${newItems.length} seriales desde IMDS`);
+    
+    // Limpiar y cerrar
+    setIsIMDSOpen(false);
+    setImdsSeriales('');
+    setImdsStatus('ACTIVO');
+    setImdsFecha('');
+    setImdsRemitente('');
+  };
+
   const isLoadedRef = useRef(false);
 
   // Load persisted CruceSeriales data from Supabase/IndexedDB on mount
@@ -464,8 +513,31 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     }
 
     setDatosCMS(prev => [...prev, ...newIMDS]);
+    
+    // También agregar los seriales a GestionGeneral
+    const maxId = serials.reduce((max, s) => Math.max(max, s.id), 0);
+    let currentId = maxId;
+    
+    const newSerials = newIMDS.map(item => {
+      currentId++;
+      const displayDate = item.date ? item.date.split('-').reverse().join('/') : '';
+      return {
+        id: currentId,
+        serial: item.serial,
+        date: item.date || defaultDate,
+        displayDate: displayDate,
+        status: item.status,
+        remitente: item.remitente,
+        source: 'IMDS',
+        isCasillero: false,
+        selected: false,
+        responsable: 'PEDRO PATIÑO'
+      };
+    });
+    
+    setSerials(prev => [...prev, ...newSerials]);
     setIsIMDSModalOpen(false);
-    alert(`⚡ Datos IMDS cargados con éxito: ${newIMDS.length} registros agregados a la base de datos CMS.`);
+    alert(`⚡ Datos IMDS cargados con éxito: ${newIMDS.length} registros agregados a la base de datos CMS y a Gestión General.`);
   };
 
   const handleConfirmCMS = () => {
