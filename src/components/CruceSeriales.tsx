@@ -118,6 +118,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   const [isCMSModalOpen, setIsCMSModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isFlatModalOpen, setIsFlatModalOpen] = useState(false);
+  const [isIMDSModalOpen, setIsIMDSModalOpen] = useState(false);
 
   // IMS raw inputs state (supporting >100.000 vertical spreadsheet rows)
   const [imsSerialsRaw, setImsSerialsRaw] = useState('');
@@ -128,6 +129,12 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   const [CMSStatusRaw, setCMSStatusRaw] = useState('');
   const [CMSRemitenteRaw, setCMSRemitenteRaw] = useState('');
   const [CMSFechaRaw, setCMSFechaRaw] = useState('');
+
+  // IMDS raw inputs state
+  const [IMDSSerialsRaw, setIMDSSerialsRaw] = useState('');
+  const [IMDSStatusRaw, setIMDSStatusRaw] = useState('');
+  const [IMDSFechaRaw, setIMDSFechaRaw] = useState('');
+  const [IMDSRemitenteRaw, setIMDSRemitenteRaw] = useState('');
 
   // Bulk Status modal states
   const [selectedSerialsBulk, setSelectedSerialsBulk] = useState<Set<string>>(new Set());
@@ -398,6 +405,62 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     setDatosMaestro(newMaster);
     setIsIMSModalOpen(false);
     alert(`⚡ Base de datos IMS cargada con éxito: ${newMaster.length} registros indexados de forma instantánea.`);
+  };
+
+  // High performance line-by-line parsing for Excel copy/pastes (>100k lines) - IMDS version
+  const handleConfirmIMDS = () => {
+    if (!IMDSSerialsRaw.trim()) {
+      alert("Ingrese datos válidos en el campo SERIAL.");
+      return;
+    }
+
+    // Split inputs into lines efficiently
+    const sLines = IMDSSerialsRaw.split(/\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
+    const stLines = IMDSStatusRaw.split(/\r?\n/).map(l => l.trim().toUpperCase());
+    const dateLines = IMDSFechaRaw.split(/\r?\n/).map(l => l.trim());
+    const remLines = IMDSRemitenteRaw.split(/\r?\n/).map(l => l.trim().toUpperCase());
+
+    const maxRows = Math.max(sLines.length, stLines.length, dateLines.length, remLines.length);
+    const newIMDS: CMSItem[] = [];
+
+    const d = new Date();
+    const defaultDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+    // Loop at core JS speed
+    for (let i = 0; i < maxRows; i++) {
+      const serialNum = sLines[i];
+      if (!serialNum) continue;
+
+      const rawStatus = stLines[i] || 'SIN ESTATUS';
+      let finalStatus: POSStatus = 'SIN ESTATUS';
+      if (rawStatus.includes('PENDIENTE')) finalStatus = 'PENDIENTE';
+      else if (rawStatus.includes('ACTIVO')) finalStatus = 'ACTIVO';
+      else if (rawStatus.includes('SUSPENDIDO')) finalStatus = 'SUSPENDIDO';
+      else if (rawStatus.includes('CANCELADO')) finalStatus = 'CANCELADO';
+      else if (rawStatus.includes('RECUPERADO')) finalStatus = 'RECUPERADO';
+      else if (rawStatus.includes('ENTREGADO')) finalStatus = 'ENTREGADO';
+      else if (rawStatus.includes('DISPONIBLE')) finalStatus = 'DISPONIBLE';
+      else if (rawStatus.includes('N/A') || rawStatus === 'NA' || rawStatus.includes('N#A')) finalStatus = 'N#A';
+      else if (rawStatus === 'SIN ESTATUS') finalStatus = 'SIN ESTATUS';
+
+      let finalDate = dateLines[i] || defaultDate;
+      if (!finalDate.match(/^\d{4}-\d{2}-\d{2}$/) && !finalDate.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        finalDate = defaultDate; // fallback to today if format is off
+      }
+
+      const finalRemitente = remLines[i] || 'IMPORT IMDS';
+
+      newIMDS.push({
+        serial: serialNum,
+        status: finalStatus,
+        remitente: finalRemitente,
+        date: finalDate
+      });
+    }
+
+    setDatosCMS(prev => [...prev, ...newIMDS]);
+    setIsIMDSModalOpen(false);
+    alert(`⚡ Datos IMDS cargados con éxito: ${newIMDS.length} registros agregados a la base de datos CMS.`);
   };
 
   const handleConfirmCMS = () => {
@@ -941,6 +1004,14 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           </button>
 
           <button
+            onClick={() => setIsIMDSModalOpen(true)}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer rounded-lg border border-transparent text-xs"
+          >
+            <Database size={13} />
+            <span>IMDS</span>
+          </button>
+
+          <button
             onClick={limpiarTodo}
             className="px-4 py-2 bg-white text-black border border-slate-200 rounded-full header-action-btn text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 justify-center cursor-pointer"
           >
@@ -1466,6 +1537,148 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 </button>
               </div>
             </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* MODAL IMDS */}
+      {isIMDSModalOpen && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay font-arial">
+          <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-6xl h-[85vh] flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
+            
+            {/* Header */}
+            <div className="p-5 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Database className="w-6 h-6 animate-pulse" style={{ color: '#8b5cf6' }} />
+                <div>
+                  <h3 className="text-base font-black uppercase text-slate-800 tracking-wider">Cargador de Datos IMDS</h3>
+                  <p className="text-[10px] text-slate-450 uppercase font-mono mt-0.5 tracking-wider">4 campos: seriales, status, fecha y remitente.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsIMDSModalOpen(false)}
+                className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            {/* Form Fields */}
+            <div className="flex-1 p-6 grid grid-cols-1 md:grid-cols-4 gap-4 overflow-y-auto bg-slate-50/50">
+              
+              {/* Campo 1: Seriales */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] text-slate-550 uppercase font-mono font-bold tracking-wider flex items-center justify-between">
+                  <span>SERIALES</span>
+                  <span className="text-[9px] text-slate-400 font-mono tracking-widest lowercase normal-case">una celda por línea</span>
+                </label>
+                <div className="relative flex-1 flex flex-col">
+                  <textarea
+                    value={IMDSSerialsRaw}
+                    onChange={e => setIMDSSerialsRaw(e.target.value)}
+                    placeholder="Pegue aquí los seriales (ejemplo:&#10;80320498&#10;80320499&#10;80320500...)"
+                    className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
+                  />
+                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
+                    Seriales: {IMDSSerialsRaw.split(/\r?\n/).filter(Boolean).length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Campo 2: Status */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] text-slate-550 uppercase font-mono font-bold tracking-wider flex items-center justify-between">
+                  <span>STATUS</span>
+                  <span className="text-[9px] text-slate-400 font-mono tracking-widest lowercase normal-case">una celda por línea</span>
+                </label>
+                <div className="relative flex-1 flex flex-col">
+                  <textarea
+                    value={IMDSStatusRaw}
+                    onChange={e => setIMDSStatusRaw(e.target.value)}
+                    placeholder="Pegue aquí el status (ejemplo:&#10;ACTIVO&#10;PENDIENTE&#10;CANCELADO...)"
+                    className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
+                  />
+                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
+                    Estados: {IMDSStatusRaw.split(/\r?\n/).filter(Boolean).length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Campo 3: Fecha */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] text-slate-550 uppercase font-mono font-bold tracking-wider flex items-center justify-between">
+                  <span>FECHA</span>
+                  <span className="text-[9px] text-slate-400 font-mono tracking-widest lowercase normal-case">YYYY-MM-DD o DD/MM/YYYY</span>
+                </label>
+                <div className="relative flex-1 flex flex-col">
+                  <textarea
+                    value={IMDSFechaRaw}
+                    onChange={e => setIMDSFechaRaw(e.target.value)}
+                    placeholder="Pegue aquí las fechas (ejemplo:&#10;2024-05-25&#10;2024-05-26&#10;2024-05-27...)"
+                    className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
+                  />
+                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
+                    Fechas: {IMDSFechaRaw.split(/\r?\n/).filter(Boolean).length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Campo 4: Remitente */}
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] text-slate-550 uppercase font-mono font-bold tracking-wider flex items-center justify-between">
+                  <span>REMITENTE</span>
+                  <span className="text-[9px] text-slate-400 font-mono tracking-widest lowercase normal-case">una celda por línea</span>
+                </label>
+                <div className="relative flex-1 flex flex-col">
+                  <textarea
+                    value={IMDSRemitenteRaw}
+                    onChange={e => setIMDSRemitenteRaw(e.target.value)}
+                    placeholder="Pegue aquí el remitente (ejemplo:&#10;DISGLOBAL&#10;VALIDADOR&#10;CLIENTE...)"
+                    className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
+                  />
+                  <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
+                    Remitentes: {IMDSRemitenteRaw.split(/\r?\n/).filter(Boolean).length}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="p-5 bg-slate-50 border-t border-slate-150 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-left">
+                <span className="text-[10px] font-bold text-slate-500 block uppercase">REGLAS DE CORRESPONDENCIA:</span>
+                <span className="text-[10px] text-slate-650 block">
+                  La línea 1 del campo 1 se emparejará con la línea 1 de los campos 2, 3 y 4.
+                  Si falta algún campo, se usarán valores por defecto.
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIMDSSerialsRaw('');
+                    setIMDSStatusRaw('');
+                    setIMDSFechaRaw('');
+                    setIMDSRemitenteRaw('');
+                  }}
+                  className="px-4 py-2 toggle-inactive text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                >
+                  Limpiar Ventana
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmIMDS}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 border border-transparent text-white font-black text-xs uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-lg active:scale-98"
+                >
+                  <Check size={14} className="text-white" />
+                  <span>Procesar y Confirmar Datos IMDS</span>
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>,
         document.body

@@ -49,6 +49,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [editingItem, setEditingItem] = useState<POSItem | null>(null);
   const [editDraft, setEditDraft] = useState<Partial<POSItem>>({});
   const [isBatchSearchOpen, setIsBatchSearchOpen] = useState(false);
+  const [isBulkDateEditOpen, setIsBulkDateEditOpen] = useState(false);
+  const [bulkEditDate, setBulkEditDate] = useState('');
 
   const getTagClass = (value?: string) => {
     const normalized = (value || '').toUpperCase().trim();
@@ -728,6 +730,36 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     }));
   };
 
+  const handleBulkDateEdit = () => {
+    if (!bulkEditDate) {
+      alert('Por favor ingrese una fecha válida');
+      return;
+    }
+
+    const selectedSerials = serials.filter(s => s.selected);
+    if (selectedSerials.length === 0) {
+      alert('No hay equipos seleccionados para editar fechas');
+      return;
+    }
+
+    const internalDate = bulkEditDate;
+    const displayDate = bulkEditDate.split('-').reverse().join('/');
+
+    setSerials(prev => prev.map(s => {
+      if (s.selected) {
+        return trackAndLogChanges(s, {
+          displayDate: displayDate,
+          date: internalDate
+        });
+      }
+      return s;
+    }));
+
+    alert(`Se actualizó la fecha a ${displayDate} para ${selectedSerials.length} equipos seleccionados`);
+    setIsBulkDateEditOpen(false);
+    setBulkEditDate('');
+  };
+
   const applyBulkStatusToPage = () => {
     const pageIds = new Set(paginatedSerials.map(s => s.id));
     setSerials(prev => prev.map(s => pageIds.has(s.id) ? trackAndLogChanges(s, { status: bulkStatus }) : s));
@@ -1123,6 +1155,16 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <Search size={12} />
                 BÚSQUEDA POR LOTE
               </button>
+
+              <button
+                onClick={() => setIsBulkDateEditOpen(true)}
+                className="btn-purple bg-purple-600 hover:bg-purple-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-purple-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
+                style={{ color: '#ffffff' }}
+                title="Editar fecha de equipos seleccionados"
+              >
+                <Pencil size={12} />
+                EDITAR FECHAS GRUPAL
+              </button>
             </div>
           </div>
 
@@ -1424,7 +1466,78 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       </div>
 
       {renderEditModal()}
+  const renderBulkDateEditModal = () => {
+    if (!isBulkDateEditOpen) return null;
+    
+    const selectedCount = serials.filter(s => s.selected).length;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div className="bg-white w-full max-w-md mx-4 shadow-2xl" style={{ borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <Pencil size={16} className="text-slate-900" />
+              <span className="text-xs font-black uppercase tracking-wider text-slate-900">Editar Fechas en Grupo</span>
+            </div>
+            <button onClick={() => { setIsBulkDateEditOpen(false); setBulkEditDate(''); }} className="p-1 hover:bg-slate-100 cursor-pointer" style={{ borderRadius: '4px' }}>
+              <X size={16} className="text-slate-600" />
+            </button>
+          </div>
+          
+          <div className="p-5">
+            <div className="mb-4">
+              <span className="text-xs font-bold text-slate-700">
+                Se actualizarán {selectedCount} equipos seleccionados
+              </span>
+            </div>
+            
+            <div className="flex flex-col gap-3">
+              <div>
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">
+                  Nueva Fecha (YYYY-MM-DD)
+                </label>
+                <input
+                  type="date"
+                  value={bulkEditDate}
+                  onChange={e => setBulkEditDate(e.target.value)}
+                  className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
+                  style={{ borderRadius: '4px' }}
+                />
+              </div>
+              
+              <div className="bg-slate-50 p-3 border border-slate-100 rounded">
+                <span className="text-[10px] text-slate-600 font-bold uppercase">
+                  NOTA: Esta acción actualizará la fecha de ingreso de todos los equipos seleccionados. 
+                  El cambio quedará registrado en el historial de cada equipo.
+                </span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              onClick={() => { setIsBulkDateEditOpen(false); setBulkEditDate(''); }}
+              className="px-4 py-2 text-xs font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleBulkDateEdit}
+              disabled={!bulkEditDate || selectedCount === 0}
+              className="px-4 py-2 text-xs font-bold uppercase bg-purple-600 hover:bg-purple-700 text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderRadius: '4px' }}
+            >
+              Aplicar Fecha
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
       {renderBatchSearchModal()}
+      {renderBulkDateEditModal()}
     </div>
   );
 };

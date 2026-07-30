@@ -641,6 +641,249 @@ export const Casillero: React.FC<CasilleroProps> = ({
     input.click();
   };
 
+  const handleImportFromCasilleroFormat = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv,.txt';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (fileEvent) => {
+        try {
+          const content = fileEvent.target?.result as string;
+          const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          if (lines.length < 2) {
+            alert("El archivo no contiene suficientes líneas.");
+            return;
+          }
+
+          let delimiter = ','; 
+          const firstLine = lines[0];
+          if (firstLine.includes('\t')) delimiter = '\t';
+          else if (firstLine.includes(';')) delimiter = ';';
+
+          const headers = firstLine.split(delimiter).map(h => {
+            return h.trim()
+                    .toUpperCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^A-Z0-9_]/g, "");
+          });
+
+          // Mapeo de columnas del formato de exportación de Casillero
+          const idxId = headers.findIndex(h => h === 'ID');
+          const idxFechaEntrada = headers.findIndex(h => h === 'FECHAENTRADA');
+          const idxSerial = headers.findIndex(h => h === 'SERIAL');
+          const idxStatus = headers.findIndex(h => h === 'ESTATUS');
+          const idxRemitente = headers.findIndex(h => h === 'REMITENTE');
+          const idxGuiaEntrada = headers.findIndex(h => h === 'GUIAENTRADA');
+          const idxRif = headers.findIndex(h => h === 'RIF');
+          const idxRazonSocial = headers.findIndex(h => h === 'RAZONSOCIAL');
+          const idxDestino = headers.findIndex(h => h === 'DESTINO');
+          const idxObservaciones = headers.findIndex(h => h === 'OBSERVACIONES');
+          const idxResponsable = headers.findIndex(h => h === 'RESPONSABLE');
+          const idxForro = headers.findIndex(h => h === 'FORRO');
+          const idxBateria = headers.findIndex(h => h === 'BATERIA');
+          const idxCargador = headers.findIndex(h => h === 'CARGADOR');
+          const idxCaja = headers.findIndex(h => h === 'CAJA');
+          const idxSim = headers.findIndex(h => h === 'SIM');
+          const idxSimNumber = headers.findIndex(h => h === 'SIMNUMBER');
+          const idxOperadora = headers.findIndex(h => h === 'OPERADORA');
+          const idxModeloManual = headers.findIndex(h => h === 'MODELOMANUAL');
+          const idxModeloNegocio = headers.findIndex(h => h === 'MODELONEGOCIO');
+          const idxEntregadoTecnico = headers.findIndex(h => h === 'ENTREGADOTECNICO');
+          const idxEsSustitucion = headers.findIndex(h => h === 'ESSUSTITUCION');
+          const idxSerialSustituto = headers.findIndex(h => h === 'SERIALSUSTITUTO');
+          const idxSimSustituto = headers.findIndex(h => h === 'SIMSUSTITUTO');
+          const idxSimSustitutoNumber = headers.findIndex(h => h === 'SIMSUSTITUTONUMBER');
+          const idxFechaSalida = headers.findIndex(h => h === 'FECHASALIDA');
+          const idxFechaSalidaCliente = headers.findIndex(h => h === 'FECHASALIDACLIENTE');
+          const idxGuiaSalidaCliente = headers.findIndex(h => h === 'GUIASALIDACLIENTE');
+          const idxDestinoSalida = headers.findIndex(h => h === 'DESTINOSALIDA');
+          const idxTicket = headers.findIndex(h => h === 'TICKET');
+          const idxBatchId = headers.findIndex(h => h === 'BATCHID');
+          const idxEntregadoDisglobal = headers.findIndex(h => h === 'ENTREGADODISGLOBAL');
+          const idxEntregadoA = headers.findIndex(h => h === 'ENTREGADOA');
+
+          if (idxSerial === -1) {
+            alert("No se encontró la columna 'SERIAL' en el archivo.");
+            return;
+          }
+
+          const newItems: POSItem[] = [];
+          const d = new Date();
+          const todayISO = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          
+          let maxId = serials.reduce((max, s) => (s && s.id && typeof s.id === 'number') ? Math.max(max, s.id) : max, 0);
+
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            let cols: string[] = [];
+            
+            if (delimiter === '\t') {
+              cols = line.split('\t');
+            } else if (delimiter === ';') {
+              cols = line.split(';');
+            } else {
+              let current = '';
+              let inQuotes = false;
+              for (let charIdx = 0; charIdx < line.length; charIdx++) {
+                const char = line[charIdx];
+                if (char === '"') {
+                  inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                  cols.push(current.trim());
+                  current = '';
+                } else {
+                  current += char;
+                }
+              }
+              cols.push(current.trim());
+            }
+
+            cols = cols.map(c => c.replace(/^"|"$/g, '').trim());
+            if (cols.length === 0) continue;
+
+            const getColVal = (idx: number): string => {
+              if (idx === -1 || idx >= cols.length) return '';
+              const val = cols[idx];
+              return val !== undefined && val !== null ? val.trim() : '';
+            };
+
+            const serialVal = getColVal(idxSerial).toUpperCase();
+            if (!serialVal) continue;
+
+            // Parsear valores booleanos
+            const parseBool = (val: string): boolean => {
+              if (!val) return false;
+              const u = val.toUpperCase();
+              return u === 'TRUE' || u === '1' || u === 'SI' || u === 'S' || u === 'YES' || u === 'Y';
+            };
+
+            // Obtener fecha de entrada
+            let fechaEntrada = getColVal(idxFechaEntrada);
+            let dateISO = todayISO;
+            let displayDate = todayISO.split('-').reverse().join('/');
+            
+            if (fechaEntrada) {
+              if (fechaEntrada.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                const [day, month, year] = fechaEntrada.split('/');
+                dateISO = `${year}-${month}-${day}`;
+                displayDate = fechaEntrada;
+              } else if (fechaEntrada.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                dateISO = fechaEntrada;
+                displayDate = fechaEntrada.split('-').reverse().join('/');
+              }
+            }
+
+            // Parsear status
+            const statusVal = getColVal(idxStatus).toUpperCase() as POSStatus;
+            let finalStatus: POSStatus = 'SIN ESTATUS';
+            if (statusVal && ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'CANCELADO', 'N#A', 'RECUPERADO', 'DISPONIBLE', 'ENTREGADO', 'SIN ESTATUS'].includes(statusVal)) {
+              finalStatus = statusVal;
+            }
+
+            // Parsear modelo de negocio
+            const modeloNegocioVal = getColVal(idxModeloNegocio).toUpperCase();
+            let finalModeloNegocio: 'BASICO' | 'COMODATO' | '' = '';
+            if (modeloNegocioVal === 'BASICO' || modeloNegocioVal === 'COMODATO') {
+              finalModeloNegocio = modeloNegocioVal;
+            }
+
+            // Parsear operadora
+            const operadoraVal = getColVal(idxOperadora).toUpperCase();
+            let finalOperadora: 'MOVISTAR' | 'MOVILNET' | 'DIGITEL' | '' = '';
+            if (operadoraVal === 'MOVISTAR' || operadoraVal === 'MOVILNET' || operadoraVal === 'DIGITEL') {
+              finalOperadora = operadoraVal as any;
+            }
+
+            maxId++;
+            newItems.push({
+              id: maxId,
+              serial: serialVal,
+              date: dateISO,
+              displayDate: displayDate,
+              status: finalStatus,
+              remitente: getColVal(idxRemitente).toUpperCase() || 'IMPORT CASILLERO',
+              source: getColVal(idxGuiaEntrada).toUpperCase(),
+              isCasillero: true,
+              selected: false,
+              rif: formatRif(getColVal(idxRif)),
+              razonSocial: getColVal(idxRazonSocial).toUpperCase(),
+              destino: getColVal(idxDestino).toUpperCase(),
+              banco: '', // No hay campo banco en el formato de exportación
+              simNumber: getColVal(idxSimNumber).toUpperCase(),
+              operadora: finalOperadora,
+              responsable: getColVal(idxResponsable).toUpperCase() || 'PEDRO PATIÑO',
+              observaciones: getColVal(idxObservaciones),
+              notaReparacion: '',
+              forro: parseBool(getColVal(idxForro)),
+              bateria: parseBool(getColVal(idxBateria)),
+              cargador: parseBool(getColVal(idxCargador)),
+              caja: parseBool(getColVal(idxCaja)),
+              sim: parseBool(getColVal(idxSim)),
+              modeloManual: getColVal(idxModeloManual).toUpperCase(),
+              modeloNegocio: finalModeloNegocio,
+              entregadoTecnico: parseBool(getColVal(idxEntregadoTecnico)),
+              esSustitucion: parseBool(getColVal(idxEsSustitucion)),
+              serialSustituto: getColVal(idxSerialSustituto).toUpperCase(),
+              modeloSustituto: detectModelFromSerial(getColVal(idxSerialSustituto)),
+              fechaSalida: getColVal(idxFechaSalida),
+              fechaSalidaCliente: getColVal(idxFechaSalidaCliente),
+              guiaSalidaCliente: getColVal(idxGuiaSalidaCliente).toUpperCase(),
+              destinoSalida: getColVal(idxDestinoSalida).toUpperCase(),
+              fechaConfirmada: !!getColVal(idxFechaSalida),
+              ticket: getColVal(idxTicket).toUpperCase(),
+              bsf: '', // No hay campo bsf en el formato de exportación
+              simSustituto: parseBool(getColVal(idxSimSustituto)),
+              simSustitutoNumber: getColVal(idxSimSustitutoNumber).toUpperCase(),
+              entregadoDisglobal: parseBool(getColVal(idxEntregadoDisglobal)),
+              entregadoA: getColVal(idxEntregadoA),
+              cruceBatchId: getColVal(idxBatchId)
+            });
+          }
+
+          if (newItems.length > 0) {
+            setSerials(prev => [...newItems, ...prev]);
+            if (setUsersProfiles) {
+              setUsersProfiles(prev => {
+                const updated = { ...prev };
+                newItems.forEach(item => {
+                  const rem = item.remitente ? item.remitente.toUpperCase().trim() : '';
+                  if (!rem || rem === 'IMPORT CASILLERO') return;
+                  
+                  const existing = updated[rem];
+                  updated[rem] = {
+                    remitenteId: rem,
+                    nombreCompleto: existing?.nombreCompleto || item.razonSocial || rem,
+                    isUsuario: existing?.isUsuario !== undefined ? existing.isUsuario : false,
+                    isCliente: true,
+                    area: existing?.area || '',
+                    cargo: existing?.cargo || '',
+                    rif: existing?.rif || item.rif || '',
+                    razonSocial: existing?.razonSocial || item.razonSocial || '',
+                    ubicacion: existing?.ubicacion || item.destino || '',
+                    telefono: existing?.telefono || ''
+                  };
+                });
+                return updated;
+              });
+            }
+            alert(`¡Se importaron ${newItems.length} equipos desde el formato de Casillero exitosamente!`);
+          } else {
+            alert("No se encontraron registros válidos para importar.");
+          }
+        } catch (err: any) {
+          alert(`Error al procesar el archivo: ${err.message}`);
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
   const deleteSelectedCasillero = () => {
     const selectedIds = new Set(serials.filter(s => s.isCasillero && s.selected).map(s => s.id));
     if (selectedIds.size === 0) {
@@ -822,6 +1065,15 @@ export const Casillero: React.FC<CasilleroProps> = ({
           >
             <FileSpreadsheet size={14} className="text-white" />
             <span>Importar Matriz</span>
+          </button>
+
+          <button
+            onClick={handleImportFromCasilleroFormat}
+            className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
+            title="Importar desde formato de exportación de Casillero"
+          >
+            <FileSpreadsheet size={14} className="text-white" />
+            <span>Importar Casillero</span>
           </button>
           
           <button

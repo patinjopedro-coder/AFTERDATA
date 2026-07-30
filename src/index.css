@@ -1867,3 +1867,62 @@ body .saliente-recibido-confirmado-blue * {
   filter: none !important;
   opacity: 1 !important;
 }
+/* Botón púrpura para edición grupal de fechas */
+.btn-purple {
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+  border: 1px solid #8b5cf6 !important;
+  border-radius: 0px !important;
+}
+
+.btn-purple *,
+.btn-purple svg,
+.btn-purple svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.btn-purple:hover {
+  background-color: #7c3aed !important;
+  border-color: #7c3aed !important;
+}
+
+/* Botón indigo para IMDS */
+.btn-indigo {
+  background-color: #4f46e5 !important;
+  color: #ffffff !important;
+  border: 1px solid #4f46e5 !important;
+  border-radius: 0px !important;
+}
+
+.btn-indigo *,
+.btn-indigo svg,
+.btn-indigo svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.btn-indigo:hover {
+  background-color: #4338ca !important;
+  border-color: #4338ca !important;
+}
+
+/* Botón cian para importar Casillero */
+.btn-cyan {
+  background-color: #0891b2 !important;
+  color: #ffffff !important;
+  border: 1px solid #0891b2 !important;
+  border-radius: 0px !important;
+}
+
+.btn-cyan *,
+.btn-cyan svg,
+.btn-cyan svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.btn-cyan:hover {
+  background-color: #0e7490 !important;
+  border-color: #0e7490 !important;
+}
