@@ -406,6 +406,108 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     );
   };
 
+  const renderBulkDateEditModal = () => {
+    if (!isBulkDateEditOpen) return null;
+    
+    const pageIds = new Set(paginatedSerials.map(s => s.id));
+    const selectedCount = serials.filter(s => s.selected).length;
+    const pageCount = paginatedSerials.length;
+    
+    const handleBulkDateUpdate = (applyToSelected: boolean) => {
+      if (!bulkEditDate) {
+        alert('POR FAVOR SELECCIONE UNA FECHA');
+        return;
+      }
+      
+      const targetIds = applyToSelected 
+        ? new Set(serials.filter(s => s.selected).map(s => s.id))
+        : pageIds;
+      
+      if (targetIds.size === 0) {
+        alert('NO HAY SERIALES PARA ACTUALIZAR');
+        return;
+      }
+      
+      const displayDate = bulkEditDate.split('-').reverse().join('/');
+      
+      setSerials(prev => prev.map(s => {
+        if (!targetIds.has(s.id)) return s;
+        return trackAndLogChanges(s, { date: bulkEditDate, displayDate });
+      }));
+      
+      setIsBulkDateEditOpen(false);
+      setBulkEditDate('');
+      alert(`Se actualizó la fecha a ${displayDate} para ${targetIds.size} equipo(s).`);
+    };
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div className="bg-white w-full max-w-md mx-4 shadow-2xl" style={{ borderRadius: '4px', border: '1px solid #e2e8f0' }}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-900">Edición Masiva de Fechas</span>
+            <button onClick={() => { setIsBulkDateEditOpen(false); setBulkEditDate(''); }} className="p-1 hover:bg-slate-100 cursor-pointer" style={{ borderRadius: '4px' }}>
+              <X size={16} className="text-slate-600" />
+            </button>
+          </div>
+          
+          <div className="p-5 space-y-4">
+            <div>
+              <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Nueva Fecha</label>
+              <input
+                type="date"
+                value={bulkEditDate}
+                onChange={e => setBulkEditDate(e.target.value)}
+                className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold focus:outline-none focus:ring-1 focus:ring-slate-300"
+                style={{ borderRadius: '4px' }}
+              />
+            </div>
+            
+            <div className="bg-slate-50 p-3 border border-slate-100" style={{ borderRadius: '4px' }}>
+              <div className="text-xs text-slate-600 font-semibold mb-2">Aplicar a:</div>
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="bulkDateTarget" defaultChecked className="cursor-pointer" />
+                  <span className="text-xs text-slate-700">Página actual ({pageCount} equipos)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="radio" name="bulkDateTarget" disabled={selectedCount === 0} className="cursor-pointer" />
+                  <span className={`text-xs ${selectedCount > 0 ? 'text-slate-700' : 'text-slate-400'}`}>
+                    Equipos seleccionados ({selectedCount} equipos)
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+          
+          <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
+            <button
+              onClick={() => { setIsBulkDateEditOpen(false); setBulkEditDate(''); }}
+              className="px-4 py-2 text-xs font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={() => handleBulkDateUpdate(false)}
+              className="px-4 py-2 text-xs font-bold uppercase bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+              style={{ borderRadius: '4px' }}
+            >
+              Aplicar a Página Actual
+            </button>
+            <button
+              onClick={() => handleBulkDateUpdate(true)}
+              disabled={selectedCount === 0}
+              className="px-4 py-2 text-xs font-bold uppercase bg-purple-600 hover:bg-purple-700 text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ borderRadius: '4px' }}
+            >
+              Aplicar a Seleccionados
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Form State
   const [bulkInput, setBulkInput] = useState('');
   const [remitente, setRemitente] = useState('');
@@ -1466,76 +1568,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       </div>
 
       {renderEditModal()}
-  const renderBulkDateEditModal = () => {
-    if (!isBulkDateEditOpen) return null;
-    
-    const selectedCount = serials.filter(s => s.selected).length;
-    
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
-        <div className="bg-white w-full max-w-md mx-4 shadow-2xl" style={{ borderRadius: '4px', border: '1px solid #e2e8f0' }}>
-          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <Pencil size={16} className="text-slate-900" />
-              <span className="text-xs font-black uppercase tracking-wider text-slate-900">Editar Fechas en Grupo</span>
-            </div>
-            <button onClick={() => { setIsBulkDateEditOpen(false); setBulkEditDate(''); }} className="p-1 hover:bg-slate-100 cursor-pointer" style={{ borderRadius: '4px' }}>
-              <X size={16} className="text-slate-600" />
-            </button>
-          </div>
-          
-          <div className="p-5">
-            <div className="mb-4">
-              <span className="text-xs font-bold text-slate-700">
-                Se actualizarán {selectedCount} equipos seleccionados
-              </span>
-            </div>
-            
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">
-                  Nueva Fecha (YYYY-MM-DD)
-                </label>
-                <input
-                  type="date"
-                  value={bulkEditDate}
-                  onChange={e => setBulkEditDate(e.target.value)}
-                  className="w-full text-xs p-2 bg-slate-100 border border-transparent text-black font-semibold uppercase focus:outline-none focus:ring-1 focus:ring-slate-300"
-                  style={{ borderRadius: '4px' }}
-                />
-              </div>
-              
-              <div className="bg-slate-50 p-3 border border-slate-100 rounded">
-                <span className="text-[10px] text-slate-600 font-bold uppercase">
-                  NOTA: Esta acción actualizará la fecha de ingreso de todos los equipos seleccionados. 
-                  El cambio quedará registrado en el historial de cada equipo.
-                </span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="px-5 py-3 border-t border-slate-100 flex justify-end gap-2">
-            <button
-              onClick={() => { setIsBulkDateEditOpen(false); setBulkEditDate(''); }}
-              className="px-4 py-2 text-xs font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
-              style={{ borderRadius: '4px' }}
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleBulkDateEdit}
-              disabled={!bulkEditDate || selectedCount === 0}
-              className="px-4 py-2 text-xs font-bold uppercase bg-purple-600 hover:bg-purple-700 text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ borderRadius: '4px' }}
-            >
-              Aplicar Fecha
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
       {renderBatchSearchModal()}
       {renderBulkDateEditModal()}
     </div>
