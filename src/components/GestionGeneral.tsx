@@ -105,14 +105,40 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
-      const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+      // Función auxiliar para parsear CSV con comillas
+      const parseCSVLine = (line: string): string[] => {
+        const result: string[] = [];
+        let current = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"') {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(current.trim());
+            current = '';
+          } else {
+            current += char;
+          }
+        }
+        result.push(current.trim());
+        return result;
+      };
+
+      let lines = text.split('\n').map(line => line.trim()).filter(line => line);
+      
+      // Saltar línea de directiva (sep=) si existe
+      if (lines.length > 0 && lines[0].toLowerCase().startsWith('sep=')) {
+        lines = lines.slice(1);
+      }
       
       if (lines.length < 2) {
         alert('El archivo CSV está vacío o no tiene datos');
         return;
       }
 
-      const headers = lines[0].split(',').map(h => h.trim().toUpperCase().replace(/"/g, ''));
+      const headers = parseCSVLine(lines[0]).map(h => h.toUpperCase().replace(/"/g, ''));
       
       // Mapeo de columnas del CSV de Disglobal a POSItem
       const columnMap: Record<string, keyof POSItem> = {
@@ -162,8 +188,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       const importedItems: POSItem[] = [];
       
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-        if (values.length < 2) continue;
+        const values = parseCSVLine(lines[i]).map(v => v.replace(/"/g, ''));
+        if (values.length < 2 || !values[0]) continue;
 
         currentId++;
         const item: POSItem = {
