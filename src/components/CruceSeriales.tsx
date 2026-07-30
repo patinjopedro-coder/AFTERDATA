@@ -123,6 +123,11 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   // IMS raw inputs state (supporting >100.000 vertical spreadsheet rows)
   const [imsSerialsRaw, setImsSerialsRaw] = useState('');
   const [imsStatusRaw, setImsStatusRaw] = useState('');
+  // IMDS raw inputs state (new modal)
+  const [imdsSerialsRaw, setImdsSerialsRaw] = useState('');
+  const [imdsStatusRaw, setImdsStatusRaw] = useState('');
+  const [imdsRemitenteRaw, setImdsRemitenteRaw] = useState('');
+  const [imdsFechaRaw, setImdsFechaRaw] = useState('');
 
   // CMS raw inputs state
   const [CMSSerialsRaw, setCMSSerialsRaw] = useState('');

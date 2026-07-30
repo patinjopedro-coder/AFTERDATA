@@ -247,6 +247,8 @@ export function prepareExportRecords(serials: POSItem[]): ExportRecord[] {
   const rows: ExportRecord[] = [];
 
   serials.forEach(s => {
+    if (s.serial === 'POR RECIBIR') return;
+
     rows.push({
       idNum: s.id,
       idStr: String(s.id),

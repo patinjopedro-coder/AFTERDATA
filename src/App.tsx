@@ -490,6 +490,7 @@ export default function App() {
     // 1. Tab General
     if (currentTab === 'general') {
       const filtered = serials.filter(s => {
+        if (s.serial === 'POR RECIBIR') return false;
         if (!includeCasillero && s.isCasillero) return false;
         if (dateFrom && s.date < dateFrom) return false;
         if (dateTo && s.date > dateTo) return false;
@@ -533,6 +534,7 @@ export default function App() {
     // 2. Tab Casillero
     if (currentTab === 'casillero') {
       const filtered = serials.filter(s => {
+        if (s.serial === 'POR RECIBIR') return false;
         if (!s.isCasillero) return false;
         if (dateFrom && s.date < dateFrom) return false;
         if (dateTo && s.date > dateTo) return false;

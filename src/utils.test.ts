@@ -179,6 +179,35 @@ describe('prepareExportRecords & mergeImportedRecords utilities', () => {
     assert.strictEqual(exportRecords[2].item.simNumber, '123456');
   });
 
+  test('should filter out records with serial \'POR RECIBIR\' when preparing export records', () => {
+    const mockSerials: POSItem[] = [
+      {
+        id: 1,
+        serial: 'POR RECIBIR',
+        date: '2026-06-22',
+        displayDate: '22/06/2026',
+        status: 'PENDIENTE',
+        remitente: 'REMITENTE-A',
+        source: 'GUI-A',
+        isCasillero: true
+      },
+      {
+        id: 2,
+        serial: 'VALID-SERIAL-1',
+        date: '2026-06-22',
+        displayDate: '22/06/2026',
+        status: 'DISPONIBLE',
+        remitente: 'REMITENTE-B',
+        source: 'GUI-B',
+        isCasillero: false
+      }
+    ];
+
+    const exportRecords = prepareExportRecords(mockSerials);
+    assert.strictEqual(exportRecords.length, 1);
+    assert.strictEqual(exportRecords[0].item.serial, 'VALID-SERIAL-1');
+  });
+
   test('should merge split import records back into POSItems correctly', () => {
     const rawImported: { id: number; idStr: string; isSustRow: boolean; item: POSItem }[] = [
       {

@@ -395,7 +395,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
   };
 
   const handleExportHistorico = () => {
-    const targets = serials.filter(s => s.isCasillero);
+    const targets = serials.filter(s => s.isCasillero && s.serial !== 'POR RECIBIR');
 
     if (targets.length === 0) {
       alert("No hay registros en el casillero para exportar.");
@@ -415,7 +415,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
   };
 
   const handleExportRecuperados = () => {
-    const targets = serials.filter(s => s.isCasillero && s.status === 'RECUPERADO');
+    const targets = serials.filter(s => s.isCasillero && s.status === 'RECUPERADO' && s.serial !== 'POR RECIBIR');
 
     if (targets.length === 0) {
       alert("No hay registros marcados como RECUPERADO en el casillero para exportar.");
@@ -1419,7 +1419,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                         <div className="flex flex-col gap-1 pr-2">
                           <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Nota de reparación o estado físico</label>
                           <select
-                            disabled={!!s.entregadoTecnico}
+                            disabled={!!s.fechaConfirmada}
                             value={s.notaReparacion || ''}
                             onChange={e => {
                               const val = e.target.value;
@@ -1445,7 +1445,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                               }));
                             }}
                             className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
-                              s.entregadoTecnico ? 'bg-slate-50 border-transparent text-slate-400 cursor-not-allowed select-none' : ''
+                              s.fechaConfirmada ? 'bg-slate-50 border-transparent text-slate-400 cursor-not-allowed select-none' : ''
                             }`}
                           >
                             <option value="">NINGUNA</option>
