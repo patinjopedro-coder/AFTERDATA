@@ -140,9 +140,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         'SIM': 'sim',
         'SIM_NUMBER': 'simNumber',
         'OPERADORA': 'operadora',
-        'MODEL
-
-O_MANUAL': 'modeloManual',
+        'MODELO_MANUAL': 'modeloManual',
         'MODELO_NEGOCIO': 'modeloNegocio',
         'ENTREGADO_TECNICO': 'entregadoTecnico',
         'ES_SUSTITUCION': 'esSustitucion',
