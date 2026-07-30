@@ -6,7 +6,7 @@ import {
   FileText, CheckSquare, Square, Search, Layers, 
   Trash2, Filter, ChevronLeft, ChevronRight, User, 
   MapPin, ShieldCheck, HelpCircle, FileSpreadsheet, Play, Check,
-  Pencil, X
+  Pencil, X, Upload
 } from 'lucide-react';
 
 interface GestionGeneralProps {
@@ -51,6 +51,8 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const [isBatchSearchOpen, setIsBatchSearchOpen] = useState(false);
   const [isBulkDateEditOpen, setIsBulkDateEditOpen] = useState(false);
   const [bulkEditDate, setBulkEditDate] = useState('');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importPreview, setImportPreview] = useState<POSItem[]>([]);
 
   const getTagClass = (value?: string) => {
     const normalized = (value || '').toUpperCase().trim();
@@ -93,6 +95,164 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     }));
     setEditingItem(null);
     setEditDraft({});
+  };
+
+  // Importar CSV de Disglobal
+  const handleImportDisglobal = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+      
+      if (lines.length < 2) {
+        alert('El archivo CSV está vacío o no tiene datos');
+        return;
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().toUpperCase().replace(/"/g, ''));
+      
+      // Mapeo de columnas del CSV de Disglobal a POSItem
+      const columnMap: Record<string, keyof POSItem> = {
+        'ID': 'id',
+        'SERIAL_CRUCE': 'serial',
+        'SERIAL_CASILLERO': 'serial',
+        'STATUS': 'status',
+        'IS_CASILLERO': 'isCasillero',
+        'REMITENTE': 'remitente',
+        'GUI_ENTRADA': 'source',
+        'DESTINO': 'destino',
+        'OBSERVACIONES': 'observaciones',
+        'RESPONSABLE': 'responsable',
+        'GUIA_SALIDA_CLIENTE': 'guiaSalidaCliente',
+        'DESTINO_SALIDA': 'destinoSalida',
+        'RIF': 'rif',
+        'RAZON_SOCIAL': 'razonSocial',
+        'BANCO': 'banco',
+        'BSF': 'bsf',
+        'USDT': 'usdt',
+        'FORRO': 'forro',
+        'BATERIA': 'bateria',
+        'CARGADOR': 'cargador',
+        'CAJA': 'caja',
+        'SIM': 'sim',
+        'SIM_NUMBER': 'simNumber',
+        'OPERADORA': 'operadora',
+        'MODEL
+
+O_MANUAL': 'modeloManual',
+        'MODELO_NEGOCIO': 'modeloNegocio',
+        'ENTREGADO_TECNICO': 'entregadoTecnico',
+        'ES_SUSTITUCION': 'esSustitucion',
+        'SERIAL_SUSTITUTO': 'serialSustituto',
+        'SIM_SUSTITUTO': 'simSustituto',
+        'SIM_SUSTITUTO_NUMBER': 'simSustitutoNumber',
+        'FECHA_SALIDA': 'fechaSalida',
+        'FECHA_SALIDA_CLIENTE': 'fechaSalidaCliente',
+        'FECHA_CONFIRMADA': 'fechaConfirmada',
+        'TICKET': 'ticket',
+        'ADDED_FROM_CRUCE': 'addedFromCruce',
+        'CRUCE_BATCH_ID': 'cruceBatchId',
+        'FECHA_INGRESO': 'date'
+      };
+
+      const maxId = serials.reduce((max, s) => Math.max(max, s.id), 0);
+      let currentId = maxId;
+      
+      const importedItems: POSItem[] = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        if (values.length < 2) continue;
+
+        currentId++;
+        const item: POSItem = {
+          id: currentId,
+          serial: '',
+          date: '',
+          displayDate: '',
+          status: 'SIN ESTATUS',
+          remitente: '',
+          source: '',
+          isCasillero: false,
+          selected: false
+        };
+
+        headers.forEach((header, index) => {
+          const key = columnMap[header];
+          const value = values[index] || '';
+          
+          if (!key) return;
+          
+          switch (key) {
+            case 'serial':
+              item.serial = value.toUpperCase();
+              break;
+            case 'status':
+              item.status = (value.toUpperCase() as POSStatus) || 'SIN ESTATUS';
+              break;
+            case 'isCasillero':
+              item.isCasillero = value.toUpperCase() === 'TRUE' || value === '1';
+              break;
+            case 'date':
+              item.date = value;
+              item.displayDate = value ? value.split('-').reverse().join('/') : '';
+              break;
+            case 'displayDate':
+              item.displayDate = value;
+              break;
+            case 'forro':
+            case 'bateria':
+            case 'cargador':
+            case 'caja':
+            case 'sim':
+            case 'entregadoTecnico':
+            case 'esSustitucion':
+            case 'simSustituto':
+            case 'addedFromCruce':
+            case 'fechaConfirmada':
+              (item as any)[key] = value.toUpperCase() === 'TRUE' || value === '1';
+              break;
+            case 'operadora':
+              item.operadora = (value.toUpperCase() as 'MOVISTAR' | 'MOVILNET' | 'DIGITEL' | '');
+              break;
+            case 'modeloNegocio':
+              item.modeloNegocio = (value.toUpperCase() as 'BASICO' | 'COMODATO' | '');
+              break;
+            default:
+              (item as any)[key] = value.toUpperCase();
+          }
+        });
+
+        if (item.serial) {
+          importedItems.push(item);
+        }
+      }
+
+      if (importedItems.length === 0) {
+        alert('No se encontraron seriales válidos para importar');
+        return;
+      }
+
+      setImportPreview(importedItems);
+      setIsImportModalOpen(true);
+    };
+    
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const confirmImport = () => {
+    if (importPreview.length === 0) return;
+    
+    const newSerials = importPreview.map(item => trackAndLogChanges(item, {}));
+    setSerials(prev => [...prev, ...newSerials]);
+    
+    alert(`Se importaron ${newSerials.length} seriales correctamente`);
+    setIsImportModalOpen(false);
+    setImportPreview([]);
   };
 
   const renderEditModal = () => {
@@ -502,6 +662,89 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             >
               Aplicar a Seleccionados
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderImportModal = () => {
+    if (!isImportModalOpen) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div className="bg-white w-full max-w-4xl mx-4 shadow-2xl" style={{ borderRadius: '4px', border: '1px solid #e2e8f0', maxHeight: '85vh' }}>
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 shrink-0">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+              Importar CSV Disglobal — {importPreview.length} registros
+            </span>
+            <button onClick={() => { setIsImportModalOpen(false); setImportPreview([]); }} className="p-1 hover:bg-slate-100 cursor-pointer" style={{ borderRadius: '4px' }}>
+              <X size={16} className="text-slate-600" />
+            </button>
+          </div>
+          
+          <div className="p-5 overflow-y-auto flex-1" style={{ maxHeight: 'calc(85vh - 130px)' }}>
+            {importPreview.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-100 sticky top-0">
+                    <tr>
+                      <th className="px-2 py-2 text-left font-bold text-slate-700 border-b border-slate-200">Serial</th>
+                      <th className="px-2 py-2 text-left font-bold text-slate-700 border-b border-slate-200">Status</th>
+                      <th className="px-2 py-2 text-left font-bold text-slate-700 border-b border-slate-200">Remitente</th>
+                      <th className="px-2 py-2 text-left font-bold text-slate-700 border-b border-slate-200">Guía</th>
+                      <th className="px-2 py-2 text-left font-bold text-slate-700 border-b border-slate-200">Fecha</th>
+                      <th className="px-2 py-2 text-left font-bold text-slate-700 border-b border-slate-200">Casillero</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importPreview.slice(0, 100).map((item, idx) => (
+                      <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
+                        <td className="px-2 py-1.5 font-mono text-slate-700 border-b border-slate-100">{item.serial}</td>
+                        <td className="px-2 py-1.5 border-b border-slate-100">
+                          <span className={getTagClass(item.status)}>{item.status}</span>
+                        </td>
+                        <td className="px-2 py-1.5 text-slate-700 border-b border-slate-100">{item.remitente}</td>
+                        <td className="px-2 py-1.5 text-slate-700 border-b border-slate-100">{item.source}</td>
+                        <td className="px-2 py-1.5 text-slate-700 border-b border-slate-100">{item.displayDate || item.date}</td>
+                        <td className="px-2 py-1.5 border-b border-slate-100">
+                          {item.isCasillero && <span className="text-[10px] bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded font-bold">CAS</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {importPreview.length > 100 && (
+                  <div className="text-center py-2 text-xs text-slate-500">
+                    Mostrando primeros 100 de {importPreview.length} registros
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-slate-500">No hay datos para mostrar</div>
+            )}
+          </div>
+          
+          <div className="px-5 py-3 border-t border-slate-100 flex justify-between items-center shrink-0">
+            <span className="text-xs text-slate-500">
+              Total: {importPreview.length} registros
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setIsImportModalOpen(false); setImportPreview([]); }}
+                className="px-4 py-2 text-xs font-bold uppercase bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                style={{ borderRadius: '4px' }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmImport}
+                className="px-4 py-2 text-xs font-bold uppercase bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                style={{ borderRadius: '4px' }}
+              >
+                Importar {importPreview.length} Registros
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1267,6 +1510,21 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 <Pencil size={12} />
                 EDITAR FECHAS GRUPAL
               </button>
+
+              <label
+                className="btn-emerald bg-emerald-600 hover:bg-emerald-700 text-white font-arial font-bold uppercase text-[10px] tracking-wider px-3.5 py-1.5 rounded-none border border-emerald-600 cursor-pointer transition-all shadow-xs h-[28px] flex items-center justify-center text-white-force gap-1"
+                style={{ color: '#ffffff' }}
+                title="Importar CSV de Disglobal"
+              >
+                <Upload size={12} />
+                IMPORTAR CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleImportDisglobal}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 
@@ -1570,6 +1828,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       {renderEditModal()}
       {renderBatchSearchModal()}
       {renderBulkDateEditModal()}
+      {renderImportModal()}
     </div>
   );
 };
