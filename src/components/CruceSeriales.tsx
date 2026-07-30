@@ -669,6 +669,22 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     downloadBlob(blob, filename);
   };
 
+  const handleExportFullBackup = async () => {
+    // Export full POS database as CSV
+    const data = await getDBItem<POSItem[]>('pos_items', []);
+    if (!data || data.length === 0) {
+      alert('No hay datos para exportar.');
+      return;
+    }
+    let csv = 'sep=;\nID;FECHA_INGRESO;SERIAL;ESTATUS;REM;USUARIO;OPERADORA;SIM\n';
+    data.forEach(item => {
+      const fecha = item.fechaIngreso || '';
+      csv += `"${item.id || ''}";"${fecha}";"${item.serial || ''}";"${item.status || ''}";"${item.remitente || ''}";"${item.usuario || ''}";"${item.operadora || ''}";"${item.simNumber || ''}"\n`;
+    });
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    downloadBlob(blob, `full_backup_${new Date().toISOString().split('T')[0]}.csv`);
+  };
+
   // Aesthetic light pastel style badges with pure WHITE text inside
   const getStatusBadgeStyle = (st: POSStatus) => {
     if (['CANCELADO', 'N#A', 'RECUPERADO'].includes(st)) {
@@ -1007,7 +1023,16 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
             <Import size={13} />
             <span>Descargar Reporte Cruzado</span>
           </button>
-
+          
+          <button
+            onClick={handleExportFullBackup}
+            disabled={totalUnicos === 0}
+            className="px-4 py-2 btn-blue disabled:opacity-50 text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            <Database size={13} className="text-white" />
+            <span>Exportar Base Completa</span>
+          </button>
+          
           <button
             onClick={() => setIsIMDSModalOpen(true)}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer rounded-lg border border-transparent text-xs"
