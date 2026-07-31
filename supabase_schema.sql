@@ -141,9 +141,10 @@ insert into registros (key, value)
 values (
     'serialesDB',
     (
-        select jsonb_pretty(
-            jsonb_agg(
-                jsonb_build_object(
+        select coalesce(
+            jsonb_pretty(
+                jsonb_agg(
+                    jsonb_build_object(
                     'id',                    s.id,
                     'serial',                s.serial_cruce,
                     'date',                  to_char(to_date(s.fecha_ingreso, 'DD/MM/YYYY'), 'YYYY-MM-DD'),
@@ -193,8 +194,10 @@ values (
                     'history',               '[]'::jsonb
                 )
             )
-        )::text
-        from (select * from seriales_staging order by id) s
+        )::text,
+        '[]'
+    )
+    from (select * from seriales_staging order by id) s
     )
 )
 on conflict (key) do update
