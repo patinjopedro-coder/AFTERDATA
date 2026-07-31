@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, POSStatus, ModelConfig, CruceItem, CMSItem } from '../types';
 import { getDBItem, setDBItem, getLocalItem, setLocalItem } from '../db';
-import { copyToClipboard, downloadBlob } from '../utils';
+import { copyToClipboard, downloadBlob, safeSplit } from '../utils';
 import { 
   FileCheck, ArrowRightLeft, Check, Import, Send, Trash2, Edit2, Play, Search, Database, Layers, X, Clipboard
 } from 'lucide-react';

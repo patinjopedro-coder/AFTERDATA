@@ -25,21 +25,6 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
   const [rawSerials, setRawSerials] = useState('');
   const [batchTitle, setBatchTitle] = useState('');
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isFlatModalOpen, setIsFlatModalOpen] = useState(false);
-
-  // Handle Save Lote
-  const handleSaveBatch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanSerials = rawSerials
-      .split(/[\r\n,;]+/)
-      .map(s => s.trim().toUpperCase())
-      .filter(Boolean);
-
-    if (cleanSerials.length === 0) {
-      alert('Por favor ingrese al menos un serial de SIM-Card.');
-      return;
-    }
 
     const d = new Date();
     const defaultTitle = `Lote - ${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;

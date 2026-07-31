@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { EnvioExterno, POSItem } from '../types';
-import { formatRif, copyToClipboard } from '../utils';
+import { formatRif, copyToClipboard, safeSplit } from '../utils';
 import { Trash2, Search, ClipboardList, Check } from 'lucide-react';
 
 interface HacerEnvioProps {

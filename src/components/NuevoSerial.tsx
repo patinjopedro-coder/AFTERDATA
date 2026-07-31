@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { POSItem, ModelConfig, UserProfile } from '../types';
-import { formatRif } from '../utils';
+import { formatRif, safeSplit } from '../utils';
 import { getTerminalModel } from '../data';
 import { Layers, Plus, Check } from 'lucide-react';
 
