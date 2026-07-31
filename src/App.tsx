@@ -102,12 +102,8 @@ export default function App() {
     return Array.from(set).sort();
   }, [serials]);
 
-  // Floating History Tooltip State
-  const [historyTooltip, setHistoryTooltip] = useState<{
-    serial: string;
-    clientX: number;
-    clientY: number;
-  } | null>(null);
+  // Global History Modal State
+  const [viewingHistorySerial, setViewingHistorySerial] = useState<string | null>(null);
 
   // Global User Profile Modal State
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
@@ -189,7 +185,7 @@ export default function App() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setViewingProfile(null);
-        setHistoryTooltip(null);
+        setViewingHistorySerial(null);
         setShowUserMenu(false);
       }
     };
@@ -854,18 +850,9 @@ export default function App() {
   };
 
   // -------------------------------------------------------------
-  // HISTORY TOOLTIP LOGIC (POP OVERLAY ON HOVER)
-  const showHistory = (serial: string, anchor: HTMLElement) => {
-    const rect = anchor.getBoundingClientRect();
-    setHistoryTooltip({
-      serial,
-      clientX: rect.left,
-      clientY: rect.bottom + window.scrollY
-    });
-  };
-
-  const hideHistory = () => {
-    setHistoryTooltip(null);
+  // HISTORY MODAL LOGIC
+  const showHistory = (serial: string) => {
+    setViewingHistorySerial(serial);
   };
 
   // Filter history logs for current serial
@@ -1364,7 +1351,6 @@ export default function App() {
               includeCasillero={includeCasillero}
               setIncludeCasillero={setIncludeCasillero}
               onShowHistory={showHistory}
-              onHideHistory={hideHistory}
               onUserClick={(remitente: string) => setViewingProfile(remitente)}
               usersProfiles={usersProfiles}
               setUsersProfiles={setUsersProfiles}
@@ -1504,49 +1490,69 @@ export default function App() {
         </main>
       </div>
 
-      {/* FLOATING RETRACED HISTORY OVERLAY POPUP */}
-      {historyTooltip && (
-        <div
-          className="absolute z-50 bg-[#0f0f11] border border-[#3f3f46] rounded-lg p-3.5 shadow-2xl min-w-[270px] max-w-[340px] pointer-events-none mt-2 font-mono text-[11px] animate-fade-in uppercase font-bold"
-          style={{
-            left: historyTooltip.clientX,
-            top: historyTooltip.clientY,
-            color: '#ffffff'
-          }}
-        >
-          <div className="font-bold text-[11px] border-b border-[#3f3f46] pb-1.5 mb-1.5 uppercase font-sans tracking-wider" style={{ color: '#ffffff' }}>
-            RECIBO DE HISTORIAL
-          </div>
-          <div className="font-sans tracking-wide uppercase" style={{ color: '#ffffff' }}>
-            SERIAL: <span className="font-mono text-xs font-black uppercase" style={{ color: '#ffffff' }}>{historyTooltip.serial}</span>
-          </div>
-
-          <div className="mt-2 text-[10px] space-y-1.5 uppercase" style={{ color: '#ffffff' }}>
-            {getSerialHistoryLogs(historyTooltip.serial).length === 0 ? (
-              <div className="uppercase" style={{ color: '#ffffff' }}>NO HAY LOGS PREVIOS EN LA BASE GENERAL.</div>
-            ) : (
-              getSerialHistoryLogs(historyTooltip.serial).map((log, i) => (
-                <div key={i} className="flex justify-between items-center border-b border-[#27272a] pb-1 uppercase" style={{ color: '#ffffff' }}>
-                  <div className="uppercase" style={{ color: '#ffffff' }}>
-                    <div className="font-bold uppercase" style={{ color: '#ffffff' }}>{log.displayDate}</div>
-                    <div className="text-[9px] uppercase" style={{ color: '#a1a1aa' }}>{log.remitente}</div>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider text-white ${['CANCELADO', 'N#A', 'RECUPERADO'].includes(log.status)
-                      ? 'bg-green-600 text-white'
-                      : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(log.status)
-                        ? 'bg-orange-500 text-white'
-                        : log.status === 'SIN ESTATUS'
-                          ? 'bg-black text-white border border-zinc-700'
-                          : 'bg-zinc-800 text-white'
-                    }`} style={{ color: '#ffffff' }}>
-                    {log.status}
-                  </span>
+      {/* GLOBAL HISTORY MODAL */}
+      {viewingHistorySerial && (() => {
+        const historyLogs = getSerialHistoryLogs(viewingHistorySerial);
+        return createPortal(
+          <div
+            className="fixed inset-0 bg-slate-900/30 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in-overlay"
+            onClick={() => setViewingHistorySerial(null)}
+          >
+            <div
+              className="bg-white border border-slate-100 rounded-2xl w-full max-w-lg max-h-[85vh] p-6 shadow-xl flex flex-col gap-4 overflow-y-auto animate-fade-in"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="flex flex-col">
+                  <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Historial del Serial</h3>
+                  <p className="text-[14px] text-blue-600 font-black font-mono tracking-widest">{viewingHistorySerial}</p>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+                <button
+                  onClick={() => setViewingHistorySerial(null)}
+                  className="text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg p-2 transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {historyLogs.length === 0 ? (
+                  <div className="text-center p-4 text-slate-500 font-bold uppercase text-xs">
+                    No hay registros previos en la base general.
+                  </div>
+                ) : (
+                  historyLogs.map((log, i) => (
+                    <div key={i} className="flex justify-between items-center border border-slate-100 bg-slate-50 rounded-xl p-3 shadow-sm">
+                      <div className="flex flex-col gap-1">
+                        <div className="text-[11px] font-bold text-slate-800 uppercase">{log.displayDate}</div>
+                        <div className="text-[9px] text-slate-500 uppercase font-bold">{log.remitente}</div>
+                        {log.source && <div className="text-[9px] text-slate-400 uppercase">Guía: {log.source}</div>}
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider text-white shadow-sm ${
+                          ['CANCELADO', 'N#A', 'RECUPERADO'].includes(log.status)
+                            ? 'bg-green-600'
+                            : ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO'].includes(log.status)
+                              ? 'bg-orange-500'
+                              : log.status === 'SIN ESTATUS'
+                                ? 'bg-slate-700'
+                                : 'bg-slate-800'
+                        }`}>
+                          {log.status}
+                        </span>
+                        {log.cruceBatchId && (
+                          <span className="text-[8px] text-slate-400 uppercase font-mono">Lote Cruce</span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
 
       {/* GLOBAL USER PROFILE MODAL */}
       {viewingProfile && (() => {

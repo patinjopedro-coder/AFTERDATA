@@ -21,8 +21,7 @@ interface GestionGeneralProps {
   setDateTo: (s: string) => void;
   includeCasillero: boolean;
   setIncludeCasillero: React.Dispatch<React.SetStateAction<boolean>>;
-  onShowHistory: (serial: string, el: HTMLElement) => void;
-  onHideHistory: () => void;
+  onShowHistory: (serial: string) => void;
   onUserClick: (remitente: string) => void;
   usersProfiles: Record<string, import('../types').UserProfile>;
   setUsersProfiles?: React.Dispatch<React.SetStateAction<Record<string, import('../types').UserProfile>>>;
@@ -40,7 +39,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   includeCasillero,
   setIncludeCasillero,
   onShowHistory,
-  onHideHistory,
   onUserClick,
   usersProfiles,
   setUsersProfiles,
@@ -61,17 +59,17 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       case 'BANCRECER S.A.':
       case 'BANCRECER S.A':
       case 'BANCRECER':
-        return 'inline-flex items-center rounded-full border border-lime-400 bg-lime-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-900 shadow-sm';
+        return 'inline-flex items-center rounded-md bg-teal-50 px-2 py-1 text-[10px] font-bold text-teal-700 ring-1 ring-inset ring-teal-600/20 uppercase shadow-sm tracking-wide';
       case 'COMODATO':
-        return 'inline-flex items-center rounded-full border border-emerald-500 bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
+        return 'inline-flex items-center rounded-md bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700 ring-1 ring-inset ring-emerald-600/20 uppercase shadow-sm tracking-wide';
       case 'FINANCIAMIENTO':
-        return 'inline-flex items-center rounded-full border border-purple-500 bg-purple-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
+        return 'inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-[10px] font-bold text-purple-700 ring-1 ring-inset ring-purple-600/20 uppercase shadow-sm tracking-wide';
       case 'BASICO':
-        return 'inline-flex items-center rounded-full border border-slate-600 bg-slate-700 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
+        return 'inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-700 ring-1 ring-inset ring-slate-500/20 uppercase shadow-sm tracking-wide';
       case 'CASILLERO':
-        return 'inline-flex items-center rounded-full border border-sky-500 bg-sky-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
+        return 'inline-flex items-center rounded-md bg-sky-50 px-2 py-1 text-[10px] font-bold text-sky-700 ring-1 ring-inset ring-sky-600/20 uppercase shadow-sm tracking-wide';
       default:
-        return 'inline-flex items-center rounded-full border border-slate-300 bg-slate-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-800 shadow-sm';
+        return 'inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-[10px] font-bold text-gray-600 ring-1 ring-inset ring-gray-500/20 uppercase shadow-sm tracking-wide';
     }
   };
   const [batchSearchInput, setBatchSearchInput] = useState('');
@@ -1210,7 +1208,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             <Layers className="text-slate-800 w-3.5 h-3.5" />
             <h3 className="font-bold text-[10px] tracking-widest text-slate-800 uppercase">Nuevo Serial</h3>
           </div>
-          <span className="text-[9px] font-bold bg-slate-900 text-white px-2 py-0.5 rounded-full">
+          <span className="text-[9px] font-bold bg-slate-900 !text-white px-2 py-0.5 rounded-full">
             {serials.filter(s => s.isCasillero).length}
           </span>
         </div>
@@ -1277,11 +1275,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                 >
                   {/* Serial + Status */}
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-semibold text-[11px] text-slate-900 select-all leading-tight tracking-wide" style={{ fontFamily: 'ui-monospace, monospace' }}>
+                    <span className="font-bold text-xs text-slate-900 select-all leading-tight tracking-wide font-mono">
                       {s.serial}
                     </span>
                     <span
-                      className="text-[7px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0 text-white leading-tight"
+                      className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wide shrink-0 !text-white leading-tight shadow-sm"
                       style={{ background: statusStyle.bg }}
                     >
                       {statusStyle.label}
@@ -1487,17 +1485,12 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                             <span 
                               data-serial={s.serial}
                               className="text-sm cursor-help hover:text-slate-900 select-all font-bold tracking-wider transition-colors flex items-center gap-1.5 text-slate-800 font-arial"
-                              onMouseEnter={(e) => {
-                                if (serials.filter(o => o.serial === s.serial).length > 1) {
-                                  onShowHistory(s.serial, e.currentTarget);
-                                }
-                              }}
-                              onMouseLeave={onHideHistory}
                               onClick={async (e) => {
                                   e.stopPropagation();
                                   handleCopyText(s.serial, `serial-${s.id}`);
+                                  onShowHistory(s.serial);
                               }}
-                              title="Click para copiar serial"
+                              title="Click para ver historial y copiar serial"
                             >
                               <span className={`w-2 h-2 shrink-0 ${
                                 ['PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'ENTREGADO'].includes(s.status)
