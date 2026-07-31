@@ -29,7 +29,7 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
     const d = new Date();
     const defaultTitle = `Lote - ${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     const finalTitle = batchTitle.trim() || defaultTitle;
-    const finalDate = d.toISOString().split('T')[0];
+    const finalDate = safeSplit(d.toISOString(), 'T')[0];
 
     const newBatch: SimBatch = {
       id: `batch_${Date.now()}`,
