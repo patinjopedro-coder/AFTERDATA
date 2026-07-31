@@ -191,16 +191,12 @@ export default function App() {
         setViewingProfile(null);
         setHistoryTooltip(null);
         setShowUserMenu(false);
-        setShowNotificationsMenu(false);
       }
     };
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (showUserMenu && !target.closest('.relative')) {
         setShowUserMenu(false);
-      }
-      if (showNotificationsMenu && !target.closest('.notification-container')) {
-        setShowNotificationsMenu(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -209,7 +205,8 @@ export default function App() {
       window.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showUserMenu, showNotificationsMenu]);
+  }, [showUserMenu]);
+
 
   // -------------------------------------------------------------
   // PERSIST STATES TO INDEXEDDB ON EVERY CHANGE
