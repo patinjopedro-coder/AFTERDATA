@@ -351,13 +351,13 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
                 </div>
               </div>
 
-            </div>
+            
           </div>,
           document.body
         )}
 
       </div>
 
-    </div>
+    
   );
 };
