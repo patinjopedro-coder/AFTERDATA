@@ -195,8 +195,7 @@ values (
             )
         )::text
         from (select * from seriales_staging order by id) s
-    ),
-    now()
+    )
 )
 on conflict (key) do update
     set value = excluded.value;
