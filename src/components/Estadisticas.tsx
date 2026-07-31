@@ -1915,7 +1915,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                     >
                       {/* Rank Badge */}
                       <div 
-                        className="absolute top-2.5 left-2.5 text-[9.5px] font-black w-5.5 h-5.5 rounded-full flex items-center justify-center border font-mono select-none"
+                        className="absolute top-2 left-2 text-xs font-black w-7 h-7 rounded-full flex items-center justify-center border font-mono select-none shadow-xs"
                         style={{ 
                           borderColor: accentColor, 
                           color: rank <= 3 ? '#ffffff' : accentColor,
@@ -2006,7 +2006,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
               >
                 <div className="border-b border-slate-100 px-3 py-2 flex justify-between items-center bg-slate-50">
                   <span className="text-[8px] text-slate-400 font-bold uppercase font-mono">CLIENTE</span>
-                  <span className="text-[9px] font-black text-slate-500 font-mono">#{idx + 1}</span>
+                  <span className="text-[13px] font-black text-slate-900 font-mono bg-amber-100 px-2 py-0.5 border border-amber-200 shadow-2xs">#{idx + 1}</span>
                 </div>
                 <div className="p-3">
                   <div className="text-xs font-black text-black truncate uppercase font-arial mt-0.5" style={{ color: '#000000' }} title={u.name}>{u.name}</div>

@@ -27,25 +27,52 @@ export const Bancos: React.FC<BancosProps> = ({
   const allBancos = useMemo(() => {
     const set = new Set<string>();
     bancosList.forEach(b => {
-      if (b.nombre) set.add(b.nombre.toUpperCase().trim());
+      let name = b.nombre ? b.nombre.toUpperCase().trim() : '';
+      if (name === 'BANCRECER' || name === 'BANCRECER S.A') name = 'BANCRECER S.A.';
+      if (name === 'BANCO PLAZA' || name === 'PLAZA' || name === 'BANCO PLAZA C.A') name = 'BANCO PLAZA C.A.';
+      if (name) set.add(name);
     });
     serials.forEach(s => {
-      if (s.banco) set.add(s.banco.toUpperCase().trim());
+      if (s.banco) {
+        let name = s.banco.toUpperCase().trim();
+        if (name === 'BANCRECER' || name === 'BANCRECER S.A') name = 'BANCRECER S.A.';
+        if (name === 'BANCO PLAZA' || name === 'PLAZA' || name === 'BANCO PLAZA C.A') name = 'BANCO PLAZA C.A.';
+        set.add(name);
+      }
     });
     // Add default common Venezuelan banks if empty
-    ['BANESCO', 'MERCANTIL', 'PROVINCIAL', 'VENEZUELA', 'BOD', 'BNC', 'BANCRECER', 'BANCAMIGA'].forEach(b => set.add(b));
+    ['BANESCO', 'MERCANTIL', 'PROVINCIAL', 'VENEZUELA', 'BOD', 'BNC', 'BANCRECER S.A.', 'BANCO PLAZA C.A.', 'BANCAMIGA'].forEach(b => set.add(b));
 
     return Array.from(set).sort();
   }, [bancosList, serials]);
 
   const filteredBancos = useMemo(() => {
     if (!searchFilter.trim()) return allBancos;
-    return allBancos.filter(b => b.toLowerCase().includes(searchFilter.toLowerCase()));
-  }, [allBancos, searchFilter]);
+    const query = searchFilter.toLowerCase().trim();
+
+    // Find bank names that match query OR contain a serial that matches query
+    return allBancos.filter(bancoName => {
+      const matchBancoName = bancoName.toLowerCase().includes(query);
+      if (matchBancoName) return true;
+
+      const hasMatchingSerial = serials.some(s => {
+        const itemBanco = (s.banco || '').toUpperCase().trim();
+        const normalizedItemBanco = (itemBanco === 'BANCRECER' || itemBanco === 'BANCRECER S.A') ? 'BANCRECER S.A.' : (itemBanco === 'BANCO PLAZA' || itemBanco === 'PLAZA' || itemBanco === 'BANCO PLAZA C.A') ? 'BANCO PLAZA C.A.' : itemBanco;
+        return normalizedItemBanco === bancoName && s.serial.toLowerCase().includes(query);
+      });
+
+      return hasMatchingSerial;
+    });
+  }, [allBancos, searchFilter, serials]);
 
   const serialsBySelectedBanco = useMemo(() => {
     if (!selectedBanco) return [];
-    return serials.filter(s => s.banco && s.banco.toUpperCase().trim() === selectedBanco.toUpperCase().trim());
+    return serials.filter(s => {
+      let b = s.banco ? s.banco.toUpperCase().trim() : '';
+      if (b === 'BANCRECER' || b === 'BANCRECER S.A') b = 'BANCRECER S.A.';
+      if (b === 'BANCO PLAZA' || b === 'PLAZA' || b === 'BANCO PLAZA C.A') b = 'BANCO PLAZA C.A.';
+      return b === selectedBanco.toUpperCase().trim();
+    });
   }, [serials, selectedBanco]);
 
   const handleAddBanco = () => {
@@ -151,7 +178,7 @@ export const Bancos: React.FC<BancosProps> = ({
             type="text"
             value={searchFilter}
             onChange={e => setSearchFilter(e.target.value)}
-            placeholder="BUSCAR BANCO..."
+            placeholder="BUSCAR BANCO O SERIAL..."
             className="w-full text-xs p-2 bg-slate-100 border border-slate-200 uppercase font-mono font-semibold"
           />
 

@@ -66,6 +66,8 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
 
     const today = currentDateStr();
     const displayToday = today.split('-').reverse().join('/');
+    const dNow = new Date();
+    const horaStr = `${String(dNow.getHours()).padStart(2, '0')}:${String(dNow.getMinutes()).padStart(2, '0')}:${String(dNow.getSeconds()).padStart(2, '0')}`;
     const isCas = !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || banco || sinCosto);
 
     let maxId = serials.reduce((max, s) => (s && s.id && typeof s.id === 'number') ? Math.max(max, s.id) : max, 0);
@@ -78,6 +80,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
         serial: serialUp,
         date: today,
         displayDate: displayToday,
+        hora: horaStr,
         status: 'SIN ESTATUS' as const,
         remitente: remitente.toUpperCase().trim(),
         source: guia.toUpperCase().trim(),
@@ -170,8 +173,8 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
     <div className="flex flex-col gap-6 text-slate-800 pb-16 font-arial max-w-4xl mx-auto">
       <div className="bg-white p-6 border border-slate-200 shadow-md">
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
-          <div className="p-2.5 bg-emerald-700 text-white">
-            <Layers size={22} />
+          <div className="p-1 bg-transparent text-black">
+            <Layers size={26} className="text-black" />
           </div>
           <div>
             <h2 className="text-lg font-black uppercase text-slate-900 tracking-tight">FORMULARIO DE NUEVO SERIAL</h2>

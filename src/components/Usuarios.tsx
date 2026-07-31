@@ -8,54 +8,21 @@ import { Users, ChevronDown, ChevronUp, Calendar, Copy, Box, Check, Briefcase, B
 const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => (
   <svg viewBox="0 0 100 100" className={className}>
     <defs>
-      <radialGradient id="male-purple-grad" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stopColor="#8c6f9f" />
-        <stop offset="100%" stopColor="#654a7c" />
-      </radialGradient>
+      <linearGradient id="corp-male-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
     </defs>
-    <circle cx="50" cy="50" r="48" fill="url(#male-purple-grad)" />
-    <mask id="male-avatar-mask-v3">
-      <circle cx="50" cy="50" r="48" fill="#ffffff" />
-    </mask>
-    <g mask="url(#male-avatar-mask-v3)">
-      {/* Neck base with shadow on the left */}
-      <path d="M 40 48 C 40 48, 39 53, 39 58 L 50 58 L 50 48 Z" fill="#e8a38c" />
-      {/* Neck highlight on the right */}
-      <path d="M 50 48 L 50 58 L 61 58 C 61 53, 60 48, 60 48 Z" fill="#fcd5c0" />
-      
-      {/* Left Ear */}
-      <circle cx="34" cy="41" r="3.5" fill="#e8a38c" />
-      {/* Right Ear */}
-      <circle cx="66" cy="41" r="3.5" fill="#fcd5c0" />
-      
-      {/* Head Shadow (Left) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 0 50 54.5 Z" fill="#e8a38c" />
-      {/* Head Highlight (Right) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 1 50 54.5 Z" fill="#fcd5c0" />
-      
-      {/* Hair Shadow (Left) */}
-      <path d="M 31 38 C 29 32, 28 26, 33 23 C 31 22, 33 18, 38 16 C 42 14, 46 12, 50 13.5 L 50 25 C 44 24, 38 25, 36 30 C 36 33, 33 36, 31 38 Z" fill="#0f172a" />
-      {/* Hair Highlight (Right) */}
-      <path d="M 50 13.5 C 53 11, 58 10, 61 11.5 C 66 13.5, 71 25, 69 38 C 67 36, 64 34, 64 32 C 64 26, 57 25, 50 25 Z" fill="#1e293b" />
-      {/* Left sideburn */}
-      <path d="M 31 38 L 31 44 L 34 42 L 33 38 Z" fill="#0f172a" />
-      {/* Right sideburn */}
-      <path d="M 69 38 L 69 44 L 66 42 L 67 38 Z" fill="#1e293b" />
-      
-      {/* White Shirt Shadow (Left) - Broad Shoulders */}
-      <path d="M 8 100 C 12 75, 25 58, 50 58 L 50 100 Z" fill="#f1f5f9" />
-      {/* White Shirt Highlight (Right) - Broad Shoulders */}
-      <path d="M 50 58 C 75 58, 88 75, 92 100 L 50 100 Z" fill="#ffffff" />
-      
-      {/* Collar Shadow (Left) */}
-      <path d="M 50 58 L 37 58 L 44 66 Z" fill="#e2e8f0" />
-      {/* Collar Highlight (Right) */}
-      <path d="M 50 58 L 63 58 L 56 66 Z" fill="#ffffff" />
-      
-      {/* Black Tie Knot */}
-      <path d="M 47.5 62 L 52.5 62 L 51.5 67 L 48.5 67 Z" fill="#111827" />
-      {/* Black Tie Body */}
-      <path d="M 48.5 67 L 51.5 67 L 53 98 L 50 100 L 47 98 Z" fill="#111827" />
+    <circle cx="50" cy="50" r="48" fill="url(#corp-male-grad)" />
+    <g>
+      {/* Head */}
+      <circle cx="50" cy="38" r="14" fill="#f8fafc" />
+      {/* Suit Jacket */}
+      <path d="M 22 88 C 22 65, 35 56, 50 56 C 65 56, 78 65, 78 88 Z" fill="#334155" />
+      {/* Shirt V */}
+      <path d="M 43 56 L 50 72 L 57 56 Z" fill="#ffffff" />
+      {/* Tie */}
+      <path d="M 48.5 60 L 51.5 60 L 52.5 82 L 50 86 L 47.5 82 Z" fill="#0284c7" />
     </g>
   </svg>
 );
@@ -63,57 +30,21 @@ const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" 
 const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => (
   <svg viewBox="0 0 100 100" className={className}>
     <defs>
-      <radialGradient id="female-purple-grad" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stopColor="#8c6f9f" />
-        <stop offset="100%" stopColor="#654a7c" />
-      </radialGradient>
+      <linearGradient id="corp-female-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#1e293b" />
+        <stop offset="100%" stopColor="#0f172a" />
+      </linearGradient>
     </defs>
-    <circle cx="50" cy="50" r="48" fill="url(#female-purple-grad)" />
-    <mask id="female-avatar-mask-v3">
-      <circle cx="50" cy="50" r="48" fill="#ffffff" />
-    </mask>
-    <g mask="url(#female-avatar-mask-v3)">
-      {/* Background Hair (Long, loose hair behind shoulders) */}
-      {/* Left Back Hair (Shadow) */}
-      <path d="M 34 35 C 33 45, 32 60, 32 78 C 32 84, 40 90, 50 90 L 50 35 Z" fill="#0f172a" />
-      {/* Right Back Hair (Highlight) */}
-      <path d="M 50 35 L 50 90 C 60 90, 68 84, 68 78 C 68 60, 67 45, 66 35 Z" fill="#1e293b" />
-
-      {/* Neck base with shadow on the left */}
-      <path d="M 43 48 C 43 48, 42 53, 42 58 L 50 58 L 50 48 Z" fill="#e8a38c" />
-      {/* Neck highlight on the right */}
-      <path d="M 50 48 L 50 58 L 58 58 C 58 53, 57 48, 57 48 Z" fill="#fcd5c0" />
-      
-      {/* Left Ear */}
-      <circle cx="34" cy="41" r="3.5" fill="#e8a38c" />
-      {/* Right Ear */}
-      <circle cx="66" cy="41" r="3.5" fill="#fcd5c0" />
-      
-      {/* Head Shadow (Left) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 0 50 54.5 Z" fill="#e8a38c" />
-      {/* Head Highlight (Right) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 1 50 54.5 Z" fill="#fcd5c0" />
-      
-      {/* White Shirt Shadow (Left) - Slimmer Shoulders */}
-      <path d="M 18 100 C 22 75, 30 58, 50 58 L 50 100 Z" fill="#f1f5f9" />
-      {/* White Shirt Highlight (Right) - Slimmer Shoulders */}
-      <path d="M 50 58 C 70 58, 78 75, 82 100 L 50 100 Z" fill="#ffffff" />
-      
-      {/* Collar Shadow (Left) */}
-      <path d="M 50 58 L 37 58 L 44 66 Z" fill="#e2e8f0" />
-      {/* Collar Highlight (Right) */}
-      <path d="M 50 58 L 63 58 L 56 66 Z" fill="#ffffff" />
-      
-      {/* Black Tie Knot */}
-      <path d="M 47.5 62 L 52.5 62 L 51.5 67 L 48.5 67 Z" fill="#111827" />
-      {/* Black Tie Body */}
-      <path d="M 48.5 67 L 51.5 67 L 53 98 L 50 100 L 47 98 Z" fill="#111827" />
-
-      {/* Foreground Hair (Long, loose strands flowing in front of shoulders with pointy ends) */}
-      {/* Left Front Hair (Shadow) */}
-      <path d="M 50 20 C 38 20, 34 30, 34 46 C 34 58, 34.5 68, 35 78 L 36 78 C 37.5 68, 37.5 58, 37 44 C 37 32, 43 29, 50 29 Z" fill="#0f172a" />
-      {/* Right Front Hair (Highlight) */}
-      <path d="M 50 20 C 62 20, 66 30, 66 46 C 66 58, 65.5 68, 65 78 L 64 78 C 62.5 68, 62.5 58, 63 44 C 63 32, 57 29, 50 29 Z" fill="#1e293b" />
+    <circle cx="50" cy="50" r="48" fill="url(#corp-female-grad)" />
+    <g>
+      {/* Hair back */}
+      <path d="M 32 32 C 32 18, 68 18, 68 32 L 70 54 C 70 60, 64 64, 64 64 L 36 64 C 36 64, 30 60, 30 54 Z" fill="#475569" />
+      {/* Head */}
+      <circle cx="50" cy="38" r="13" fill="#f8fafc" />
+      {/* Blazer */}
+      <path d="M 24 88 C 24 66, 36 56, 50 56 C 64 56, 76 66, 76 88 Z" fill="#334155" />
+      {/* Inner Top */}
+      <path d="M 44 56 L 50 68 L 56 56 Z" fill="#0284c7" />
     </g>
   </svg>
 );

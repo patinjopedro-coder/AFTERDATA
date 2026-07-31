@@ -58,6 +58,10 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const getTagClass = (value?: string) => {
     const normalized = (value || '').toUpperCase().trim();
     switch (normalized) {
+      case 'BANCRECER S.A.':
+      case 'BANCRECER S.A':
+      case 'BANCRECER':
+        return 'inline-flex items-center rounded-full border border-lime-300 bg-lime-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-900 shadow-2xs';
       case 'COMODATO':
         return 'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700';
       case 'BASICO':
@@ -1220,7 +1224,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                   <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 uppercase">{s.status}</span>
                 </div>
                 <div className="text-[10px] text-slate-500 font-sans flex justify-between uppercase">
-                  <span>Remitente: {s.remitente || 'N/A'}</span>
+                  <span>Razón Social: {s.razonSocial || s.remitente || 'N/A'}</span>
                   <span>Guía: {s.source || '-'}</span>
                 </div>
               </div>
@@ -1435,14 +1439,17 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                               {modelInfo.so === 'ANDROID' ? 'ANDROID' : modelInfo.so === 'LINUX' ? 'LINUX' : 'UNK'} - {modelInfo.modelo}
                             </span>
                             {(s.sinCosto || s.banco || s.bsf || s.usdt) && (
-                              <div className="text-[9px] text-slate-500 font-semibold uppercase font-arial">
+                              <div className="text-[9px] text-slate-500 font-semibold uppercase font-arial flex items-center gap-1 mt-0.5">
+                                {s.banco && (s.banco.toUpperCase().includes('BANCRECER')) ? (
+                                  <span className={getTagClass('BANCRECER S.A.')}>BANCRECER S.A.</span>
+                                ) : s.banco ? (
+                                  <span>{s.banco}</span>
+                                ) : null}
                                 {s.sinCosto ? (
-                                  <span className="text-emerald-700 font-bold uppercase">SIN COSTO</span>
+                                  <span className="text-emerald-700 font-bold uppercase"> - SIN COSTO</span>
                                 ) : (
                                   <>
-                                    {s.banco && `${s.banco}`}
-                                    {s.banco && (s.bsf || s.usdt) && ' - '}
-                                    {s.bsf || s.usdt}
+                                    {(s.bsf || s.usdt) && ` - ${s.bsf || s.usdt}`}
                                   </>
                                 )}
                               </div>

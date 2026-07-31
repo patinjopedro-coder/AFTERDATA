@@ -53,6 +53,7 @@ export interface POSItem {
   usdt?: string;
   cruceBatchId?: string;
   sinCosto?: boolean;
+  hora?: string;
   history?: string[];
 }
 

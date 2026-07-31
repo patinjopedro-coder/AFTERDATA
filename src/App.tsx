@@ -1208,7 +1208,7 @@ export default function App() {
                   </div>
                   <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
                     {duplicateSerialsList.length === 0 && duplicateSimsList.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-400 font-semibold uppercase">Ninguna Alerta</div>
+                      <div className="p-4 text-center text-xs text-slate-400 font-semibold uppercase">Sin Notificaciones Pendientes</div>
                     ) : (
                       <>
                         {duplicateSerialsList.map(item => (
@@ -1222,11 +1222,11 @@ export default function App() {
                             }}
                           >
                             <div className="text-xs font-bold text-slate-800 tracking-wider font-mono flex items-center justify-between">
-                              <span>{item.serial} (POS)</span>
-                              <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">Ver</span>
+                              <span>ALERTA DUPLICADO DE SERIAL: {item.serial}</span>
+                              <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER EQUIPO</span>
                             </div>
-                            <div className="text-[9px] text-slate-500 font-mono mt-1 uppercase">
-                              Fechas: {item.dates.map(d => d.split('-').reverse().join('/')).join(' / ')}
+                            <div className="text-[10px] text-slate-600 font-sans mt-1">
+                              El serial del terminal se encuentra registrado en múltiples fechas ({item.dates.map(d => d.split('-').reverse().join('/')).join(' / ')}). Haga clic para revisar y corregir.
                             </div>
                           </div>
                         ))}
@@ -1241,11 +1241,11 @@ export default function App() {
                             }}
                           >
                             <div className="text-xs font-bold text-slate-800 tracking-wider font-mono flex items-center justify-between">
-                              <span className="text-red-750 font-extrabold">{item.sim} (SIM)</span>
-                              <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">Ver</span>
+                              <span className="text-red-750 font-extrabold">ALERTA REPETICIÓN SIM-CARD: {item.sim}</span>
+                              <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER ANULACIÓN</span>
                             </div>
-                            <div className="text-[9px] text-slate-500 font-mono mt-1 uppercase">
-                              Lotes: {item.occurrences.map(o => `${o.batchTitle} (${o.date.split('-').reverse().join('/')})`).join(' / ')}
+                            <div className="text-[10px] text-slate-600 font-sans mt-1">
+                              La tarjeta SIM aparece registrada en múltiples lotes de anulación ({item.occurrences.map(o => `${o.batchTitle} - ${o.date.split('-').reverse().join('/')}`).join(' | ')}).
                             </div>
                           </div>
                         ))}
