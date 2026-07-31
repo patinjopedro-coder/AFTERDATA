@@ -1200,37 +1200,85 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   return (
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 text-slate-800 gestion-general-tab">
       
-      {/* SIDEBAR DERECHA/IZQUIERDA: EQUIPOS INGRESADOS POR FORMULARIO DE NUEVO SERIAL */}
-      <div className="xl:col-span-1 dark-panel p-5 flex flex-col gap-4 h-full max-h-[800px] overflow-hidden">
+      {/* SIDEBAR: ÚLTIMOS INGRESADOS POR NUEVO SERIAL */}
+      <div className="xl:col-span-1 dark-panel p-5 flex flex-col gap-4 h-full overflow-hidden">
+        {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
           <div className="flex items-center gap-2">
-            <Layers className="text-slate-900 w-5 h-5" />
-            <h3 className="font-bold text-xs tracking-wider text-slate-900 uppercase">INGRESADOS POR NUEVO SERIAL</h3>
+            <Layers className="text-slate-900 w-4 h-4" />
+            <h3 className="font-black text-[11px] tracking-wider text-slate-900 uppercase">Nuevo Serial</h3>
           </div>
-          <span className="text-[10px] font-extrabold bg-slate-100 text-slate-700 px-2 py-0.5 border border-slate-200">
-            {serials.filter(s => !s.addedFromCruce).length}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Últimos 7</span>
+            <span className="text-[10px] font-extrabold bg-slate-900 text-white px-2 py-0.5 rounded-full">
+              {serials.filter(s => !s.addedFromCruce).length}
+            </span>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+        {/* Cards */}
+        <div className="flex flex-col gap-2 overflow-y-auto flex-1 pr-0.5">
           {serials.filter(s => !s.addedFromCruce).length === 0 ? (
-            <p className="text-xs text-slate-400 font-mono text-center py-8 font-semibold uppercase">No hay equipos ingresados por el formulario de Nuevo Serial.</p>
+            <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
+              <Layers className="w-8 h-8 text-slate-200" />
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Sin registros</p>
+            </div>
           ) : (
-            serials.filter(s => !s.addedFromCruce).map(s => (
-              <div key={s.id} className="p-3 bg-white border border-slate-200 shadow-2xs font-arial text-xs flex flex-col gap-1.5">
-                <div className="flex justify-between items-center font-bold">
-                  <span className="text-slate-900 select-all font-black text-sm tracking-wider">{s.serial}</span>
-                  <span className="text-[9px] bg-emerald-600 text-white font-black px-2 py-0.5 uppercase tracking-wider">{s.status}</span>
-                </div>
-                <div className="text-[10px] text-slate-600 font-arial flex justify-between uppercase font-semibold">
-                  <span>RAZÓN SOCIAL: {s.razonSocial || s.remitente || 'N/A'}</span>
-                  <span>GUÍA: {s.source || '-'}</span>
-                </div>
-              </div>
-            ))
+            [...serials.filter(s => !s.addedFromCruce)]
+              .reverse()
+              .slice(0, 7)
+              .map((s, idx) => {
+                const statusColor =
+                  (s.status || '').toLowerCase().includes('recuperado') ? { bg: 'bg-emerald-500', text: 'text-white' } :
+                  (s.status || '').toLowerCase().includes('devuelto')   ? { bg: 'bg-amber-400',  text: 'text-amber-900' } :
+                  (s.status || '').toLowerCase().includes('sin')        ? { bg: 'bg-slate-500',  text: 'text-white' } :
+                  { bg: 'bg-blue-500', text: 'text-white' };
+
+                return (
+                  <div
+                    key={s.id}
+                    className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex flex-col gap-2 hover:border-slate-300 hover:bg-white transition-all group"
+                  >
+                    {/* Row 1: Serial + Status badge */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-black text-[13px] tracking-widest text-slate-900 font-mono select-all leading-none">
+                        {s.serial}
+                      </span>
+                      <span className={`text-[8px] ${statusColor.bg} ${statusColor.text} font-black px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0`}>
+                        {s.status || 'S/E'}
+                      </span>
+                    </div>
+
+                    {/* Row 2: Razón social */}
+                    <div className="text-[10px] text-slate-600 font-semibold uppercase leading-tight truncate">
+                      {s.razonSocial || s.remitente || '—'}
+                    </div>
+
+                    {/* Row 3: Guía + Fecha */}
+                    <div className="flex items-center justify-between gap-1 pt-1 border-t border-slate-150">
+                      <span className="text-[9px] text-slate-400 font-mono font-bold uppercase">
+                        {s.source ? `Guía: ${s.source}` : '—'}
+                      </span>
+                      {s.date && (
+                        <span className="text-[8px] bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded font-bold font-mono shrink-0">
+                          {s.date.split('-').reverse().join('/')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
           )}
         </div>
+
+        {/* Footer: total count */}
+        {serials.filter(s => !s.addedFromCruce).length > 7 && (
+          <div className="text-center text-[9px] text-slate-400 font-bold uppercase tracking-wider border-t border-slate-100 pt-3 shrink-0">
+            + {serials.filter(s => !s.addedFromCruce).length - 7} más en la tabla principal
+          </div>
+        )}
       </div>
+
 
       {/* COMPONENTE PRINCIPAL: TABLA & ACCIONES MASIVAS */}
       <div className="xl:col-span-3 flex flex-col gap-4">
