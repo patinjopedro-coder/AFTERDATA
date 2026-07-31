@@ -62,7 +62,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
       id: maxId + 1,
       serial: 'POR RECIBIR',
       date: fecha,
-      displayDate: fecha.split('-').reverse().join('/'),
+      displayDate: String(fecha || '').split('-').reverse().join('/'),
       status: 'SIN ESTATUS',
       remitente: razonSocial.trim().toUpperCase() || 'ENVÍO SIN SALIENTE',
       source: '',
@@ -174,7 +174,7 @@ export const HacerEnvio: React.FC<HacerEnvioProps> = ({
                     return (
                       <tr key={index} className="hover:bg-slate-50 transition-colors text-xs font-mono border-b border-slate-100 text-slate-800">
                         <td className="py-3 px-4 whitespace-nowrap text-slate-650">
-                          {e.fecha.split('-').reverse().join('/')}
+                          {String(e.fecha || '').split('-').reverse().join('/')}
                         </td>
                         <td className="py-3 px-4">
                           <span 

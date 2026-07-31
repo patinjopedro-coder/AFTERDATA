@@ -5,7 +5,7 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { formatRif, sanitizeSerials, prepareExportRecords, mergeImportedRecords } from './utils';
+import { formatRif, sanitizeSerials, prepareExportRecords, mergeImportedRecords, safeSplit } from './utils';
 import { getTerminalModel } from './data';
 import { POSItem, ModelConfig } from './types';
 
@@ -32,6 +32,20 @@ describe('formatRif utility', () => {
     assert.strictEqual(formatRif('9876543210'), 'J-9876543210');
   });
 });
+
+describe('safeSplit utility', () => {
+  test('should handle valid string inputs', () => {
+    assert.deepStrictEqual(safeSplit('2026-07-30', '-'), ['2026', '07', '30']);
+  });
+
+  test('should handle null, undefined, numbers and booleans safely without crashing', () => {
+    assert.deepStrictEqual(safeSplit(null, '-'), ['']);
+    assert.deepStrictEqual(safeSplit(undefined, '-'), ['']);
+    assert.deepStrictEqual(safeSplit(12345, '3'), ['12', '45']);
+    assert.deepStrictEqual(safeSplit(false, 'a'), ['f', 'lse']);
+  });
+});
+
 
 describe('sanitizeSerials utility', () => {
   test('should return an empty array if empty input is provided', () => {

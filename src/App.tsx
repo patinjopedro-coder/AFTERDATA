@@ -422,7 +422,7 @@ export default function App() {
               const d = new Date();
               const defaultLocal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
               const rawDate = cols[idxFecha] || defaultLocal;
-              const formatDisplayDate = rawDate.split('-').reverse().join('/');
+              const formatDisplayDate = String(rawDate || '').split('-').reverse().join('/');
 
               const idStr = idxID !== -1 ? cols[idxID].trim() : '';
               const rawIdVal = idStr && !isNaN(parseInt(idStr)) ? parseInt(idStr) : 0;
@@ -1247,7 +1247,7 @@ export default function App() {
                               <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER EQUIPO</span>
                             </div>
                             <div className="text-[10px] text-slate-600 font-sans mt-1">
-                              El serial del terminal se encuentra registrado en múltiples fechas ({item.dates.map(d => d.split('-').reverse().join('/')).join(' / ')}). Haga clic para revisar y corregir.
+                              El serial del terminal se encuentra registrado en múltiples fechas ({item.dates.map(d => String(d || '').split('-').reverse().join('/')).join(' / ')}). Haga clic para revisar y corregir.
                             </div>
                           </div>
                         ))}
@@ -1266,7 +1266,7 @@ export default function App() {
                               <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER ANULACIÓN</span>
                             </div>
                             <div className="text-[10px] text-slate-600 font-sans mt-1">
-                              La tarjeta SIM aparece registrada en múltiples lotes de anulación ({item.occurrences.map(o => `${o.batchTitle} - ${o.date.split('-').reverse().join('/')}`).join(' | ')}).
+                              La tarjeta SIM aparece registrada en múltiples lotes de anulación ({item.occurrences.map(o => `${o.batchTitle} - ${String(o.date || '').split('-').reverse().join('/')}`).join(' | ')}).
                             </div>
                           </div>
                         ))}

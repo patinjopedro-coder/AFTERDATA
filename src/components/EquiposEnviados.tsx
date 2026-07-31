@@ -254,7 +254,7 @@ export const EquiposEnviados: React.FC<EquiposEnviadosProps> = ({
                         {e.razonSocial || 'MANUAL / SIN ENTRADA'}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap text-slate-800 font-mono font-semibold text-[11px]">
-                        {e.fecha.split('-').reverse().join('/')}
+                        {String(e.fecha || '').split('-').reverse().join('/')}
                       </td>
                       <td className="py-3 px-4 font-arial font-semibold text-[11px] text-slate-900">
                         <span className="inline-flex items-center gap-1">

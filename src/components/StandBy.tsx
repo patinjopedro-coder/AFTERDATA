@@ -306,7 +306,7 @@ export const StandBy: React.FC<StandByProps> = ({
                           {(idx + 1).toString().padStart(2, '0')}
                         </td>
                         <td className="py-3.5 px-4 text-slate-650">
-                          {item.date.split('-').reverse().join('/')}
+                          {String(item.date || '').split('-').reverse().join('/')}
                         </td>
                         <td className={`py-3.5 px-4 text-sm font-semibold select-all font-sans ${isProcessed ? 'text-emerald-800 font-black' : 'text-slate-850'}`}>
                           {item.serial || <span className="text-slate-350 italic font-normal">S/S</span>}
@@ -328,7 +328,7 @@ export const StandBy: React.FC<StandByProps> = ({
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-emerald-800 font-bold">
-                          {item.processedDate ? item.processedDate.split('-').reverse().join('/') : '-'}
+                          {item.processedDate ? String(item.processedDate).split('-').reverse().join('/') : '-'}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           {(item as any).isDerived ? (

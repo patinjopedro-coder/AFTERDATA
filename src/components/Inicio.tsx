@@ -17,7 +17,7 @@ export const Inicio: React.FC<InicioProps> = ({ serials, activeCruceBatchId, set
   }, []);
 
   const currentDisplayDate = useMemo(() => {
-    return currentDateStr.split('-').reverse().join('/');
+    return String(currentDateStr || '').split('-').reverse().join('/');
   }, [currentDateStr]);
 
   // 1. Ultimo lote añadido

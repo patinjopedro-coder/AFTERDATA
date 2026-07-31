@@ -1074,7 +1074,8 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         if (exportCasilleroFilter === 'no-casillero' && s.isCasillero) return false;
         if (exportCasilleroFilter === 'only-casillero' && !s.isCasillero) return false;
 
-        const monthNum = parseInt(s.date.split('-')[1], 10);
+        const parts = String(s.date || '').split('-');
+        const monthNum = parts.length > 1 ? parseInt(parts[1], 10) : NaN;
         return monthNum === (i + 1);
       });
 

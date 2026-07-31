@@ -364,3 +364,11 @@ export function downloadBlob(blob: Blob, filename: string): void {
   }, 250);
 }
 
+/**
+ * Safely splits a value into an array of strings, converting null/undefined/non-strings to String first.
+ */
+export function safeSplit(val: any, separator: string | RegExp): string[] {
+  return String(val ?? '').split(separator);
+}
+
+

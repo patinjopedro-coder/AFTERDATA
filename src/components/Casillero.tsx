@@ -166,7 +166,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
       if (s.id !== editingItem.id) return s;
       const draft = { ...editDraft };
       if (editDraft.date && editDraft.date !== s.date) {
-        draft.displayDate = (editDraft.date as string).split('-').reverse().join('/');
+        draft.displayDate = String(editDraft.date || '').split('-').reverse().join('/');
       }
       if (s.serial === 'POR RECIBIR' && draft.serial && draft.serial !== 'POR RECIBIR') {
         draft.salienteSinRecibir = false;
@@ -551,13 +551,13 @@ export const Casillero: React.FC<CasilleroProps> = ({
             
             if (rawFechaLlegada) {
               if (rawFechaLlegada.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                const [day, month, year] = rawFechaLlegada.split('/');
+                const [day, month, year] = String(rawFechaLlegada || '').split('/');
                 dateISO = `${year}-${month}-${day}`;
               } else if (rawFechaLlegada.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 dateISO = rawFechaLlegada;
               }
             }
-            const displayDateVal = dateISO.split('-').reverse().join('/');
+            const displayDateVal = String(dateISO || '').split('-').reverse().join('/');
 
             const parseBool = (val: string) => {
               if (!val) return false;
@@ -773,16 +773,16 @@ export const Casillero: React.FC<CasilleroProps> = ({
             // Obtener fecha de entrada
             let fechaEntrada = getColVal(idxFechaEntrada);
             let dateISO = todayISO;
-            let displayDate = todayISO.split('-').reverse().join('/');
+            let displayDate = String(todayISO || '').split('-').reverse().join('/');
             
             if (fechaEntrada) {
               if (fechaEntrada.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                const [day, month, year] = fechaEntrada.split('/');
+                const [day, month, year] = String(fechaEntrada || '').split('/');
                 dateISO = `${year}-${month}-${day}`;
                 displayDate = fechaEntrada;
               } else if (fechaEntrada.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 dateISO = fechaEntrada;
-                displayDate = fechaEntrada.split('-').reverse().join('/');
+                displayDate = String(fechaEntrada || '').split('-').reverse().join('/');
               }
             }
 

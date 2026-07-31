@@ -63,7 +63,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     }
 
     const fecha = imdsFecha || new Date().toISOString().split('T')[0];
-    const displayDate = fecha.split('-').reverse().join('/');
+    const displayDate = String(fecha || '').split('-').reverse().join('/');
     const remitente = imdsRemitente.trim().toUpperCase() || 'IMDS';
 
     const maxId = serials.reduce((max, s) => Math.max(max, s.id), 0);
@@ -524,7 +524,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     
     const newSerials = newIMDS.map(item => {
       currentId++;
-      const displayDate = item.date ? item.date.split('-').reverse().join('/') : '';
+      const displayDate = item.date ? String(item.date).split('-').reverse().join('/') : '';
       return {
         id: currentId,
         serial: item.serial,
@@ -637,7 +637,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               updatedItem = {
                 ...updatedItem,
                 date: match.date,
-                displayDate: match.date.split('-').reverse().join('/')
+                displayDate: String(match.date || '').split('-').reverse().join('/')
               };
             }
           } else {
@@ -660,7 +660,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           const fallbackOperadora = isCMS ? 'DISPONIBLE' : (match?.operadora || 'DISPONIBLE');
           const finalRemitente = isCMS ? (match.remitente || cleanRemitente) : cleanRemitente;
           const finalDate = isCMS ? (match.date || today) : today;
-          const finalDisplayDate = finalDate.split('-').reverse().join('/');
+          const finalDisplayDate = String(finalDate || '').split('-').reverse().join('/');
 
           maxId++;
           copy.unshift({

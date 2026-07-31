@@ -93,7 +93,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       if (s.id !== editingItem.id) return s;
       const draft = { ...editDraft };
       if (editDraft.date && editDraft.date !== s.date) {
-        draft.displayDate = editDraft.date.split('-').reverse().join('/');
+        draft.displayDate = String(editDraft.date || '').split('-').reverse().join('/');
       }
       if (s.serial === 'POR RECIBIR' && draft.serial && draft.serial !== 'POR RECIBIR') {
         draft.salienteSinRecibir = false;
@@ -229,7 +229,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               break;
             case 'date':
               item.date = value;
-              item.displayDate = value ? value.split('-').reverse().join('/') : '';
+              item.displayDate = value ? String(value).split('-').reverse().join('/') : '';
               break;
             case 'displayDate':
               item.displayDate = value;
@@ -494,7 +494,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         serial: searchSerial,
         found: !!match,
         status: match ? match.status : 'NO REGISTRADO',
-        date: match ? (match.displayDate || match.date.split('-').reverse().join('/')) : '-'
+        date: match ? (match.displayDate || String(match.date || '').split('-').reverse().join('/')) : '-'
       };
     });
 
@@ -1073,11 +1073,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     let internalDate = '';
     let displayVal = textVal;
     if (textVal.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-      const [d, m, y] = textVal.split('/');
+      const [d, m, y] = String(textVal || '').split('/');
       internalDate = `${y}-${m}-${d}`;
     } else if (textVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
       internalDate = textVal;
-      displayVal = textVal.split('-').reverse().join('/');
+      displayVal = String(textVal || '').split('-').reverse().join('/');
     }
     setSerials(prev => prev.map(s => {
       if (s.id === id) {
@@ -1534,7 +1534,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                         <td className="py-3 px-4">
                           <input
                             type="text"
-                            value={s.displayDate || s.date.split('-').reverse().join('/')}
+                            value={s.displayDate || String(s.date || '').split('-').reverse().join('/')}
                             onChange={e => handleUpdateDateText(s.id, e.target.value)}
                             placeholder="DD/MM/YYYY"
                             className="bg-slate-100 border border-transparent rounded-none font-bold font-arial text-xs p-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 w-24 text-center"

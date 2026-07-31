@@ -201,7 +201,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
                 onChange={e => {
                   const val = e.target.value;
                   setBulkInput(val);
-                  const firstSerial = val.split(/\n+/).map(s => s.trim()).find(Boolean);
+                  const firstSerial = String(val || '').split(/\n+/).map(s => s.trim()).find(Boolean);
                   if (firstSerial) {
                     const detected = getTerminalModel(firstSerial, modelosDB);
                     if (detected && detected.modelo && !detected.modelo.includes('DESCONOCIDO')) {
