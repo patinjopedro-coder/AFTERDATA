@@ -30,7 +30,7 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
           .maybeSingle();
 
         const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
-          setTimeout(() => resolve({ data: null, error: new Error('Supabase Timeout') }), 1200)
+          setTimeout(() => resolve({ data: null, error: new Error('Supabase Timeout') }), 15000)
         );
 
         const { data, error } = await Promise.race([supabaseQuery, timeoutPromise]);
@@ -39,6 +39,10 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
           const parsed = parseValue<T>(data.value, defaultValue);
           setLocalItem(key, parsed);
           return parsed;
+        }
+        // Log si Supabase falló (query error o timeout)
+        if (error) {
+          console.warn(`Supabase query falló para [${key}]:`, error.message);
         }
       } catch (e) {
         console.warn(`Error al leer desde Supabase para [${key}]:`, e);
