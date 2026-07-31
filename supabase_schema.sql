@@ -59,16 +59,21 @@ create table if not exists registros (
 --    Se usa para transformar los datos a JSON antes de insertar en 'registros'.
 -- ============================================================================
 
-create type if not exists status_enum as enum (
+-- PASO 0: Limpiar tipos ENUM existentes (PostgreSQL no soporta CREATE TYPE IF NOT EXISTS)
+drop type if exists status_enum cascade;
+drop type if exists operadora_enum cascade;
+drop type if exists modelo_negocio_enum cascade;
+
+create type status_enum as enum (
     'PENDIENTE', 'ACTIVO', 'SUSPENDIDO', 'CANCELADO', 'N#A',
     'SIN ESTATUS', 'RECUPERADO', 'ENTREGADO', 'DISPONIBLE'
 );
 
-create type if not exists operadora_enum as enum (
+create type operadora_enum as enum (
     'MOVISTAR', 'MOVILNET', 'DIGITEL', 'DISPONIBLE'
 );
 
-create type if not exists modelo_negocio_enum as enum (
+create type modelo_negocio_enum as enum (
     'BASICO', 'COMODATO', 'FINANCIAMIENTO'
 );
 
