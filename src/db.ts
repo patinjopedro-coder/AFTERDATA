@@ -18,52 +18,59 @@ function parseValue<T>(value: unknown, fallback: T): T {
 }
 
 export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
-  const configError = getSupabaseConfigError();
-  if (!configError && supabase) {
-    try {
-      // Timeout seguro de 2.5s para evitar que Supabase bloquee la carga en Vercel
-      const supabaseQuery = supabase
-        .from(SUPABASE_TABLE_NAME)
-        .select('key, value')
-        .eq('key', key)
-        .maybeSingle();
+  try {
+    const configError = getSupabaseConfigError();
+    if (!configError && supabase) {
+      try {
+        const supabaseQuery = supabase
+          .from(SUPABASE_TABLE_NAME)
+          .select('key, value')
+          .eq('key', key)
+          .maybeSingle();
 
-      const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
-        setTimeout(() => resolve({ data: null, error: new Error('Supabase Timeout') }), 2500)
-      );
+        const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: new Error('Supabase Timeout') }), 1200)
+        );
 
-      const { data, error } = await Promise.race([supabaseQuery, timeoutPromise]);
+        const { data, error } = await Promise.race([supabaseQuery, timeoutPromise]);
 
-      if (!error && data?.value !== undefined && data?.value !== null) {
-        const parsed = parseValue<T>(data.value, defaultValue);
-        setLocalItem(key, parsed);
-        return parsed;
+        if (!error && data?.value !== undefined && data?.value !== null) {
+          const parsed = parseValue<T>(data.value, defaultValue);
+          setLocalItem(key, parsed);
+          return parsed;
+        }
+      } catch (e) {
+        console.warn(`Error al leer desde Supabase para [${key}]:`, e);
       }
-    } catch (e) {
-      console.warn(`Error al leer desde Supabase para [${key}], cayendo a almacenamiento local:`, e);
     }
-  }
 
-  // 1. Probar IndexedDB primero (sin límites de tamaño)
-  try {
-    const idbVal = await getLocalItem<T | null>(key, null);
-    if (idbVal !== null && idbVal !== undefined) {
-      return idbVal as T;
+    // 1. Probar IndexedDB si está disponible
+    if (typeof window !== 'undefined' && 'indexedDB' in window) {
+      try {
+        const idbVal = await getLocalItem<T | null>(key, null);
+        if (idbVal !== null && idbVal !== undefined) {
+          return idbVal as T;
+        }
+      } catch (e) {
+        console.warn(`Error al leer desde IndexedDB para [${key}]:`, e);
+      }
     }
-  } catch (e) {
-    console.warn(`Error al leer desde IndexedDB para [${key}]:`, e);
-  }
 
-  // 2. Respaldo secundario desde localStorage
-  try {
-    const localRaw = localStorage.getItem(key);
-    if (localRaw !== null) {
-      const parsed = JSON.parse(localRaw) as T;
-      setLocalItem(key, parsed);
-      return parsed;
+    // 2. Respaldo secundario desde localStorage
+    if (typeof window !== 'undefined' && 'localStorage' in window) {
+      try {
+        const localRaw = localStorage.getItem(key);
+        if (localRaw !== null) {
+          const parsed = JSON.parse(localRaw) as T;
+          setLocalItem(key, parsed);
+          return parsed;
+        }
+      } catch (e) {
+        console.warn(`Error al leer desde localStorage para [${key}]:`, e);
+      }
     }
-  } catch (e) {
-    console.warn(`Error al leer desde localStorage para [${key}]:`, e);
+  } catch (globalErr) {
+    console.error(`Error crítico en getDBItem para [${key}]:`, globalErr);
   }
 
   return defaultValue;
