@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as XLSX from 'xlsx';
+
 import { POSItem } from './types';
 
 /**
@@ -72,9 +74,6 @@ export function sanitizeSerials(loaded: POSItem[]): POSItem[] {
  */
 export function exportToExcel(data: Record<string, any>[], filename: string): void {
   if (!data || data.length === 0) return;
-
-  // Import dynamically or directly since we installed xlsx
-  const XLSX = require('xlsx');
 
   // 1. Create a worksheet from the json data array
   const worksheet = XLSX.utils.json_to_sheet(data);

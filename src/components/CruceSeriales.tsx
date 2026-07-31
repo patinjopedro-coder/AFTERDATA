@@ -362,7 +362,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     setSelectedSerialsBulk(next);
   };
 
-  const handleDragMouseUpRef = useRef<() => void>();
+  const handleDragMouseUpRef = useRef<(() => void) | undefined>(undefined);
   handleDragMouseUpRef.current = () => {
     setIsDragging(false);
   };

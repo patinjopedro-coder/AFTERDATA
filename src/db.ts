@@ -18,6 +18,19 @@ function parseValue<T>(value: unknown, fallback: T): T {
   return value as T;
 }
 
+/**
+ * Un valor "vacío" es un array sin elementos, un objeto sin claves, o una cadena vacía.
+ * Distinguirlos es crítico: un array vacío que llega de Supabase o que sale de un estado
+ * de React sin cargar NO debe sobrescribir una copia que sí tiene datos.
+ */
+function isEmptyValue(value: unknown): boolean {
+  if (value === undefined || value === null) return true;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'string') return value.trim() === '';
+  if (typeof value === 'object') return Object.keys(value as object).length === 0;
+  return false;
+}
+
 export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
   try {
     const configError = getSupabaseConfigError();
@@ -37,7 +50,23 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
 
         if (!error && data?.value !== undefined && data?.value !== null) {
           const parsed = parseValue<T>(data.value, defaultValue);
-          setLocalItem(key, parsed);
+
+          // Si la nube trae datos reales, es la fuente de verdad: se cachea en local.
+          if (!isEmptyValue(parsed)) {
+            setLocalItem(key, parsed);
+            return parsed;
+          }
+
+          // La nube devolvió un valor VACÍO. Nunca sobrescribimos con esto una copia
+          // local que sí tenga datos: sería una pérdida irreversible.
+          const local = await getLocalItem<T | null>(key, null);
+          if (local !== null && !isEmptyValue(local)) {
+            console.warn(
+              `[${key}] Supabase devolvió un valor vacío pero existen datos locales. ` +
+              `Se usan los datos locales y NO se sobrescribe la copia local.`
+            );
+            return local as T;
+          }
           return parsed;
         }
         // Log si Supabase falló (query error o timeout)
@@ -81,7 +110,26 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
   return defaultValue;
 }
 
-export async function setDBItem<T>(key: string, value: T): Promise<void> {
+export async function setDBItem<T>(
+  key: string,
+  value: T,
+  opciones: { permitirVaciar?: boolean } = {}
+): Promise<void> {
+  // Guarda de seguridad: escribir un valor vacío encima de datos existentes es casi
+  // siempre un accidente (carga fallida, estado de React sin inicializar, migración
+  // que no encontró filas). Se exige intención explícita con permitirVaciar.
+  if (isEmptyValue(value) && !opciones.permitirVaciar) {
+    const existenteLocal = await getLocalItem<T | null>(key, null);
+    if (existenteLocal !== null && !isEmptyValue(existenteLocal)) {
+      console.warn(
+        `[${key}] Se bloqueó un intento de guardar un valor vacío sobre ${
+          Array.isArray(existenteLocal) ? existenteLocal.length + ' registros' : 'datos existentes'
+        }. Usa setDBItem(key, value, { permitirVaciar: true }) si es intencional.`
+      );
+      return;
+    }
+  }
+
   // Siempre guardar primero en IndexedDB (soporta volúmenes masivos de datos)
   try {
     await setLocalItem(key, value);
