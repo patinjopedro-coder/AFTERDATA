@@ -483,10 +483,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   const renderBatchSearchModal = () => {
     if (!isBatchSearchOpen) return null;
 
-    const searchSerials = batchSearchInput
-      .split(/[\n,;\s]+/)
-      .map(s => s.trim().toUpperCase())
-      .filter(Boolean);
+    const searchSerials = safeSplit(batchSearchInput, /[\n,;\s]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
 
     const results = searchSerials.map(searchSerial => {
       const match = serials.find(s => s.serial.trim().toUpperCase() === searchSerial);

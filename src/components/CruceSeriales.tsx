@@ -289,10 +289,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
   // Parsing helper
   const parseLines = (text: string) => {
-    return text
-      .split(/[\r\n,;]+/)
-      .map(s => s.trim().toUpperCase())
-      .filter(Boolean);
+    return safeSplit(text, /[\r\n,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
   };
 
   const emailLines = parseLines(emailText);
