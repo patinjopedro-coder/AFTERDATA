@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { POSItem, ModelConfig, UserProfile } from '../types';
 import { formatRif } from '../utils';
+import { getTerminalModel } from '../data';
 import { Layers, Plus, Check } from 'lucide-react';
 
 interface NuevoSerialProps {
@@ -35,8 +36,9 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
   const [simNumber, setSimNumber] = useState('');
   const [modeloManual, setModeloManual] = useState('');
   const [ticket, setTicket] = useState('');
+  const [statusSelected, setStatusSelected] = useState<'ENTREGADO' | 'RECUPERADO' | 'DISPONIBLE' | 'SIN ESTATUS'>('SIN ESTATUS');
   const [operadora, setOperadora] = useState<'MOVISTAR' | 'MOVILNET' | 'DIGITEL' | ''>('');
-  const [modeloNegocio, setModeloNegocio] = useState<'BASICO' | 'COMODATO' | ''>('');
+  const [modeloNegocio, setModeloNegocio] = useState<'BASICO' | 'COMODATO' | 'FINANCIAMIENTO' | ''>('');
   const [accForro, setAccForro] = useState(false);
   const [accCargador, setAccCargador] = useState(false);
   const [accCaja, setAccCaja] = useState(false);
@@ -81,7 +83,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
         date: today,
         displayDate: displayToday,
         hora: horaStr,
-        status: 'SIN ESTATUS' as const,
+        status: statusSelected,
         remitente: remitente.toUpperCase().trim(),
         source: guia.toUpperCase().trim(),
         isCasillero: isCas,
@@ -157,6 +159,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
     setSimNumber('');
     setModeloManual('');
     setTicket('');
+    setStatusSelected('SIN ESTATUS');
     setOperadora('');
     setModeloNegocio('');
     setAccForro(false);
@@ -191,12 +194,22 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
             {/* Campo Seriales Masivos */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-black uppercase tracking-wider text-slate-800">
-                LISTA DE SERIALES (UNO POR LÍNEA)
+                SERIAL
               </label>
               <textarea
                 value={bulkInput}
-                onChange={e => setBulkInput(e.target.value)}
-                placeholder="PROCESE CON PISTOLA DE LECTURA O PEGUE LISTA DE SERIALES..."
+                onChange={e => {
+                  const val = e.target.value;
+                  setBulkInput(val);
+                  const firstSerial = val.split(/\n+/).map(s => s.trim()).find(Boolean);
+                  if (firstSerial) {
+                    const detected = getTerminalModel(firstSerial, modelosDB);
+                    if (detected && detected.modelo && !detected.modelo.includes('DESCONOCIDO')) {
+                      setModeloManual(detected.modelo);
+                    }
+                  }
+                }}
+                placeholder=""
                 className="w-full min-h-[120px] p-3 bg-slate-100 border border-slate-250 font-mono text-xs uppercase font-semibold focus:outline-none focus:bg-white focus:border-slate-800"
               />
             </div>
@@ -204,7 +217,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
             {/* Grid de Formulario */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">N° Guía (Entrada)</label>
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">N° GUIA</label>
                 <input
                   type="text"
                   value={guia}
@@ -265,13 +278,27 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Nro de Ticket</label>
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">NUMERO DE TICKET</label>
                 <input
                   type="text"
                   value={ticket}
                   onChange={e => setTicket(e.target.value)}
                   className="w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold"
                 />
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">STATUS</label>
+                <select
+                  value={statusSelected}
+                  onChange={e => setStatusSelected(e.target.value as any)}
+                  className="w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-bold text-slate-900"
+                >
+                  <option value="SIN ESTATUS"></option>
+                  <option value="ENTREGADO">ENTREGADO</option>
+                  <option value="RECUPERADO">RECUPERADO</option>
+                  <option value="DISPONIBLE">DISPONIBLE</option>
+                </select>
               </div>
 
               <div className="flex flex-col gap-1">
@@ -289,7 +316,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo Negocio</label>
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">MODELO DE NEGOCIO</label>
                 <select
                   value={modeloNegocio}
                   onChange={e => setModeloNegocio(e.target.value as any)}
@@ -298,43 +325,69 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
                   <option value=""></option>
                   <option value="BASICO">BÁSICO</option>
                   <option value="COMODATO">COMODATO</option>
+                  <option value="FINANCIAMIENTO">FINANCIAMIENTO</option>
                 </select>
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">COSTO</label>
+                  <label className="flex items-center gap-1 text-[9px] text-slate-500 font-semibold uppercase select-none cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={sinCosto}
+                      onChange={e => {
+                        const checked = e.target.checked;
+                        setSinCosto(checked);
+                        if (checked) {
+                          setCostoBsf('SIN COSTO');
+                        } else {
+                          if (costoBsf === 'SIN COSTO') setCostoBsf('');
+                        }
+                      }}
+                      className="rounded text-blue-600 bg-slate-100 border-slate-300 focus:ring-0 w-3 h-3"
+                    />
+                    <span>SIN COSTO</span>
+                  </label>
+                </div>
                 <input
                   type="text"
                   value={costoBsf}
                   onChange={e => setCostoBsf(e.target.value)}
                   disabled={sinCosto}
-                  className={`w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold ${sinCosto ? 'opacity-50' : ''}`}
+                  className={`w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold ${sinCosto ? 'bg-slate-200 border-slate-350 text-slate-800 cursor-not-allowed font-bold' : ''}`}
                 />
               </div>
 
-              {/* Campo Banco sin autollenado */}
+              {/* Campo Banco con datalist editable/desplegable */}
               <div className="flex flex-col gap-1 md:col-span-2">
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Banco</label>
                 <input
                   type="text"
+                  list="bancosListNuevoSerial"
                   value={banco}
                   onChange={e => setBanco(e.target.value)}
-                  className="w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold"
+                  placeholder="ESCRIBA O SELECCIONE UN BANCO DE LA LISTA..."
+                  className="w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold text-slate-900 focus:outline-none focus:bg-white focus:border-slate-800"
                 />
+                <datalist id="bancosListNuevoSerial">
+                  {uniqueBancos.map((bName) => (
+                    <option key={bName} value={bName} />
+                  ))}
+                </datalist>
               </div>
             </div>
 
             {/* Accesorios */}
             <div className="bg-slate-50 p-3 border border-slate-200 space-y-2">
               <span className="text-[10px] font-black uppercase text-slate-600 block">ACCESORIOS INCLUIDOS</span>
-              <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                 {[
                   { label: 'FORRO', val: accForro, set: setAccForro },
                   { label: 'CARGADOR', val: accCargador, set: setAccCargador },
                   { label: 'CAJA', val: accCaja, set: setAccCaja },
                   { label: 'BATERÍA', val: accBateria, set: setAccBateria },
                   { label: 'SIM', val: accSim, set: setAccSim },
-                  { label: 'SIN COSTO', val: sinCosto, set: setSinCosto },
                 ].map((item) => (
                   <button
                     key={item.label}

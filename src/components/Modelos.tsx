@@ -5,11 +5,13 @@ import { Settings, Plus, Edit, Trash, Layers, Search } from 'lucide-react';
 interface ModelosProps {
   modelosDB: Record<string, ModelConfig>;
   setModelosDB: React.Dispatch<React.SetStateAction<Record<string, ModelConfig>>>;
+  isReadOnly?: boolean;
 }
 
 export const Modelos: React.FC<ModelosProps> = ({
   modelosDB,
-  setModelosDB
+  setModelosDB,
+  isReadOnly = false
 }) => {
   const [prefix, setPrefix] = useState('');
   const [modelName, setModelName] = useState('');
@@ -124,10 +126,11 @@ export const Modelos: React.FC<ModelosProps> = ({
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Prefijo de Serial (Ej: T650P)</label>
             <input
               type="text"
+              disabled={isReadOnly}
               value={prefix}
               onChange={e => setPrefix(e.target.value)}
               placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase font-arial font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+              className={`w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase font-arial font-bold focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
               required
             />
           </div>
@@ -136,10 +139,11 @@ export const Modelos: React.FC<ModelosProps> = ({
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Nombre Completo del Terminal</label>
             <input
               type="text"
+              disabled={isReadOnly}
               value={modelName}
               onChange={e => setModelName(e.target.value)}
               placeholder=""
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+              className={`w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 uppercase font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
               required
             />
           </div>
@@ -147,9 +151,10 @@ export const Modelos: React.FC<ModelosProps> = ({
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Sistema Operativo</label>
             <select
+              disabled={isReadOnly}
               value={os}
               onChange={e => setOs(e.target.value as OperatingSystem)}
-              className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+              className={`w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 font-semibold focus:outline-none focus:bg-slate-50 focus:border-slate-300 transition-all cursor-pointer shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               <option value="ANDROID">ANDROID</option>
               <option value="LINUX">LINUX</option>
@@ -160,7 +165,8 @@ export const Modelos: React.FC<ModelosProps> = ({
           <div className="flex gap-2 mt-2">
             <button
               type="submit"
-              className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              disabled={isReadOnly}
+              className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={12} className="text-slate-500" />
               <span>{editingKey ? 'ACTUALIZAR' : 'AGREGAR PREFIJO'}</span>
@@ -226,20 +232,22 @@ export const Modelos: React.FC<ModelosProps> = ({
                     </span>
                   </div>
 
-                  <div className="flex gap-1.5 align-right">
-                    <button
-                      onClick={() => handleEdit(k)}
-                      className="action-btn-edit p-2 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <Edit size={12} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(k)}
-                      className="action-btn-delete p-2 rounded-lg transition-colors cursor-pointer"
-                    >
-                      <Trash size={12} />
-                    </button>
-                  </div>
+                  {!isReadOnly && (
+                    <div className="flex gap-1.5 align-right">
+                      <button
+                        onClick={() => handleEdit(k)}
+                        className="action-btn-edit p-2 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Edit size={12} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(k)}
+                        className="action-btn-delete p-2 rounded-lg transition-colors cursor-pointer"
+                      >
+                        <Trash size={12} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })

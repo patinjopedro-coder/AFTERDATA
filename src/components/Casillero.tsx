@@ -3,7 +3,7 @@ import { POSItem, POSStatus, ModelConfig, UserProfile } from '../types';
 import { getTerminalModel } from '../data';
 import { formatRif, trackAndLogChanges, copyToClipboard, downloadBlob } from '../utils';
 import { 
-  FolderLock, Check, Trash2,
+  Home, Key, Check, Trash2,
   ChevronLeft, ChevronRight,
   FileSpreadsheet, Pencil, X
 } from 'lucide-react';
@@ -47,14 +47,20 @@ export const Casillero: React.FC<CasilleroProps> = ({
   const getTagClass = (value?: string) => {
     const normalized = (value || '').toUpperCase().trim();
     switch (normalized) {
+      case 'BANCRECER S.A.':
+      case 'BANCRECER S.A':
+      case 'BANCRECER':
+        return 'inline-flex items-center rounded-full border border-lime-400 bg-lime-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-900 shadow-sm';
       case 'COMODATO':
-        return 'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700';
+        return 'inline-flex items-center rounded-full border border-emerald-500 bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
+      case 'FINANCIAMIENTO':
+        return 'inline-flex items-center rounded-full border border-purple-500 bg-purple-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
       case 'BASICO':
-        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600';
+        return 'inline-flex items-center rounded-full border border-slate-600 bg-slate-700 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
       case 'CASILLERO':
-        return 'inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700';
+        return 'inline-flex items-center rounded-full border border-sky-500 bg-sky-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
       default:
-        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500';
+        return 'inline-flex items-center rounded-full border border-slate-300 bg-slate-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-800 shadow-sm';
     }
   };
 
@@ -1036,7 +1042,10 @@ export const Casillero: React.FC<CasilleroProps> = ({
       <div className="flex justify-between items-center dark-panel p-4 flex-wrap gap-4">
         <div>
           <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <FolderLock className="w-5 h-5 text-slate-900" />
+            <div className="relative inline-flex items-center justify-center">
+              <Home className="w-5 h-5 text-slate-900" />
+              <Key className="w-3 h-3 text-slate-900 absolute -right-1 -bottom-0.5" />
+            </div>
             EQUIPOS RECIBIDOS - {activeBatch === 'HISTORIAL' ? 'HISTORIAL GENERAL' : activeBatch}
           </h2>
         </div>
@@ -1067,25 +1076,6 @@ export const Casillero: React.FC<CasilleroProps> = ({
           >
             <FileSpreadsheet size={14} className="text-white" />
             <span>Importar Matriz</span>
-          </button>
-
-          <button
-            onClick={handleImportFromCasilleroFormat}
-            className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
-            title="Importar desde formato de exportación de Casillero"
-          >
-            <FileSpreadsheet size={14} className="text-white" />
-            <span>Importar Casillero</span>
-          </button>
-          
-          <button
-            onClick={() => setFilterEntregadosDisglobal(p => !p)}
-            className={`px-3 py-1.5 font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn ${
-              filterEntregadosDisglobal ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-slate-200 hover:bg-slate-350 text-slate-700'
-            }`}
-            title="Filtrar por entregados a usuarios de Disglobal"
-          >
-            <Check size={14} className={filterEntregadosDisglobal ? 'text-white' : 'text-slate-700'} />
           </button>
 
           {!isReadOnly && (
@@ -1173,8 +1163,8 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       {/* SELECTOR */}
                       <td className="py-4 px-3 text-center relative overflow-hidden">
                         {s.fechaConfirmada && (
-                          <div className="absolute top-0 left-0 w-16 h-16 overflow-hidden pointer-events-none select-none z-10">
-                            <div className="absolute top-[8px] -left-[22px] w-[70px] bg-emerald-600 text-white text-[6px] font-black text-center py-0.5 uppercase tracking-wider shadow-sm transform -rotate-45 font-mono">
+                          <div className="absolute top-0 left-0 w-24 h-24 overflow-hidden pointer-events-none select-none z-10">
+                            <div className="absolute top-[14px] -left-[28px] w-[110px] bg-emerald-600 text-white text-[9px] font-black text-center py-1 uppercase tracking-widest shadow-md transform -rotate-45 font-mono">
                               COMPLETADO
                             </div>
                           </div>
@@ -1316,15 +1306,13 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       {/* LISTADO DE ACCESORIOS */}
                       <td className="py-4 px-3 text-xs w-44">
                         <div className="flex flex-col gap-1.5 pr-2">
-                          <div className={`flex flex-col gap-1.5 transition-all ${
-                            s.entregadoTecnico ? 'opacity-40 filter grayscale contrast-75 pointer-events-none select-none' : ''
-                          }`}>
+                          <div className="flex flex-col gap-1.5 transition-all">
                             <button
                               disabled={isRecuperado || !!s.entregadoTecnico}
                               onClick={() => toggleBooleanRef(s.id, 'forro')}
-                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                                s.forro ? 'active' : ''
-                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors accessory-btn ${
+                                s.forro ? 'active' : (isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : 'cursor-pointer')
+                              }`}
                             >
                               <span>FORRO</span>
                               {s.forro && <Check size={12} />}
@@ -1333,9 +1321,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <button
                               disabled={isRecuperado || !!s.entregadoTecnico}
                               onClick={() => toggleBooleanRef(s.id, 'bateria')}
-                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                                s.bateria ? 'active' : ''
-                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors accessory-btn ${
+                                s.bateria ? 'active' : (isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : 'cursor-pointer')
+                              }`}
                             >
                               <span>BATERÍA</span>
                               {s.bateria && <Check size={12} />}
@@ -1344,9 +1332,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <button
                               disabled={isRecuperado || !!s.entregadoTecnico}
                               onClick={() => toggleBooleanRef(s.id, 'cargador')}
-                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                                s.cargador ? 'active' : ''
-                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors accessory-btn ${
+                                s.cargador ? 'active' : (isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : 'cursor-pointer')
+                              }`}
                             >
                               <span>CARGADOR</span>
                               {s.cargador && <Check size={12} />}
@@ -1355,9 +1343,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             <button
                               disabled={isRecuperado || !!s.entregadoTecnico}
                               onClick={() => toggleBooleanRef(s.id, 'caja')}
-                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors cursor-pointer accessory-btn ${
-                                s.caja ? 'active' : ''
-                              } ${isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : ''}`}
+                              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1 rounded-md transition-colors accessory-btn ${
+                                s.caja ? 'active' : (isRecuperado || s.entregadoTecnico ? 'opacity-50 cursor-not-allowed bg-slate-200 border-slate-350 text-slate-400' : 'cursor-pointer')
+                              }`}
                             >
                               <span>CAJA</span>
                               {s.caja && <Check size={12} />}
@@ -1448,7 +1436,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                                 return o;
                               }));
                             }}
-                            className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input ${
+                            className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input cursor-pointer ${
                               s.fechaConfirmada ? 'bg-slate-50 border-transparent text-slate-400 cursor-not-allowed select-none' : ''
                             }`}
                           >

@@ -28,32 +28,48 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
         .maybeSingle();
 
       if (!error && data?.value !== undefined && data?.value !== null) {
-        return parseValue<T>(data.value, defaultValue);
+        const parsed = parseValue<T>(data.value, defaultValue);
+        setLocalItem(key, parsed);
+        return parsed;
       }
     } catch (e) {
-      console.warn(`Error al leer desde Supabase para [${key}], cayendo a localStorage:`, e);
+      console.warn(`Error al leer desde Supabase para [${key}], cayendo a almacenamiento local:`, e);
     }
   }
 
-  // Respaldo y migración desde localStorage
-  const localRaw = localStorage.getItem(key);
-  if (localRaw !== null) {
-    try {
-      const parsed = JSON.parse(localRaw) as T;
-      try {
-        await setDBItem(key, parsed);
-      } catch (err) {
-        console.warn('No se pudo migrar el dato a Supabase:', err);
-      }
-      return parsed;
-    } catch (e) {
-      return defaultValue;
+  // 1. Probar IndexedDB primero (sin límites de tamaño)
+  try {
+    const idbVal = await getLocalItem<T | null>(key, null);
+    if (idbVal !== null && idbVal !== undefined) {
+      return idbVal as T;
     }
+  } catch (e) {
+    console.warn(`Error al leer desde IndexedDB para [${key}]:`, e);
   }
+
+  // 2. Respaldo secundario desde localStorage
+  try {
+    const localRaw = localStorage.getItem(key);
+    if (localRaw !== null) {
+      const parsed = JSON.parse(localRaw) as T;
+      setLocalItem(key, parsed);
+      return parsed;
+    }
+  } catch (e) {
+    console.warn(`Error al leer desde localStorage para [${key}]:`, e);
+  }
+
   return defaultValue;
 }
 
 export async function setDBItem<T>(key: string, value: T): Promise<void> {
+  // Siempre guardar primero en IndexedDB (soporta volúmenes masivos de datos)
+  try {
+    await setLocalItem(key, value);
+  } catch (e) {
+    console.warn(`Error al guardar en IndexedDB para [${key}]:`, e);
+  }
+
   const configError = getSupabaseConfigError();
   if (!configError && supabase) {
     try {
@@ -62,20 +78,22 @@ export async function setDBItem<T>(key: string, value: T): Promise<void> {
         .upsert([{ key, value: serializeValue(value) }], { onConflict: 'key' });
 
       if (!error) {
-        localStorage.setItem(key, JSON.stringify(value));
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (lsErr) {
+          // Ignorar cuota excedida de localStorage ya que IndexedDB y Supabase tienen los datos
+        }
         return;
       }
-
-      throw error;
     } catch (e) {
-      console.warn('Error al guardar en Supabase, respaldando solo en localStorage:', e);
+      console.warn('Error al guardar en Supabase, usando almacenamiento local:', e);
     }
   }
 
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
-    console.error('Error crítico: No se pudo respaldar en localStorage', e);
+    // Si localStorage falla por QuotaExceededError, IndexedDB ya tiene el respaldo seguro
   }
 }
 

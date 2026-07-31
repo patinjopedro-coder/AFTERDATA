@@ -44,8 +44,11 @@ export const INITIAL_MODELS: Record<string, ModelConfig> = {
   'LANE5000': { modelo: 'INGENICO LANE', key: 'LANE5000', so: 'LINUX' },
   'LINK2500': { modelo: 'INGENICO LINK', so: 'LINUX' },
   'G2': { modelo: 'G2', so: 'ANDROID' },
-  'N820': { modelo: 'N820', so: 'ANDROID' },
-  'N800': { modelo: 'N800', so: 'ANDROID' },
+  'N820': { modelo: 'NEWLAND N820', so: 'ANDROID' },
+  'N800': { modelo: 'NEWLAND N800', so: 'ANDROID' },
+  'N300': { modelo: 'NEWPOS N300', so: 'ANDROID' },
+  'N3': { modelo: 'NEWPOS N3', so: 'ANDROID' },
+  'N5': { modelo: 'NEWPOS N5', so: 'ANDROID' },
   'K300': { modelo: 'K300', so: 'ANDROID' },
   'WP': { modelo: 'WP', so: 'ANDROID' }
 } as unknown as Record<string, ModelConfig>;
@@ -121,21 +124,39 @@ export const INITIAL_SERIALS: POSItem[] = [
 
 export function getTerminalModel(serial: string, models: Record<string, ModelConfig>) {
   if (!serial) return { modelo: '-', so: 'DESCONOCIDO' as const };
-  const s = serial.toUpperCase();
+  const raw = serial.toUpperCase().trim();
+  const clean = raw.replace(/[-_]/g, '');
   
-  // Pruebas por prefijo exacto
+  // 1. Coincidencia exacta o inicio de prefijo directo
   for (const prefix in models) {
-    if (s.startsWith(prefix.toUpperCase())) {
+    const pClean = prefix.toUpperCase().replace(/[-_]/g, '');
+    if (raw.startsWith(prefix.toUpperCase()) || clean.startsWith(pClean)) {
       return {
         modelo: models[prefix].modelo || (models[prefix] as any),
         so: models[prefix].so || 'DESCONOCIDO' as const
       };
     }
   }
-  
-  // Pruebas por inclusión parcial
+
+  // 2. Extraer primer segmento alfanumérico antes del guión o espacio (ej: "N300W1KL00" -> "N300", "K300-123" -> "K300")
+  const subMatch = raw.match(/^([A-Z0-9]+)/);
+  if (subMatch) {
+    const token = subMatch[1];
+    for (const prefix in models) {
+      const p = prefix.toUpperCase();
+      if (token.startsWith(p) || p.startsWith(token) || token.includes(p)) {
+        return {
+          modelo: models[prefix].modelo || (models[prefix] as any),
+          so: models[prefix].so || 'DESCONOCIDO' as const
+        };
+      }
+    }
+  }
+
+  // 3. Pruebas por inclusión parcial flexible
   for (const prefix in models) {
-    if (s.includes(prefix.toUpperCase())) {
+    const p = prefix.toUpperCase();
+    if (raw.includes(p) || clean.includes(p)) {
       return {
         modelo: models[prefix].modelo || (models[prefix] as any),
         so: models[prefix].so || 'DESCONOCIDO' as const

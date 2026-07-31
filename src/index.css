@@ -1778,12 +1778,7 @@ body .saliente-recibido-active * {
 .tr-confirmada td:nth-child(6),
 .tr-confirmada td:nth-child(7),
 .tr-confirmada td:nth-child(8) {
-  filter: grayscale(100%) opacity(0.75);
-}
-
-/* Grayscale only the accessories list inside the 4th column, not the receive button */
-.tr-confirmada td:nth-child(4) > div > div:first-of-type {
-  filter: grayscale(100%) opacity(0.75);
+  filter: opacity(0.85);
 }
 
 @keyframes subtle-blue-pulse {

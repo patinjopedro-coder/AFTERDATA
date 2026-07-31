@@ -24,113 +24,81 @@ const DEPARTMENT_COLORS = [
 
 const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
   <svg viewBox="0 0 100 100" className={className}>
-    <defs>
-      <radialGradient id="male-purple-grad-stat" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stopColor="#8c6f9f" />
-        <stop offset="100%" stopColor="#654a7c" />
-      </radialGradient>
-    </defs>
-    <circle cx="50" cy="50" r="48" fill="url(#male-purple-grad-stat)" />
-    <mask id="male-avatar-mask-v3-stat">
-      <circle cx="50" cy="50" r="48" fill="#ffffff" />
-    </mask>
-    <g mask="url(#male-avatar-mask-v3-stat)">
-      {/* Neck base with shadow on the left */}
-      <path d="M 40 48 C 40 48, 39 53, 39 58 L 50 58 L 50 48 Z" fill="#e8a38c" />
-      {/* Neck highlight on the right */}
-      <path d="M 50 48 L 50 58 L 61 58 C 61 53, 60 48, 60 48 Z" fill="#fcd5c0" />
-      
-      {/* Left Ear */}
-      <circle cx="34" cy="41" r="3.5" fill="#e8a38c" />
-      {/* Right Ear */}
-      <circle cx="66" cy="41" r="3.5" fill="#fcd5c0" />
-      
-      {/* Head Shadow (Left) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 0 50 54.5 Z" fill="#e8a38c" />
-      {/* Head Highlight (Right) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 1 50 54.5 Z" fill="#fcd5c0" />
-      
-      {/* Hair Shadow (Left) */}
-      <path d="M 31 38 C 29 32, 28 26, 33 23 C 31 22, 33 18, 38 16 C 42 14, 46 12, 50 13.5 L 50 25 C 44 24, 38 25, 36 30 C 36 33, 33 36, 31 38 Z" fill="#0f172a" />
-      {/* Hair Highlight (Right) */}
-      <path d="M 50 13.5 C 53 11, 58 10, 61 11.5 C 66 13.5, 71 25, 69 38 C 67 36, 64 34, 64 32 C 64 26, 57 25, 50 25 Z" fill="#1e293b" />
-      {/* Left sideburn */}
-      <path d="M 31 38 L 31 44 L 34 42 L 33 38 Z" fill="#0f172a" />
-      {/* Right sideburn */}
-      <path d="M 69 38 L 69 44 L 66 42 L 67 38 Z" fill="#1e293b" />
-      
-      {/* White Shirt Shadow (Left) - Broad Shoulders */}
-      <path d="M 8 100 C 12 75, 25 58, 50 58 L 50 100 Z" fill="#f1f5f9" />
-      {/* White Shirt Highlight (Right) - Broad Shoulders */}
-      <path d="M 50 58 C 75 58, 88 75, 92 100 L 50 100 Z" fill="#ffffff" />
-      
-      {/* Collar Shadow (Left) */}
-      <path d="M 50 58 L 37 58 L 44 66 Z" fill="#e2e8f0" />
-      {/* Collar Highlight (Right) */}
-      <path d="M 50 58 L 63 58 L 56 66 Z" fill="#ffffff" />
-      
-      {/* Black Tie Knot */}
-      <path d="M 47.5 62 L 52.5 62 L 51.5 67 L 48.5 67 Z" fill="#111827" />
-      {/* Black Tie Body */}
-      <path d="M 48.5 67 L 51.5 67 L 53 98 L 50 100 L 47 98 Z" fill="#111827" />
+    {/* Dark navy circular background */}
+    <circle cx="50" cy="50" r="48" fill="#1e293b" />
+    <g>
+      {/* Outer Golden Outline (Executive Side-Part Hair Outline) */}
+      <path 
+        d="M 50 12 C 37 12 30 18 30 30 C 30 34 29 38 29 42 C 29 46 32 48 33 50 C 37 55 42 58 50 58 C 58 58 63 55 67 50 C 68 48 71 46 71 42 C 71 38 70 34 70 30 C 70 18 63 12 50 12 Z M 16 75 C 16 65 30 55 50 55 C 70 55 84 65 84 75"
+        fill="none" 
+        stroke="#fbbf24" 
+        strokeWidth="3.5" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+      />
+      {/* Suit Jacket Body */}
+      <path d="M 16 85 C 16 64 30 54 50 54 C 70 54 84 64 84 85 Z" fill="#2b384e" stroke="#fbbf24" strokeWidth="2" />
+      {/* Dark Suit Collar & Shirt V */}
+      <path d="M 40 54 L 50 72 L 60 54 Z" fill="#1e293b" />
+      <path d="M 44 54 L 50 66 L 56 54 Z" fill="#2b384e" />
+      {/* Dark Tie */}
+      <path d="M 48 60 L 52 60 L 53 84 L 50 86 L 47 84 Z" fill="#131b2a" />
+      {/* Neck */}
+      <path d="M 41 46 C 41 52 44 56 50 56 C 56 56 59 52 59 46 Z" fill="#e0957b" />
+      <path d="M 41 50 C 44 54 50 56 50 56 C 50 56 56 54 59 50 Z" fill="#c77b63" />
+      {/* Face Base */}
+      <path d="M 35 34 C 35 46 41 52 50 52 C 59 52 65 46 65 34 C 65 24 59 20 50 20 C 41 20 35 24 35 34 Z" fill="#f8a991" />
+      {/* Ears */}
+      <circle cx="34" cy="36" r="3" fill="#f8a991" />
+      <circle cx="66" cy="36" r="3" fill="#f8a991" />
+
+      {/* FORMAL EXECUTIVE SIDE-PART HAIR CUT (CABELLO FORMAL CON PARTIDO LATERAL) */}
+      {/* Base Black Hair Mass */}
+      <path d="M 30 32 C 30 18 38 12 50 12 C 62 12 70 18 70 32 C 70 40 68 44 68 44 C 65 36 60 26 50 26 C 40 26 35 36 32 44 C 32 44 30 40 30 32 Z" fill="#0f172a" />
+      {/* Main Swept Top Hair Volume (Peinado Formal Hacia un Lado) */}
+      <path d="M 32 26 C 36 15 48 14 66 18 C 69 22 69 28 68 31 C 61 24 50 23 38 27 Z" fill="#1e293b" />
+      {/* Side Parting Line / Línea de Partido Lateral Pulcra */}
+      <path d="M 36 21 C 42 16 54 15 67 19 L 66 21 C 53 17 42 18 36 23 Z" fill="#fbbf24" opacity="0.9" />
+      {/* Front Wave Bang (Onda Ejecutiva) */}
+      <path d="M 38 27 C 46 22 56 22 66 26 C 61 29 52 28 42 31 Z" fill="#334155" />
+      {/* Neat Sideburns */}
+      <path d="M 30 32 L 30 40 L 33 38 L 33 32 Z" fill="#0f172a" />
+      <path d="M 70 32 L 70 40 L 67 38 L 67 32 Z" fill="#0f172a" />
     </g>
   </svg>
 );
 
 const FemaleAvatar: React.FC<{ className?: string }> = ({ className = "w-16 h-16" }) => (
   <svg viewBox="0 0 100 100" className={className}>
-    <defs>
-      <radialGradient id="female-purple-grad-stat" cx="50%" cy="40%" r="60%">
-        <stop offset="0%" stopColor="#8c6f9f" />
-        <stop offset="100%" stopColor="#654a7c" />
-      </radialGradient>
-    </defs>
-    <circle cx="50" cy="50" r="48" fill="url(#female-purple-grad-stat)" />
-    <mask id="female-avatar-mask-v3-stat">
-      <circle cx="50" cy="50" r="48" fill="#ffffff" />
-    </mask>
-    <g mask="url(#female-avatar-mask-v3-stat)">
-      {/* Background Hair (Long, loose hair behind shoulders) */}
-      {/* Left Back Hair (Shadow) */}
-      <path d="M 34 35 C 33 45, 32 60, 32 78 C 32 84, 40 90, 50 90 L 50 35 Z" fill="#0f172a" />
-      {/* Right Back Hair (Highlight) */}
-      <path d="M 50 35 L 50 90 C 60 90, 68 84, 68 78 C 68 60, 67 45, 66 35 Z" fill="#1e293b" />
-
-      {/* Neck base with shadow on the left */}
-      <path d="M 43 48 C 43 48, 42 53, 42 58 L 50 58 L 50 48 Z" fill="#e8a38c" />
-      {/* Neck highlight on the right */}
-      <path d="M 50 48 L 50 58 L 58 58 C 58 53, 57 48, 57 48 Z" fill="#fcd5c0" />
-      
-      {/* Left Ear */}
-      <circle cx="34" cy="41" r="3.5" fill="#e8a38c" />
-      {/* Right Ear */}
-      <circle cx="66" cy="41" r="3.5" fill="#fcd5c0" />
-      
-      {/* Head Shadow (Left) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 0 50 54.5 Z" fill="#e8a38c" />
-      {/* Head Highlight (Right) */}
-      <path d="M 50 25.5 A 14.5 14.5 0 0 1 50 54.5 Z" fill="#fcd5c0" />
-      
-      {/* White Shirt Shadow (Left) - Slimmer Shoulders */}
-      <path d="M 18 100 C 22 75, 30 58, 50 58 L 50 100 Z" fill="#f1f5f9" />
-      {/* White Shirt Highlight (Right) - Slimmer Shoulders */}
-      <path d="M 50 58 C 70 58, 78 75, 82 100 L 50 100 Z" fill="#ffffff" />
-      
-      {/* Collar Shadow (Left) */}
-      <path d="M 50 58 L 37 58 L 44 66 Z" fill="#e2e8f0" />
-      {/* Collar Highlight (Right) */}
-      <path d="M 50 58 L 63 58 L 56 66 Z" fill="#ffffff" />
-      
-      {/* Black Tie Knot */}
-      <path d="M 47.5 62 L 52.5 62 L 51.5 67 L 48.5 67 Z" fill="#111827" />
-      {/* Black Tie Body */}
-      <path d="M 48.5 67 L 51.5 67 L 53 98 L 50 100 L 47 98 Z" fill="#111827" />
-
-      {/* Foreground Hair (Long, loose strands flowing in front of shoulders with pointy ends) */}
-      {/* Left Front Hair (Shadow) */}
-      <path d="M 50 20 C 38 20, 34 30, 34 46 C 34 58, 34.5 68, 35 78 L 36 78 C 37.5 68, 37.5 58, 37 44 C 37 32, 43 29, 50 29 Z" fill="#0f172a" />
-      {/* Right Front Hair (Highlight) */}
-      <path d="M 50 20 C 62 20, 66 30, 66 46 C 66 58, 65.5 68, 65 78 L 64 78 C 62.5 68, 62.5 58, 63 44 C 63 32, 57 29, 50 29 Z" fill="#1e293b" />
+    {/* Dark navy circular background */}
+    <circle cx="50" cy="50" r="48" fill="#1e293b" />
+    <g>
+      {/* Outer Golden Outline for Female Avatar */}
+      <path 
+        d="M 50 12 C 37 12 31 24 31 44 C 31 66 33 78 33 78 M 50 12 C 63 12 69 24 69 44 C 69 66 67 78 67 78 M 20 80 C 20 66 30 55 50 55 C 70 55 80 66 80 80"
+        fill="none" 
+        stroke="#fbbf24" 
+        strokeWidth="3.5" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+      />
+      {/* Long Sleek Blonde Hair Backing */}
+      <path d="M 31 36 C 31 20 38 12 50 12 C 62 12 69 20 69 36 C 69 62 67 78 67 78 L 33 78 C 33 78 31 62 31 36 Z" fill="#eab308" />
+      {/* Dark Navy Shirt / Blazer Body */}
+      <path d="M 20 85 C 20 64 30 54 50 54 C 70 54 80 64 80 85 Z" fill="#0f172a" stroke="#fbbf24" strokeWidth="2" />
+      {/* Dark Navy Collar / Shirt V */}
+      <path d="M 40 54 L 50 72 L 60 54 Z" fill="#1e293b" />
+      {/* White Tie */}
+      <path d="M 48 58 L 52 58 L 53 82 L 50 85 L 47 82 Z" fill="#ffffff" stroke="#e2e8f0" strokeWidth="0.5" />
+      {/* Neck Base */}
+      <path d="M 43 44 C 43 52 44 56 50 56 C 56 56 57 52 57 44 Z" fill="#e0957b" />
+      {/* Face Base */}
+      <path d="M 39 34 C 38 46 43 52 50 52 C 57 52 62 46 61 34 C 61 24 57 20 50 20 C 43 20 39 24 39 34 Z" fill="#f8a991" />
+      {/* Ears */}
+      <circle cx="38" cy="36" r="2" fill="#f8a991" />
+      <circle cx="62" cy="36" r="2" fill="#f8a991" />
+      {/* Sleek Blonde Hair Front Strands */}
+      <path d="M 50 13 C 44 13 39 20 39 34 C 39 52 34 76 34 76 C 36 72 40 60 41 42 C 42 28 47 21 50 21 C 53 21 58 28 59 42 C 60 60 64 72 66 76 C 66 76 61 52 61 34 C 61 20 56 13 50 13 Z" fill="#facc15" />
     </g>
   </svg>
 );
@@ -1882,23 +1850,29 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                   const rank = index + 1;
                   const pProfile = usersProfiles[colab.name];
                   
-                  // Custom border styles based on rank
+                  const rankLabels = ['1º', '2º', '3º', '4º', '5º'];
                   let borderClass = 'border-slate-200';
                   let rankBgClass = 'from-slate-50 to-white';
-                  let accentColor = '#64748b'; // default slate
-                  
+                  let accentColor = '#475569';
+                  let numColor = '#94a3b8';
+
                   if (rank === 1) {
-                    borderClass = 'border-amber-400 border-2';
-                    rankBgClass = 'from-amber-50/20 to-white';
-                    accentColor = '#f59e0b'; // Gold
+                    borderClass = 'border-amber-500 border-2 shadow-md';
+                    rankBgClass = 'from-amber-200 via-amber-100 to-amber-50';
+                    accentColor = '#d97706'; // Gold
+                    numColor = '#b45309';
                   } else if (rank === 2) {
-                    borderClass = 'border-slate-300 border-2';
-                    rankBgClass = 'from-slate-100/40 to-white';
-                    accentColor = '#94a3b8'; // Silver
+                    borderClass = 'border-slate-400 border-2';
+                    rankBgClass = 'from-slate-200 via-slate-100 to-slate-50';
+                    accentColor = '#475569'; // Silver
+                    numColor = '#475569';
                   } else if (rank === 3) {
-                    borderClass = 'border-amber-700 border-2';
-                    rankBgClass = 'from-amber-50/10 to-white';
+                    borderClass = 'border-amber-800 border-2';
+                    rankBgClass = 'from-amber-300/40 via-amber-200/30 to-amber-50';
                     accentColor = '#b45309'; // Bronze
+                    numColor = '#92400e';
+                  } else {
+                    numColor = '#64748b';
                   }
 
                   return (
@@ -1910,25 +1884,25 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                         setModalSearch('');
                         setDetailSelectedDate(null);
                       }}
-                      className={`relative flex flex-col items-center justify-between p-4 cursor-pointer hover:-translate-y-1 hover:shadow-lg transition-all duration-300 bg-gradient-to-b ${rankBgClass} border ${borderClass} h-[250px] group`}
+                      className={`relative flex flex-col items-center justify-between p-4 cursor-pointer hover:-translate-y-1 hover:shadow-xl transition-all duration-300 bg-gradient-to-b ${rankBgClass} border ${borderClass} h-[250px] group`}
                       style={{ borderRadius: '0px' }}
                     >
                       {/* Rank Badge */}
                       <div 
-                        className="absolute top-2 left-2 text-xs font-black w-7 h-7 rounded-full flex items-center justify-center border font-mono select-none shadow-xs"
+                        className="absolute top-2 left-2 text-xs font-black w-7 h-7 rounded-full flex items-center justify-center border font-mono select-none shadow-sm z-20"
                         style={{ 
                           borderColor: accentColor, 
-                          color: rank <= 3 ? '#ffffff' : accentColor,
-                          backgroundColor: rank <= 3 ? accentColor : 'transparent'
+                          color: '#ffffff',
+                          backgroundColor: accentColor
                         }}
                       >
                         {rank}
                       </div>
 
-                      {/* Rank Background Watermark */}
+                      {/* Rank Background Watermark (Más visible y nítido) */}
                       <div 
-                        className="absolute inset-0 flex items-center justify-center select-none overflow-hidden pointer-events-none opacity-[0.04] group-hover:opacity-[0.08] transition-opacity font-sans font-black text-[100px]"
-                        style={{ color: accentColor }}
+                        className="absolute inset-0 flex items-center justify-center select-none overflow-hidden pointer-events-none opacity-[0.20] group-hover:opacity-[0.35] transition-opacity font-sans font-black text-[110px] leading-none"
+                        style={{ color: numColor }}
                       >
                         {rankLabels[index]}
                       </div>
@@ -1936,7 +1910,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
                       {/* Avatar */}
                       <div className="relative mt-4 z-10">
                         <div 
-                          className="w-18 h-18 rounded-full border-2 bg-white overflow-hidden shadow-sm flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
+                          className="w-18 h-18 rounded-full border-2 bg-white overflow-hidden shadow-md flex items-center justify-center transition-transform duration-300 group-hover:scale-105"
                           style={{ borderColor: accentColor }}
                         >
                           {renderAvatarHelper(pProfile?.genero, "w-full h-full", colab.name)}

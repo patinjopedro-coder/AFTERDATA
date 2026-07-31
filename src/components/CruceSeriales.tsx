@@ -1039,7 +1039,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
               <button
                 onClick={handleAddMatchesToGeneral}
-                disabled={coincidencias.length === 0}
+                disabled={coincidencias.length === 0 || isReadOnly}
                 className="w-full text-xs font-extrabold uppercase py-2.5 btn-green disabled:bg-slate-100 disabled:text-slate-450 disabled:border-slate-200 disabled:cursor-not-allowed text-white transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
               >
                 <Send size={13} className="text-white" />

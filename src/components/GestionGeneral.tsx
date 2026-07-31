@@ -61,15 +61,17 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       case 'BANCRECER S.A.':
       case 'BANCRECER S.A':
       case 'BANCRECER':
-        return 'inline-flex items-center rounded-full border border-lime-300 bg-lime-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-900 shadow-2xs';
+        return 'inline-flex items-center rounded-full border border-lime-400 bg-lime-400 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-900 shadow-sm';
       case 'COMODATO':
-        return 'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700';
+        return 'inline-flex items-center rounded-full border border-emerald-500 bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
+      case 'FINANCIAMIENTO':
+        return 'inline-flex items-center rounded-full border border-purple-500 bg-purple-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
       case 'BASICO':
-        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-600';
+        return 'inline-flex items-center rounded-full border border-slate-600 bg-slate-700 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
       case 'CASILLERO':
-        return 'inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700';
+        return 'inline-flex items-center rounded-full border border-sky-500 bg-sky-600 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-white shadow-sm';
       default:
-        return 'inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-slate-500';
+        return 'inline-flex items-center rounded-full border border-slate-300 bg-slate-200 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wide text-slate-800 shadow-sm';
     }
   };
   const [batchSearchInput, setBatchSearchInput] = useState('');
@@ -1218,14 +1220,14 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
             <p className="text-xs text-slate-400 font-mono text-center py-8 font-semibold uppercase">No hay equipos ingresados por el formulario de Nuevo Serial.</p>
           ) : (
             serials.filter(s => !s.addedFromCruce).map(s => (
-              <div key={s.id} className="p-3 bg-white border border-slate-200 shadow-2xs font-mono text-xs flex flex-col gap-1">
+              <div key={s.id} className="p-3 bg-white border border-slate-200 shadow-2xs font-arial text-xs flex flex-col gap-1.5">
                 <div className="flex justify-between items-center font-bold">
-                  <span className="text-slate-900 select-all">{s.serial}</span>
-                  <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 uppercase">{s.status}</span>
+                  <span className="text-slate-900 select-all font-black text-sm tracking-wider">{s.serial}</span>
+                  <span className="text-[9px] bg-emerald-600 text-white font-black px-2 py-0.5 uppercase tracking-wider">{s.status}</span>
                 </div>
-                <div className="text-[10px] text-slate-500 font-sans flex justify-between uppercase">
-                  <span>Razón Social: {s.razonSocial || s.remitente || 'N/A'}</span>
-                  <span>Guía: {s.source || '-'}</span>
+                <div className="text-[10px] text-slate-600 font-arial flex justify-between uppercase font-semibold">
+                  <span>RAZÓN SOCIAL: {s.razonSocial || s.remitente || 'N/A'}</span>
+                  <span>GUÍA: {s.source || '-'}</span>
                 </div>
               </div>
             ))

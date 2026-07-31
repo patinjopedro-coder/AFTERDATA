@@ -13,11 +13,13 @@ interface SimBatch {
 interface GestionSimCardsProps {
   simCardBatches: SimBatch[];
   setSimCardBatches: React.Dispatch<React.SetStateAction<SimBatch[]>>;
+  isReadOnly?: boolean;
 }
 
 export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
   simCardBatches,
-  setSimCardBatches
+  setSimCardBatches,
+  isReadOnly = false
 }) => {
   const [rawSerials, setRawSerials] = useState('');
   const [batchTitle, setBatchTitle] = useState('');
@@ -112,27 +114,30 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Nombre del Lote / Fecha (Opcional)</label>
               <input
                 type="text"
+                disabled={isReadOnly}
                 value={batchTitle}
                 onChange={e => setBatchTitle(e.target.value)}
                 placeholder=""
-                className="w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-semibold shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+                className={`w-full text-xs p-2.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-semibold shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
             </div>
 
             <div className="flex flex-col gap-1">
               <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pegar Seriales de SIM-Card (&gt;500)</label>
               <textarea
+                disabled={isReadOnly}
                 value={rawSerials}
                 onChange={e => setRawSerials(e.target.value)}
                 placeholder=""
-                className="w-full min-h-[200px] text-xs p-3.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
+                className={`w-full min-h-[200px] text-xs p-3.5 bg-slate-100 border border-transparent rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 transition-all font-mono shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${isReadOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border-none shadow-md btn-blue text-white-force"
+              disabled={isReadOnly}
+              className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border-none shadow-md btn-blue text-white-force"
             >
               <Plus size={14} className="text-white" />
               <span>Guardar Lote</span>

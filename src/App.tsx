@@ -21,14 +21,20 @@ import { Bancos } from './components/Bancos';
 import { NuevoSerial } from './components/NuevoSerial';
 import { BancoItem, ToastNotification } from './types';
 
-// Lucide icons
 import {
   Database, FileSpreadsheet, Download, RefreshCw,
   Trash2, Layers, Search, Calendar, FolderCheck, Clock,
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
-  Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut, Landmark, PlusCircle
+  Home, Key, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut, Landmark, PlusCircle
 } from 'lucide-react';
 import { Pencil } from 'lucide-react';
+
+const CasilleroKeyIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
+  <div className="relative inline-flex items-center justify-center">
+    <Home size={size} className={className} />
+    <Key size={Math.max(10, Math.round(size * 0.55))} className={`absolute -right-1 -bottom-0.5 ${className}`} />
+  </div>
+);
 
 export default function App() {
   // -------------------------------------------------------------
@@ -80,6 +86,21 @@ export default function App() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [includeCasillero, setIncludeCasillero] = useState(true);
+
+  // Unique Bancos list derived from system serials + default Venezuelan banks
+  const uniqueBancos = useMemo(() => {
+    const set = new Set<string>();
+    (serials || []).forEach(s => {
+      if (s && s.banco) {
+        let name = s.banco.toUpperCase().trim();
+        if (name === 'BANCRECER' || name === 'BANCRECER S.A') name = 'BANCRECER S.A.';
+        if (name === 'BANCO PLAZA' || name === 'PLAZA' || name === 'BANCO PLAZA C.A') name = 'BANCO PLAZA C.A.';
+        set.add(name);
+      }
+    });
+    ['BANESCO', 'MERCANTIL', 'PROVINCIAL', 'VENEZUELA', 'BNC', 'BANCRECER S.A.', 'BANCO PLAZA C.A.', 'BANCAMIGA', '100% BANCO', 'BANCO DE VENEZUELA', 'BANCO DEL TESORO', 'BANCO EXTERIOR', 'BANCO FONDO COMUN', 'BNC BANCO NACIONAL DE CREDITO', 'BFC BANCO FONDO COMUN'].forEach(b => set.add(b));
+    return Array.from(set).sort();
+  }, [serials]);
 
   // Floating History Tooltip State
   const [historyTooltip, setHistoryTooltip] = useState<{
@@ -1082,7 +1103,7 @@ export default function App() {
               { id: 'inicio', label: 'Inicio', icon: Home },
               { id: 'nuevoserial', label: 'Nuevo Serial', icon: PlusCircle },
               { id: 'general', label: 'Gestión General', icon: Layers },
-              { id: 'casillero', label: 'Casillero', icon: Flag },
+              { id: 'casillero', label: 'Casillero', icon: CasilleroKeyIcon },
               { id: 'bancos', label: 'Bancos', icon: Landmark },
               { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
               { id: 'standby', label: 'Stand-by', icon: Clock },
@@ -1377,7 +1398,7 @@ export default function App() {
               usersProfiles={usersProfiles}
               setUsersProfiles={setUsersProfiles}
               activeCruceBatchId={activeCruceBatchId}
-              uniqueBancos={[]}
+              uniqueBancos={uniqueBancos}
               onAddToast={addToast}
               isReadOnly={isObserverRole}
             />
@@ -1502,6 +1523,7 @@ export default function App() {
             <GestionSimCards
               simCardBatches={simCardBatches}
               setSimCardBatches={setSimCardBatches}
+              isReadOnly={isObserverRole}
             />
           </div>
 
@@ -1509,6 +1531,7 @@ export default function App() {
             <Modelos
               modelosDB={modelosDB}
               setModelosDB={setModelosDB}
+              isReadOnly={isObserverRole}
             />
           </div>
 

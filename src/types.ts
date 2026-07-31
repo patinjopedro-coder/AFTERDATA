@@ -31,7 +31,7 @@ export interface POSItem {
   simNumber?: string;
   operadora?: 'MOVISTAR' | 'MOVILNET' | 'DIGITEL' | '';
   modeloManual?: string;
-  modeloNegocio?: 'BASICO' | 'COMODATO' | '';
+  modeloNegocio?: 'BASICO' | 'COMODATO' | 'FINANCIAMIENTO' | '';
   entregadoTecnico?: boolean;
   esSustitucion?: boolean;
   serialSustituto?: string;
