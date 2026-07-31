@@ -21,11 +21,18 @@ export async function getDBItem<T>(key: string, defaultValue: T): Promise<T> {
   const configError = getSupabaseConfigError();
   if (!configError && supabase) {
     try {
-      const { data, error } = await supabase
+      // Timeout seguro de 2.5s para evitar que Supabase bloquee la carga en Vercel
+      const supabaseQuery = supabase
         .from(SUPABASE_TABLE_NAME)
         .select('key, value')
         .eq('key', key)
         .maybeSingle();
+
+      const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: new Error('Supabase Timeout') }), 2500)
+      );
+
+      const { data, error } = await Promise.race([supabaseQuery, timeoutPromise]);
 
       if (!error && data?.value !== undefined && data?.value !== null) {
         const parsed = parseValue<T>(data.value, defaultValue);
