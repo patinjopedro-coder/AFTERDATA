@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { POSItem, POSStatus, ModelConfig, UserProfile } from '../types';
 import { getTerminalModel } from '../data';
-import { formatRif, trackAndLogChanges, copyToClipboard, downloadBlob } from '../utils';
+import { formatRif, trackAndLogChanges, copyToClipboard, downloadBlob, safeSplit } from '../utils';
 import { 
   Home, Key, Check, Trash2,
   ChevronLeft, ChevronRight,

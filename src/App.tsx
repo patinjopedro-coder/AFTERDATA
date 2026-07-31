@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { POSItem, EnvioExterno, ModelConfig, POSStatus, UserProfile, StandbyItem } from './types';
 import { INITIAL_SERIALS, INITIAL_MODELS } from './data';
 import { getDBItem, setDBItem } from './db';
-import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords, downloadBlob } from './utils';
+import { getSupabaseConfigError } from './lib/supabase';
+import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords, downloadBlob, safeSplit } from './utils';
 
 import { GestionGeneral } from './components/GestionGeneral';
 import { LogoIcon } from './components/LogoIcon';
@@ -25,7 +26,7 @@ import {
   Database, FileSpreadsheet, Download, RefreshCw,
   Trash2, Layers, Search, Calendar, FolderCheck, Clock,
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
-  Home, Key, Flag, ArrowUpRight, Smartphone, CardSim, LogOut, Landmark, PlusCircle
+  Home, Key, Flag, ArrowUpRight, Smartphone, CardSim, LogOut, Landmark, PlusCircle, Bell
 } from 'lucide-react';
 import { Pencil } from 'lucide-react';
 
@@ -54,6 +55,9 @@ export default function App() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [bancosList, setBancosList] = useState<BancoItem[]>([]);
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
+  // Aviso visible cuando la nube no está disponible: sin esto la app degradaba
+  // en silencio al almacenamiento del navegador y parecía que "no hay datos".
+  const [avisoNube, setAvisoNube] = useState<string | null>(null);
 
   const addToast = (mensaje: string) => {
     const id = `TOAST-${Date.now()}-${Math.random()}`;
@@ -131,6 +135,14 @@ export default function App() {
   useEffect(() => {
     async function loadAll() {
       try {
+        const errorConfig = getSupabaseConfigError();
+        if (errorConfig) {
+          setAvisoNube(
+            `${errorConfig} La aplicación está trabajando solo con el almacenamiento de este navegador; ` +
+            `los cambios NO se guardan en la nube ni se comparten con otros usuarios.`
+          );
+        }
+
         const [
           loadedSerials,
           loadedEnvios,
@@ -1101,6 +1113,20 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#08080a] text-zinc-300 flex font-sans antialiased overflow-hidden h-screen relative">
+
+      {/* AVISO DE CONEXIÓN CON LA NUBE */}
+      {avisoNube && (
+        <div className="fixed top-0 inset-x-0 z-[10000] bg-amber-500 text-black px-4 py-2 text-[12px] font-bold flex items-center justify-center gap-3 shadow-lg">
+          <ShieldAlert size={16} className="shrink-0" />
+          <span>{avisoNube}</span>
+          <button
+            onClick={() => setAvisoNube(null)}
+            className="border-none bg-black/15 hover:bg-black/25 rounded px-2 py-0.5 cursor-pointer shrink-0"
+          >
+            Ocultar
+          </button>
+        </div>
+      )}
 
       {/* FLOATING TOAST NOTIFICATIONS (ESQUINA SUPERIOR DERECHA) */}
       <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-xs w-full">
