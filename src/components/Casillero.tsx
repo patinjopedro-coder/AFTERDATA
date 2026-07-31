@@ -20,6 +20,7 @@ interface CasilleroProps {
   usersProfiles: Record<string, UserProfile>;
   setUsersProfiles?: React.Dispatch<React.SetStateAction<Record<string, UserProfile>>>;
   activeCruceBatchId: string;
+  isReadOnly?: boolean;
 }
 
 export const Casillero: React.FC<CasilleroProps> = ({
@@ -33,7 +34,8 @@ export const Casillero: React.FC<CasilleroProps> = ({
   onUserClick,
   usersProfiles,
   setUsersProfiles,
-  activeCruceBatchId
+  activeCruceBatchId,
+  isReadOnly = false
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const handleCopyText = async (text: string, key: string) => {
@@ -1086,14 +1088,16 @@ export const Casillero: React.FC<CasilleroProps> = ({
             <Check size={14} className={filterEntregadosDisglobal ? 'text-white' : 'text-slate-700'} />
           </button>
 
-          <button
-            onClick={deleteSelectedCasillero}
-            className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
-            title="Eliminar seleccionados"
-          >
-            <Trash2 size={14} className="text-white" />
-            <span>ELIMINAR</span>
-          </button>
+          {!isReadOnly && (
+            <button
+              onClick={deleteSelectedCasillero}
+              className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
+              title="Eliminar seleccionados"
+            >
+              <Trash2 size={14} className="text-white" />
+              <span>ELIMINAR</span>
+            </button>
+          )}
           <span className="text-xs text-slate-700 font-semibold uppercase font-arial bg-slate-100 px-3 py-1.5 rounded-lg border border-transparent shadow-xs">
             {activeBatch === 'HISTORIAL' ? 'Historial' : 'Este Lote'}: {paginatedSerials.length} / Total: {sortedSerials.length}
           </span>

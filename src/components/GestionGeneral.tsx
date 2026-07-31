@@ -27,6 +27,7 @@ interface GestionGeneralProps {
   usersProfiles: Record<string, import('../types').UserProfile>;
   setUsersProfiles?: React.Dispatch<React.SetStateAction<Record<string, import('../types').UserProfile>>>;
   activeCruceBatchId: string;
+  isReadOnly?: boolean;
 }
 
 export const GestionGeneral: React.FC<GestionGeneralProps> = ({
@@ -816,22 +817,6 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
 
   const handleRemitenteChange = (val: string) => {
     setRemitente(val);
-    const searchVal = val.toUpperCase().trim();
-    if (searchVal.length >= 4) {
-      const profile = usersProfiles[searchVal];
-      if (profile) {
-        if (profile.rif) setRif(profile.rif);
-        if (profile.razonSocial) setRazonSocial(profile.razonSocial);
-        if (profile.ubicacion) setDestino(profile.ubicacion);
-      } else {
-        const match = serials.find(s => s.remitente && s.remitente.toUpperCase().trim() === searchVal);
-        if (match) {
-          if (match.rif) setRif(match.rif);
-          if (match.razonSocial) setRazonSocial(match.razonSocial);
-          if (match.destino) setDestino(match.destino);
-        }
-      }
-    }
   };
 
   // Table Configuration & Filter States
@@ -1212,277 +1197,36 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   return (
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 text-slate-800 gestion-general-tab">
       
-      {/* SIDEBAR: INPUT DIRECTO LOGÍSTICO */}
-      <div className="xl:col-span-1 dark-panel p-5 flex flex-col gap-4 h-fit">
-        <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-          <Layers className="text-slate-900 w-5 h-5" />
-          <h3 className="font-bold text-sm tracking-wider text-slate-900">INGRESAR SERIAL</h3>
+      {/* SIDEBAR DERECHA/IZQUIERDA: EQUIPOS INGRESADOS POR FORMULARIO DE NUEVO SERIAL */}
+      <div className="xl:col-span-1 dark-panel p-5 flex flex-col gap-4 h-full max-h-[800px] overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+          <div className="flex items-center gap-2">
+            <Layers className="text-slate-900 w-5 h-5" />
+            <h3 className="font-bold text-xs tracking-wider text-slate-900 uppercase">INGRESADOS POR NUEVO SERIAL</h3>
+          </div>
+          <span className="text-[10px] font-extrabold bg-slate-100 text-slate-700 px-2 py-0.5 border border-slate-200">
+            {serials.filter(s => !s.addedFromCruce).length}
+          </span>
         </div>
 
-        {/* GRID DE INGRESO DE DATOS COMPACTO */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-          {/* Fila 1: Guía y Serial */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">N° Guía (Entrada)</label>
-            <input
-              type="text"
-              value={guia}
-              onChange={e => setGuia(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial</label>
-            <input
-              type="text"
-              value={bulkInput}
-              onChange={e => {
-                const val = e.target.value;
-                setBulkInput(val);
-                const firstSerial = val.split(/[\n,;\s]+/)[0] || '';
-                const detected = detectModelFromSerial(firstSerial, modelosDB);
-                if (detected) {
-                  setModeloManual(detected);
-                }
-              }}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-          </div>
-
-
-
-          {/* Fila 2: Remitente y Origen */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Remitente</label>
-            <input
-              type="text"
-              list="formRemitenteList"
-              value={remitente}
-              onChange={e => handleRemitenteChange(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-            <datalist id="formRemitenteList">
-              {remitente.trim().length >= 4 && uniqueRemitentes.map(r => <option key={r} value={r} />)}
-            </datalist>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Origen</label>
-            <input
-              type="text"
-              value={destino}
-              onChange={e => setDestino(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-          </div>
-
-          {/* Fila 3: Razón Social y RIF */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Razón Social</label>
-            <input
-              type="text"
-              value={razonSocial}
-              onChange={e => setRazonSocial(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">RIF Cliente</label>
-            <input
-              type="text"
-              value={rif}
-              onChange={e => setRif(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-          </div>
-
-          {/* Fila 4: Modelo y Ticket */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo POS</label>
-            <input
-              type="text"
-              value={modeloManual}
-              onChange={e => setModeloManual(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Nro de Ticket</label>
-            <input
-              type="text"
-              value={ticket}
-              onChange={e => setTicket(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-          </div>
-
-          {/* Número SIM moved below accessory buttons (see below) */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Operadora</label>
-            <select
-              value={operadora}
-              onChange={e => setOperadora(e.target.value as any)}
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            >
-              <option value=""></option>
-              <option value="MOVISTAR">MOVISTAR</option>
-              <option value="MOVILNET">MOVILNET</option>
-              <option value="DIGITEL">DIGITEL</option>
-            </select>
-          </div>
-
-          {/* Fila 6: Modelo Negocio */}
-          <div className="flex flex-col gap-1 col-span-2">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Modelo Negocio</label>
-            <select
-              value={modeloNegocio}
-              onChange={e => setModeloNegocio(e.target.value as any)}
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            >
-              <option value=""></option>
-              <option value="BASICO">BÁSICO</option>
-              <option value="COMODATO">COMODATO</option>
-            </select>
-          </div>
-
-          {/* Fila 7: Costo y al lado BANCO */}
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Costo</label>
-            <input
-              type="text"
-              value={costoBsf}
-              onChange={e => setCostoBsf(e.target.value)}
-              disabled={sinCosto}
-              placeholder=""
-              className={`w-full text-sm p-2.5 bg-${sinCosto ? 'slate-200' : 'slate-100'} border border-${sinCosto ? 'slate-350' : 'transparent'} rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${sinCosto ? 'opacity-50 cursor-not-allowed' : ''}`}
-            />
-          </div>
-          <div className="flex flex-col gap-1 col-span-2">
-            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Banco</label>
-            <input
-              type="text"
-              list="formBancoList"
-              value={banco}
-              onChange={e => setBanco(e.target.value)}
-              placeholder=""
-              className="w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]"
-            />
-            <datalist id="formBancoList">
-              {uniqueBancos.map(b => <option key={b} value={b} />)}
-            </datalist>
-          </div>
-
-        {/* ACCESORIOS GESTION COMPLETA */}
-        <div className="col-span-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-          <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
-            <button
-              type="button"
-              onClick={() => setAccForro(!accForro)}
-              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors cursor-pointer border accessory-btn ${
-                accForro ? 'active' : ''
-              }`}
-            >
-              <span>FORRO</span>
-              {accForro && <Check size={12} />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setAccCargador(!accCargador)}
-              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors cursor-pointer border accessory-btn ${
-                accCargador ? 'active' : ''
-              }`}
-            >
-              <span>CARGADOR</span>
-              {accCargador && <Check size={12} />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setAccCaja(!accCaja)}
-              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors cursor-pointer border accessory-btn ${
-                accCaja ? 'active' : ''
-              }`}
-            >
-              <span>CAJA</span>
-              {accCaja && <Check size={12} />}
-            </button>
-            <button
-              type="button"
-              onClick={() => setAccBateria(!accBateria)}
-              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors cursor-pointer border accessory-btn ${
-                accBateria ? 'active' : ''
-              }`}
-            >
-              <span>BATERÍA</span>
-              {accBateria && <Check size={12} />}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const newVal = !accSim;
-                setAccSim(newVal);
-                if (!newVal) {
-                  setSimNumber('');
-                } else {
-                  setSimNumber('');
-                }
-              }}
-              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors cursor-pointer border accessory-btn ${
-                accSim ? 'active' : ''
-              }`}
-            >
-              <span>SIM</span>
-              {accSim && <Check size={12} />}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const newVal = !sinCosto;
-                setSinCosto(newVal);
-                if (newVal) {
-                  setCostoBsf('');
-                  setCostoUsdt('');
-                }
-              }}
-              className={`flex items-center justify-between text-[11px] font-bold px-3 py-1.5 rounded-md transition-colors cursor-pointer border accessory-btn ${
-                sinCosto ? 'active' : ''
-              }`}
-            >
-              <span>SIN COSTO</span>
-              {sinCosto && <Check size={12} />}
-            </button>
-          </div>
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+          {serials.filter(s => !s.addedFromCruce).length === 0 ? (
+            <p className="text-xs text-slate-400 font-mono text-center py-8 font-semibold uppercase">No hay equipos ingresados por el formulario de Nuevo Serial.</p>
+          ) : (
+            serials.filter(s => !s.addedFromCruce).map(s => (
+              <div key={s.id} className="p-3 bg-white border border-slate-200 shadow-2xs font-mono text-xs flex flex-col gap-1">
+                <div className="flex justify-between items-center font-bold">
+                  <span className="text-slate-900 select-all">{s.serial}</span>
+                  <span className="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 uppercase">{s.status}</span>
+                </div>
+                <div className="text-[10px] text-slate-500 font-sans flex justify-between uppercase">
+                  <span>Remitente: {s.remitente || 'N/A'}</span>
+                  <span>Guía: {s.source || '-'}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
-
-        {/* Número SIM: placed below the accessory buttons, enabled only when SIM is checked */}
-        <div className="col-span-3 mt-3">
-          <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Número SIM</label>
-          <input
-            type="text"
-            value={simNumber}
-            onChange={e => setSimNumber(e.target.value)}
-            placeholder=""
-            disabled={!accSim}
-            className={`w-full text-sm p-2.5 bg-slate-100 border border-transparent rounded-lg text-black uppercase font-arial font-semibold focus:outline-none focus:ring-2 focus:ring-slate-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)] ${
-              !accSim ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          />
-        </div>
-      </div>
-
-        <button
-          onClick={handleRegister}
-          className="w-full py-3 btn-green text-white rounded-lg text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-2 mt-2 cursor-pointer shadow-sm"
-        >
-          <Play fill="currentColor" size={10} className="text-white" />
-          <span>Registrar POS</span>
-        </button>
       </div>
 
       {/* COMPONENTE PRINCIPAL: TABLA & ACCIONES MASIVAS */}

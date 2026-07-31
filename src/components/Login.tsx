@@ -14,11 +14,22 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const normalized = username.trim();
+    const upper = normalized.toUpperCase();
     if ((normalized === 'Pedro' && password === 'Blackopioum12') || (normalized === 'Genyerling' && password === '1234') || (normalized === 'Murachi' && password === '1234')) {
       localStorage.setItem('disglobal_authenticated', 'true');
-      // store the canonical username
       const storeUser = normalized === 'Pedro' ? 'Pedro' : (normalized === 'Genyerling' ? 'Genyerling' : 'Murachi');
       localStorage.setItem('disglobal_username', storeUser);
+      localStorage.setItem('disglobal_role', 'admin');
+      onLoginSuccess();
+    } else if (upper === 'PAIVA' && password === '1234') {
+      localStorage.setItem('disglobal_authenticated', 'true');
+      localStorage.setItem('disglobal_username', 'J. PAIVA');
+      localStorage.setItem('disglobal_role', 'observer');
+      onLoginSuccess();
+    } else if (upper === 'MIRNA' && password === '1234') {
+      localStorage.setItem('disglobal_authenticated', 'true');
+      localStorage.setItem('disglobal_username', 'M. ARMAS');
+      localStorage.setItem('disglobal_role', 'observer');
       onLoginSuccess();
     } else {
       setError('Usuario o contraseña incorrectos.');

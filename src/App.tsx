@@ -8,7 +8,6 @@ import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords,
 import { GestionGeneral } from './components/GestionGeneral';
 import { LogoIcon } from './components/LogoIcon';
 import { Casillero } from './components/Casillero';
-// HacerEnvio removed from main UI
 import { CruceSeriales } from './components/CruceSeriales';
 import { EquiposEnviados } from './components/EquiposEnviados';
 import { Modelos } from './components/Modelos';
@@ -17,13 +16,17 @@ import { Usuarios } from './components/Usuarios';
 import { GestionSimCards } from './components/GestionSimCards';
 import { Login } from './components/Login';
 import { StandBy } from './components/StandBy';
+import { Inicio } from './components/Inicio';
+import { Bancos } from './components/Bancos';
+import { NuevoSerial } from './components/NuevoSerial';
+import { BancoItem, ToastNotification } from './types';
 
 // Lucide icons
 import {
   Database, FileSpreadsheet, Download, RefreshCw,
   Trash2, Layers, Search, Calendar, FolderCheck, Clock,
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
-  Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut
+  Home, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut, Landmark, PlusCircle
 } from 'lucide-react';
 import { Pencil } from 'lucide-react';
 
@@ -39,10 +42,21 @@ export default function App() {
   const [enviosExternos, setEnviosExternos] = useState<EnvioExterno[]>([]);
   const [modelosDB, setModelosDB] = useState<Record<string, ModelConfig>>(INITIAL_MODELS);
   const [usersProfiles, setUsersProfiles] = useState<Record<string, UserProfile>>({});
-  const [currentTab, setCurrentTab] = useState<string>('general');
+  const [currentTab, setCurrentTab] = useState<string>('inicio');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [simCardBatches, setSimCardBatches] = useState<any[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [bancosList, setBancosList] = useState<BancoItem[]>([]);
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
+
+  const addToast = (mensaje: string) => {
+    const id = `TOAST-${Date.now()}-${Math.random()}`;
+    const timestamp = Date.now();
+    setToasts(prev => [ { id, mensaje, timestamp }, ...prev]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
 
   // STAND-BY and Batch states
   const [standbyList, setStandbyList] = useState<StandbyItem[]>([]);
@@ -1011,14 +1025,35 @@ export default function App() {
   }
 
   const storedUserRaw = localStorage.getItem('disglobal_username') || 'PEDRO';
+  const storedRole = localStorage.getItem('disglobal_role') || 'admin';
+  const isObserverRole = storedRole === 'observer';
   const currentUserKey = storedUserRaw.toUpperCase();
   const currentProfile = usersProfiles[currentUserKey] || { nombreCompleto: storedUserRaw, cargo: '' };
   const displayName = (currentProfile.nombreCompleto || storedUserRaw).toUpperCase();
-  const displayCargo = (currentProfile.cargo || '').toUpperCase();
+  const displayCargo = isObserverRole ? 'OBSERVADOR' : ((currentProfile.cargo || '').toUpperCase());
   const displayInitial = (currentProfile.nombreCompleto ? currentProfile.nombreCompleto.charAt(0) : storedUserRaw.charAt(0)).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-[#08080a] text-zinc-300 flex font-sans antialiased overflow-hidden h-screen">
+    <div className="min-h-screen bg-[#08080a] text-zinc-300 flex font-sans antialiased overflow-hidden h-screen relative">
+
+      {/* FLOATING TOAST NOTIFICATIONS (ESQUINA SUPERIOR DERECHA) */}
+      <div className="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm">
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            className="pointer-events-auto bg-slate-900 text-white p-3.5 shadow-2xl border-l-4 border-emerald-500 text-xs font-mono font-bold uppercase tracking-wider animate-fade-in flex items-center justify-between gap-3"
+            style={{ borderRadius: '0px' }}
+          >
+            <span>{toast.mensaje}</span>
+            <button
+              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+              className="text-slate-400 hover:text-white cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
 
       {/* 1. SIDEBAR IZQUIERDA VERTICAL */}
       <aside className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-[#f8fafc] border-r border-slate-200 flex flex-col justify-between shrink-0 h-full select-none z-10`}>
@@ -1044,8 +1079,11 @@ export default function App() {
           {/* Menú de Navegación Vertical */}
           <nav className={`flex flex-col gap-1.5 px-3`}>
             {[
-              { id: 'general', label: 'Gestión General', icon: Home },
+              { id: 'inicio', label: 'Inicio', icon: Home },
+              { id: 'nuevoserial', label: 'Nuevo Serial', icon: PlusCircle },
+              { id: 'general', label: 'Gestión General', icon: Layers },
               { id: 'casillero', label: 'Casillero', icon: Flag },
+              { id: 'bancos', label: 'Bancos', icon: Landmark },
               { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
               { id: 'standby', label: 'Stand-by', icon: Clock },
               { id: 'envios', label: 'Equipos Enviados', icon: Send },
@@ -1095,8 +1133,11 @@ export default function App() {
             <div className="h-4 w-px bg-slate-300"></div>
 
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+              {currentTab === 'inicio' && 'Inicio — Panel de Control y Métricas'}
+              {currentTab === 'nuevoserial' && 'Nuevo Serial — Formulario de Registro'}
               {currentTab === 'general' && 'Gestión General de Seriales'}
               {currentTab === 'casillero' && 'Control de Casillero'}
+              {currentTab === 'bancos' && 'Directorio de Bancos'}
               {currentTab === 'cruce' && 'Cruce Inteligente de Seriales'}
               {currentTab === 'standby' && 'Equipos en Camino (Stand-by)'}
               {currentTab === 'envios' && 'Equipos Despachados / Enviados'}
@@ -1320,6 +1361,28 @@ export default function App() {
         {/* AREA DE TRABAJO SCROLLABLE */}
         <main className="flex-1 overflow-y-auto p-8 dashboard-bg">
 
+          <div className={currentTab === 'inicio' ? '' : 'hidden'}>
+            <Inicio
+              serials={serials}
+              activeCruceBatchId={activeCruceBatchId}
+              setCurrentTab={setCurrentTab}
+            />
+          </div>
+
+          <div className={currentTab === 'nuevoserial' ? '' : 'hidden'}>
+            <NuevoSerial
+              serials={serials}
+              setSerials={setSerials}
+              modelosDB={modelosDB}
+              usersProfiles={usersProfiles}
+              setUsersProfiles={setUsersProfiles}
+              activeCruceBatchId={activeCruceBatchId}
+              uniqueBancos={[]}
+              onAddToast={addToast}
+              isReadOnly={isObserverRole}
+            />
+          </div>
+
           <div className={currentTab === 'general' ? '' : 'hidden'}>
             <GestionGeneral
               serials={serials}
@@ -1339,6 +1402,17 @@ export default function App() {
               usersProfiles={usersProfiles}
               setUsersProfiles={setUsersProfiles}
               activeCruceBatchId={activeCruceBatchId}
+              isReadOnly={isObserverRole}
+            />
+          </div>
+
+          <div className={currentTab === 'bancos' ? '' : 'hidden'}>
+            <Bancos
+              serials={serials}
+              bancosList={bancosList}
+              setBancosList={setBancosList}
+              setSerials={setSerials}
+              isReadOnly={isObserverRole}
             />
           </div>
 
@@ -1355,6 +1429,7 @@ export default function App() {
               usersProfiles={usersProfiles}
               setUsersProfiles={setUsersProfiles}
               activeCruceBatchId={activeCruceBatchId}
+              isReadOnly={isObserverRole}
             />
           </div>
 
@@ -1397,6 +1472,8 @@ export default function App() {
               activeCruceBatchId={activeCruceBatchId}
               setActiveCruceBatchId={setActiveCruceBatchId}
               setCurrentTab={setCurrentTab}
+              onAddToast={addToast}
+              isReadOnly={isObserverRole}
             />
           </div>
 

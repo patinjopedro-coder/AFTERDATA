@@ -16,6 +16,8 @@ interface CruceSerialesProps {
   activeCruceBatchId: string;
   setActiveCruceBatchId: (id: string) => void;
   setCurrentTab: (tab: string) => void;
+  onAddToast?: (msg: string) => void;
+  isReadOnly?: boolean;
 }
 
 export const CruceSeriales: React.FC<CruceSerialesProps> = ({
@@ -26,7 +28,9 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   usersProfiles,
   activeCruceBatchId,
   setActiveCruceBatchId,
-  setCurrentTab
+  setCurrentTab,
+  onAddToast,
+  isReadOnly = false
 }) => {
   // Real-time text streams state
   const [emailText, setEmailText] = useState('');
@@ -703,7 +707,11 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       return copy;
     });
 
-    alert(`✅ ¡Cruce inteligente completado!\n• ${nuevos} nuevos registros agregados.\n• ${actualizados} terminales existentes actualizados.`);
+    if (onAddToast) {
+      onAddToast(`Se han añadido ${coincidencias.length} seriales a gestión general`);
+    } else {
+      alert(`✅ ¡Cruce inteligente completado!\n• ${nuevos} nuevos registros agregados.\n• ${actualizados} terminales existentes actualizados.`);
+    }
     setRemitenteCorreo('');
     setCurrentTab('general');
   };
@@ -750,8 +758,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     }
     let csv = 'sep=;\nID;FECHA_INGRESO;SERIAL;ESTATUS;REM;USUARIO;OPERADORA;SIM\n';
     data.forEach(item => {
-      const fecha = item.fechaIngreso || '';
-      csv += `"${item.id || ''}";"${fecha}";"${item.serial || ''}";"${item.status || ''}";"${item.remitente || ''}";"${item.usuario || ''}";"${item.operadora || ''}";"${item.simNumber || ''}"\n`;
+      const fecha = item.date || item.displayDate || '';
+      csv += `"${item.id || ''}";"${fecha}";"${item.serial || ''}";"${item.status || ''}";"${item.remitente || ''}";"${item.responsable || ''}";"${item.operadora || ''}";"${item.simNumber || ''}"\n`;
     });
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     downloadBlob(blob, `full_backup_${new Date().toISOString().split('T')[0]}.csv`);
@@ -779,10 +787,19 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
             type="text"
             value={remitenteCorreo}
             onChange={e => {
-              setRemitenteCorreo(e.target.value.toUpperCase());
-              setShowMainSuggestions(true);
+              const val = e.target.value.toUpperCase();
+              setRemitenteCorreo(val);
+              if (val.trim().length >= 4) {
+                setShowMainSuggestions(true);
+              } else {
+                setShowMainSuggestions(false);
+              }
             }}
-            onFocus={() => setShowMainSuggestions(true)}
+            onFocus={() => {
+              if (remitenteCorreo.trim().length >= 4) {
+                setShowMainSuggestions(true);
+              }
+            }}
             onBlur={() => {
               setTimeout(() => setShowMainSuggestions(false), 200);
             }}
@@ -943,19 +960,16 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
             <div className="flex-1 flex flex-col gap-2">
               <textarea
                 value={fisicoText}
-                onChange={e => setFisicoText(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  setFisicoText(val);
+                  if (val.trim()) {
+                    setFisicoViewMode('visual');
+                  }
+                }}
                 placeholder="Lea con la pistola de códigos de barra directamente o pegue la lectura física masiva..."
                 className="w-full flex-1 min-h-[220px] text-xs font-semibold p-3.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-300 placeholder-slate-400 transition-all font-sans"
               />
-              <button
-                onClick={() => {
-                  if (fisicoText.trim()) setFisicoViewMode('visual');
-                }}
-                disabled={!fisicoText.trim()}
-                className="w-full py-1.5 btn-orange disabled:opacity-50 disabled:cursor-not-allowed text-xs font-bold uppercase cursor-pointer transition-all"
-              >
-                Procesar y Hacer Match
-              </button>
             </div>
           ) : (
             <div className="flex-1 flex flex-col gap-2.5">
@@ -1094,15 +1108,6 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           >
             <Import size={13} />
             <span>Descargar Reporte Cruzado</span>
-          </button>
-          
-          <button
-            onClick={handleExportFullBackup}
-            disabled={totalUnicos === 0}
-            className="px-4 py-2 btn-blue disabled:opacity-50 text-xs font-extrabold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Database size={13} className="text-white" />
-            <span>Exportar Base Completa</span>
           </button>
           
           <button

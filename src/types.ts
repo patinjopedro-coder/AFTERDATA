@@ -109,4 +109,13 @@ export interface StandbyItem {
   status: 'PENDIENTE' | 'PROCESADO';
   processedDate?: string;
 }
+export interface BancoItem {
+  id: string;
+  nombre: string;
+}
 
+export interface ToastNotification {
+  id: string;
+  mensaje: string;
+  timestamp: number;
+}
