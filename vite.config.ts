@@ -70,7 +70,7 @@ const localDbPlugin = () => {
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss(), localDbPlugin()],
-    base: './',
+    base: '/',
     envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
     resolve: {
       alias: {
