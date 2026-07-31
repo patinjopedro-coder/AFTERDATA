@@ -359,11 +359,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 <input
                   type="checkbox"
                   checked={!!editDraft.entregadoDisglobal}
-                  onChange={e => setEditDraft(d => ({
-                    ...d,
-                    entregadoDisglobal: e.target.checked,
-                    entregadoA: e.target.checked ? (d.entregadoA || disglobalUsers[0] || '') : ''
-                  }))}
+                  onChange={e => setEditDraft(d => ({ ...d, entregadoDisglobal: e.target.checked, entregadoA: e.target.checked ? (d.entregadoA || disglobalUsers[0] || '') : '' }))}
                   className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
                 />
                 <span>Entregado a Usuario Disglobal</span>
