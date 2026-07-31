@@ -25,6 +25,21 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
   const [rawSerials, setRawSerials] = useState('');
   const [batchTitle, setBatchTitle] = useState('');
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isFlatModalOpen, setIsFlatModalOpen] = useState(false);
+
+  // Save Batch
+  const handleSaveBatch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanSerials = rawSerials
+      .split(/[\n,;]+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    if (cleanSerials.length === 0) {
+      alert('Por favor ingrese al menos un serial de SIM-Card.');
+      return;
+    }
 
     const d = new Date();
     const defaultTitle = `Lote - ${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
@@ -84,10 +99,10 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 text-slate-800 font-arial pb-16">
-      
+
       {/* Columna Izquierda: Cargar Nuevas y Listado de Lotes */}
       <div className="xl:col-span-1 flex flex-col gap-6">
-        
+
         {/* Panel Cargar */}
         <div className="dark-panel p-5 flex flex-col gap-4">
           <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
@@ -158,7 +173,7 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
                       Cant: {b.serials.length}
                     </span>
                   </div>
-                  
+
                   <div className="flex justify-between items-center text-[10px] text-slate-450 mt-1 border-t border-slate-200/50 pt-1.5">
                     <span className="flex items-center gap-1">
                       <Calendar size={10} />
@@ -193,7 +208,7 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
       <div className="xl:col-span-3">
         {selectedBatch ? (
           <div className="dark-panel p-6 flex flex-col gap-5 min-h-[500px]">
-            
+
             {/* Header del Detalle */}
             <div className="flex justify-between items-center border-b border-slate-100 pb-4 flex-wrap gap-3">
               <div>
@@ -293,10 +308,11 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
             </div>
           </div>
         )}
+
         {isFlatModalOpen && createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/30 backdrop-blur-md animate-fade-in-overlay select-none font-arial">
             <div className="bg-white border border-slate-100 rounded-2xl w-full max-w-lg flex flex-col shadow-xl overflow-hidden animate-fade-in text-slate-800">
-              
+
               {/* Header */}
               <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                 <div className="flex items-center gap-2">
@@ -308,7 +324,7 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
                     </p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsFlatModalOpen(false)}
                   className="p-1 px-2.5 toggle-inactive uppercase cursor-pointer text-[10px] font-black tracking-wider transition-all bg-transparent border-none"
                 >
@@ -321,7 +337,7 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
                 <p className="text-xs text-slate-550 font-sans text-left">
                   Haga clic dentro del cuadro para seleccionar todos los seriales de SIM-Card y copiarlos juntos:
                 </p>
-                
+
                 <textarea
                   readOnly
                   value={filteredSerials.join('\n')}
@@ -351,13 +367,13 @@ export const GestionSimCards: React.FC<GestionSimCardsProps> = ({
                 </div>
               </div>
 
-            
+            </div>
           </div>,
           document.body
         )}
 
       </div>
 
-    
+    </div>
   );
 };
