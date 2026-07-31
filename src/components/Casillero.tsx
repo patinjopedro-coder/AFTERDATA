@@ -166,7 +166,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
       if (s.id !== editingItem.id) return s;
       const draft = { ...editDraft };
       if (editDraft.date && editDraft.date !== s.date) {
-        draft.displayDate = String(editDraft.date || '').split('-').reverse().join('/');
+        draft.displayDate = safeSplit(editDraft.date || '', '-').reverse().join('/');
       }
       if (s.serial === 'POR RECIBIR' && draft.serial && draft.serial !== 'POR RECIBIR') {
         draft.salienteSinRecibir = false;
@@ -455,7 +455,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
       reader.onload = (fileEvent) => {
         try {
           const content = fileEvent.target?.result as string;
-          const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const lines = safeSplit(content || '', /\r?\n/).map(l => l.trim()).filter(Boolean);
           if (lines.length < 2) {
             alert("El archivo no contiene suficientes líneas.");
             return;
@@ -466,7 +466,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
           if (firstLine.includes('\t')) delimiter = '\t';
           else if (firstLine.includes(';')) delimiter = ';';
 
-          const headers = firstLine.split(delimiter).map(h => {
+          const headers = safeSplit(firstLine || '', delimiter).map(h => {
             return h.trim()
                     .toUpperCase()
                     .normalize("NFD")
@@ -515,9 +515,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
             let cols: string[] = [];
             
             if (delimiter === '\t') {
-              cols = line.split('\t');
+              cols = safeSplit(line || '', '\t');
             } else if (delimiter === ';') {
-              cols = line.split(';');
+              cols = safeSplit(line || '', ';');
             } else {
               let current = '';
               let inQuotes = false;
@@ -552,13 +552,13 @@ export const Casillero: React.FC<CasilleroProps> = ({
             
             if (rawFechaLlegada) {
               if (rawFechaLlegada.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                const [day, month, year] = String(rawFechaLlegada || '').split('/');
+                const [day, month, year] = safeSplit(rawFechaLlegada || '', '/');
                 dateISO = `${year}-${month}-${day}`;
               } else if (rawFechaLlegada.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 dateISO = rawFechaLlegada;
               }
             }
-            const displayDateVal = String(dateISO || '').split('-').reverse().join('/');
+            const displayDateVal = safeSplit(dateISO || '', '-').reverse().join('/');
 
             const parseBool = (val: string) => {
               if (!val) return false;
@@ -662,7 +662,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
       reader.onload = (fileEvent) => {
         try {
           const content = fileEvent.target?.result as string;
-          const lines = content.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const lines = safeSplit(content || '', /\r?\n/).map(l => l.trim()).filter(Boolean);
           if (lines.length < 2) {
             alert("El archivo no contiene suficientes líneas.");
             return;
@@ -673,7 +673,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
           if (firstLine.includes('\t')) delimiter = '\t';
           else if (firstLine.includes(';')) delimiter = ';';
 
-          const headers = firstLine.split(delimiter).map(h => {
+          const headers = safeSplit(firstLine || '', delimiter).map(h => {
             return h.trim()
                     .toUpperCase()
                     .normalize("NFD")
@@ -732,9 +732,9 @@ export const Casillero: React.FC<CasilleroProps> = ({
             let cols: string[] = [];
             
             if (delimiter === '\t') {
-              cols = line.split('\t');
+              cols = safeSplit(line || '', '\t');
             } else if (delimiter === ';') {
-              cols = line.split(';');
+              cols = safeSplit(line || '', ';');
             } else {
               let current = '';
               let inQuotes = false;
@@ -774,16 +774,16 @@ export const Casillero: React.FC<CasilleroProps> = ({
             // Obtener fecha de entrada
             let fechaEntrada = getColVal(idxFechaEntrada);
             let dateISO = todayISO;
-            let displayDate = String(todayISO || '').split('-').reverse().join('/');
+            let displayDate = safeSplit(todayISO || '', '-').reverse().join('/');
             
             if (fechaEntrada) {
               if (fechaEntrada.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-                const [day, month, year] = String(fechaEntrada || '').split('/');
+                const [day, month, year] = safeSplit(fechaEntrada || '', '/');
                 dateISO = `${year}-${month}-${day}`;
                 displayDate = fechaEntrada;
               } else if (fechaEntrada.match(/^\d{4}-\d{2}-\d{2}$/)) {
                 dateISO = fechaEntrada;
-                displayDate = String(fechaEntrada || '').split('-').reverse().join('/');
+                displayDate = safeSplit(fechaEntrada || '', '-').reverse().join('/');
               }
             }
 

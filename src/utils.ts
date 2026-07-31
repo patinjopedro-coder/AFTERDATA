@@ -370,5 +370,3 @@ export function downloadBlob(blob: Blob, filename: string): void {
 export function safeSplit(val: any, separator: string | RegExp): string[] {
   return String(val ?? '').split(separator);
 }
-
-

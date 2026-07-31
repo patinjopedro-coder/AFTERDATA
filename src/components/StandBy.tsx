@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { StandbyItem } from '../types';
 import { Clock, Plus, Trash2, Search, CheckCircle, AlertCircle, FileSpreadsheet } from 'lucide-react';
-import { downloadBlob } from '../utils';
+import { downloadBlob, safeSplit } from '../utils';
 
 interface StandByProps {
   standbyList: StandbyItem[];
@@ -26,22 +26,16 @@ export const StandBy: React.FC<StandByProps> = ({
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const serials = serialsInput
-      .split(/[\r\n,;]+/)
-      .map(s => s.trim().toUpperCase())
-      .filter(Boolean);
+    const serials = safeSplit(serialsInput, /[\r\n,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
 
-    const guias = guiasInput
-      .split(/[\r\n,;]+/)
-      .map(g => g.trim().toUpperCase())
-      .filter(Boolean);
+    const guias = safeSplit(guiasInput, /[\r\n,;]+/).map(g => g.trim().toUpperCase()).filter(Boolean);
 
     if (serials.length === 0 && guias.length === 0) {
       alert('POR FAVOR INGRESE AL MENOS UN SERIAL O UNA GUÍA EN CAMINO.');
       return;
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = safeSplit(new Date().toISOString(), 'T')[0];
     const newItems: StandbyItem[] = [];
 
     // Combinar o registrar de forma individual
@@ -148,7 +142,7 @@ export const StandBy: React.FC<StandByProps> = ({
     });
 
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-    const filename = `standby_reporte_${new Date().toISOString().split('T')[0]}.csv`;
+    const filename = `standby_reporte_${safeSplit(new Date().toISOString(), 'T')[0]}.csv`;
     downloadBlob(blob, filename);
   };
 
@@ -306,7 +300,7 @@ export const StandBy: React.FC<StandByProps> = ({
                           {(idx + 1).toString().padStart(2, '0')}
                         </td>
                         <td className="py-3.5 px-4 text-slate-650">
-                          {String(item.date || '').split('-').reverse().join('/')}
+                          {safeSplit(item.date || '', '-').reverse().join('/')}
                         </td>
                         <td className={`py-3.5 px-4 text-sm font-semibold select-all font-sans ${isProcessed ? 'text-emerald-800 font-black' : 'text-slate-850'}`}>
                           {item.serial || <span className="text-slate-350 italic font-normal">S/S</span>}
@@ -328,7 +322,7 @@ export const StandBy: React.FC<StandByProps> = ({
                           </span>
                         </td>
                         <td className="py-3.5 px-4 text-emerald-800 font-bold">
-                          {item.processedDate ? String(item.processedDate).split('-').reverse().join('/') : '-'}
+                          {item.processedDate ? safeSplit(item.processedDate, '-').reverse().join('/') : '-'}
                         </td>
                         <td className="py-3.5 px-4 text-center">
                           {(item as any).isDerived ? (

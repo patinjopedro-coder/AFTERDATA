@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { POSItem, EnvioExterno, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
 import { Truck, ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { copyToClipboard } from '../utils';
+import { copyToClipboard, safeSplit } from '../utils';
 
 interface EquiposEnviadosProps {
   serials: POSItem[];
@@ -254,7 +254,7 @@ export const EquiposEnviados: React.FC<EquiposEnviadosProps> = ({
                         {e.razonSocial || 'MANUAL / SIN ENTRADA'}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap text-slate-800 font-mono font-semibold text-[11px]">
-                        {String(e.fecha || '').split('-').reverse().join('/')}
+                        {safeSplit(e.fecha || '', '-').reverse().join('/')}
                       </td>
                       <td className="py-3 px-4 font-arial font-semibold text-[11px] text-slate-900">
                         <span className="inline-flex items-center gap-1">

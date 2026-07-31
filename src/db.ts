@@ -1,5 +1,6 @@
 import { supabase, SUPABASE_TABLE_NAME, getSupabaseConfigError } from './lib/supabase';
 
+import { safeSplit } from './utils';
 function serializeValue<T>(value: T): string {
   if (typeof value === 'string') return value;
   return JSON.stringify(value);

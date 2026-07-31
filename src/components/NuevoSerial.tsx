@@ -55,7 +55,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
 
   const handleRegister = () => {
     if (isReadOnly) return;
-    const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    const rawLines = safeSplit(bulkInput || '', /\n+/).map(l => l.trim()).filter(Boolean);
     if (rawLines.length === 0) {
       alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
       return;
@@ -67,7 +67,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
     }
 
     const today = currentDateStr();
-    const displayToday = today.split('-').reverse().join('/');
+    const displayToday = safeSplit(today || '', '-').reverse().join('/');
     const dNow = new Date();
     const horaStr = `${String(dNow.getHours()).padStart(2, '0')}:${String(dNow.getMinutes()).padStart(2, '0')}:${String(dNow.getSeconds()).padStart(2, '0')}`;
     const isCas = !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || banco || sinCosto);
@@ -201,7 +201,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
                 onChange={e => {
                   const val = e.target.value;
                   setBulkInput(val);
-                  const firstSerial = String(val || '').split(/\n+/).map(s => s.trim()).find(Boolean);
+                  const firstSerial = safeSplit(val || '', /\n+/).map(s => s.trim()).find(Boolean);
                   if (firstSerial) {
                     const detected = getTerminalModel(firstSerial, modelosDB);
                     if (detected && detected.modelo && !detected.modelo.includes('DESCONOCIDO')) {

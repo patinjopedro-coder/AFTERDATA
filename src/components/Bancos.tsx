@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { safeSplit } from '../utils';
 import { POSItem, BancoItem } from '../types';
 import { Landmark, Plus, Edit2, Trash2, ChevronRight, X, Building2, Layers } from 'lucide-react';
 

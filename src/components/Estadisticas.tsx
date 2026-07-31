@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
-import { copyToClipboard, downloadBlob } from '../utils';
+import { copyToClipboard, downloadBlob, safeSplit } from '../utils';
 import { 
   BarChart3, Calendar, FileDown, Search, 
   Layers, Cpu, Smartphone, CardSim, Users, Compass, Check,
@@ -1074,7 +1074,7 @@ export const Estadisticas: React.FC<EstadisticasProps> = ({
         if (exportCasilleroFilter === 'no-casillero' && s.isCasillero) return false;
         if (exportCasilleroFilter === 'only-casillero' && !s.isCasillero) return false;
 
-        const parts = String(s.date || '').split('-');
+        const parts = safeSplit(s.date || '', '-');
         const monthNum = parts.length > 1 ? parseInt(parts[1], 10) : NaN;
         return monthNum === (i + 1);
       });

@@ -56,14 +56,14 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
 
   // Función para procesar IMDS y agregar a GestionGeneral
   const handleIMDSProcess = () => {
-    const rawLines = imdsSeriales.split(/[\n,;\s]+/).filter(s => s.trim());
+    const rawLines = safeSplit(imdsSeriales, /[\n,;\s]+/).filter(s => s.trim());
     if (rawLines.length === 0) {
       alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
       return;
     }
 
     const fecha = imdsFecha || new Date().toISOString().split('T')[0];
-    const displayDate = String(fecha || '').split('-').reverse().join('/');
+    const displayDate = safeSplit(fecha || '', '-').reverse().join('/');
     const remitente = imdsRemitente.trim().toUpperCase() || 'IMDS';
 
     const maxId = serials.reduce((max, s) => Math.max(max, s.id), 0);
@@ -428,8 +428,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     }
 
     // Split inputs into lines efficiently
-    const sLines = imsSerialsRaw.split(/\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
-    const stLines = imsStatusRaw.split(/\r?\n/).map(l => l.trim().toUpperCase());
+    const sLines = safeSplit(imsSerialsRaw, /\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
+    const stLines = safeSplit(imsStatusRaw, /\r?\n/).map(l => l.trim().toUpperCase());
 
     const maxRows = Math.max(sLines.length, stLines.length);
     const newMaster: CruceItem[] = [];
@@ -473,10 +473,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     }
 
     // Split inputs into lines efficiently
-    const sLines = IMDSSerialsRaw.split(/\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
-    const stLines = IMDSStatusRaw.split(/\r?\n/).map(l => l.trim().toUpperCase());
-    const dateLines = IMDSFechaRaw.split(/\r?\n/).map(l => l.trim());
-    const remLines = IMDSRemitenteRaw.split(/\r?\n/).map(l => l.trim().toUpperCase());
+    const sLines = safeSplit(IMDSSerialsRaw, /\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
+    const stLines = safeSplit(IMDSStatusRaw, /\r?\n/).map(l => l.trim().toUpperCase());
+    const dateLines = safeSplit(IMDSFechaRaw, /\r?\n/).map(l => l.trim());
+    const remLines = safeSplit(IMDSRemitenteRaw, /\r?\n/).map(l => l.trim().toUpperCase());
 
     const maxRows = Math.max(sLines.length, stLines.length, dateLines.length, remLines.length);
     const newIMDS: CMSItem[] = [];
@@ -524,7 +524,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     
     const newSerials = newIMDS.map(item => {
       currentId++;
-      const displayDate = item.date ? String(item.date).split('-').reverse().join('/') : '';
+      const displayDate = item.date ? safeSplit(item.date, '-').reverse().join('/') : '';
       return {
         id: currentId,
         serial: item.serial,
@@ -550,10 +550,10 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
       return;
     }
 
-    const sLines = CMSSerialsRaw.split(/\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
-    const stLines = CMSStatusRaw.split(/\r?\n/).map(l => l.trim().toUpperCase());
-    const remLines = CMSRemitenteRaw.split(/\r?\n/).map(l => l.trim().toUpperCase());
-    const dateLines = CMSFechaRaw.split(/\r?\n/).map(l => l.trim());
+    const sLines = safeSplit(CMSSerialsRaw, /\r?\n/).map(l => l.trim().toUpperCase()).filter(Boolean);
+    const stLines = safeSplit(CMSStatusRaw, /\r?\n/).map(l => l.trim().toUpperCase());
+    const remLines = safeSplit(CMSRemitenteRaw, /\r?\n/).map(l => l.trim().toUpperCase());
+    const dateLines = safeSplit(CMSFechaRaw, /\r?\n/).map(l => l.trim());
 
     const maxRows = Math.max(sLines.length, stLines.length, remLines.length, dateLines.length);
     const newCMS: CMSItem[] = [];
@@ -602,7 +602,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     const newBatchId = `LOTE - ${formatDayStr} ${formatTimeStr}`;
 
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const displayToday = today.split('-').reverse().join('/');
+    const displayToday = safeSplit(today || '', '-').reverse().join('/');
     const cleanRemitente = remName.trim().toUpperCase() || 'VALIDADOR';
 
     let nuevos = 0;
@@ -637,7 +637,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
               updatedItem = {
                 ...updatedItem,
                 date: match.date,
-                displayDate: String(match.date || '').split('-').reverse().join('/')
+                displayDate: safeSplit(match.date || '', '-').reverse().join('/')
               };
             }
           } else {
@@ -660,7 +660,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
           const fallbackOperadora = isCMS ? 'DISPONIBLE' : (match?.operadora || 'DISPONIBLE');
           const finalRemitente = isCMS ? (match.remitente || cleanRemitente) : cleanRemitente;
           const finalDate = isCMS ? (match.date || today) : today;
-          const finalDisplayDate = String(finalDate || '').split('-').reverse().join('/');
+          const finalDisplayDate = safeSplit(finalDate || '', '-').reverse().join('/');
 
           maxId++;
           copy.unshift({
@@ -1166,7 +1166,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                    Seriales: {imsSerialsRaw.split(/\r?\n/).filter(Boolean).length}
+                    Seriales: {safeSplit(imsSerialsRaw, /\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
               </div>
@@ -1185,7 +1185,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                    Estados: {imsStatusRaw.split(/\r?\n/).filter(Boolean).length}
+                    Estados: {safeSplit(imsStatusRaw, /\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
               </div>
@@ -1468,7 +1468,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text shadow-sm"
                     />
                     <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                      {CMSSerialsRaw.split(/\r?\n/).filter(Boolean).length}
+                      {safeSplit(CMSSerialsRaw, /\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
                 </div>
@@ -1484,7 +1484,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text shadow-sm"
                     />
                     <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                      {CMSStatusRaw.split(/\r?\n/).filter(Boolean).length}
+                      {safeSplit(CMSStatusRaw, /\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
                 </div>
@@ -1500,7 +1500,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text uppercase shadow-sm"
                     />
                     <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                      {CMSRemitenteRaw.split(/\r?\n/).filter(Boolean).length}
+                      {safeSplit(CMSRemitenteRaw, /\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
                 </div>
@@ -1516,7 +1516,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                       className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-355 font-mono tracking-wider placeholder-slate-400 min-h-[200px] leading-relaxed select-text shadow-sm"
                     />
                     <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                      {CMSFechaRaw.split(/\r?\n/).filter(Boolean).length}
+                      {safeSplit(CMSFechaRaw, /\r?\n/).filter(Boolean).length}
                     </span>
                   </div>
                 </div>
@@ -1688,7 +1688,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                    Seriales: {IMDSSerialsRaw.split(/\r?\n/).filter(Boolean).length}
+                    Seriales: {safeSplit(IMDSSerialsRaw, /\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
               </div>
@@ -1707,7 +1707,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                    Estados: {IMDSStatusRaw.split(/\r?\n/).filter(Boolean).length}
+                    Estados: {safeSplit(IMDSStatusRaw, /\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
               </div>
@@ -1726,7 +1726,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                    Fechas: {IMDSFechaRaw.split(/\r?\n/).filter(Boolean).length}
+                    Fechas: {safeSplit(IMDSFechaRaw, /\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
               </div>
@@ -1745,7 +1745,7 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                     className="w-full flex-1 p-3 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-900 focus:outline-none focus:bg-slate-50 focus:border-slate-350 font-mono tracking-wider placeholder-slate-400 min-h-[300px] leading-relaxed select-text"
                   />
                   <span className="absolute bottom-2.5 right-3 text-[9px] font-mono font-bold bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-slate-700 shadow-sm">
-                    Remitentes: {IMDSRemitenteRaw.split(/\r?\n/).filter(Boolean).length}
+                    Remitentes: {safeSplit(IMDSRemitenteRaw, /\r?\n/).filter(Boolean).length}
                   </span>
                 </div>
               </div>

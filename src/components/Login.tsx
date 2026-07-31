@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { safeSplit } from '../utils';
 import { Lock, User } from 'lucide-react';
 import { LogoIcon } from './LogoIcon';
 

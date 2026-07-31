@@ -93,7 +93,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
       if (s.id !== editingItem.id) return s;
       const draft = { ...editDraft };
       if (editDraft.date && editDraft.date !== s.date) {
-        draft.displayDate = String(editDraft.date || '').split('-').reverse().join('/');
+        draft.displayDate = safeSplit(editDraft.date || '', '-').reverse().join('/');
       }
       if (s.serial === 'POR RECIBIR' && draft.serial && draft.serial !== 'POR RECIBIR') {
         draft.salienteSinRecibir = false;
@@ -133,7 +133,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         return result;
       };
 
-      let lines = text.split('\n').map(line => line.trim()).filter(line => line);
+      let lines = safeSplit(text, '\n').map(line => line.trim()).filter(line => line);
       
       // Saltar línea de directiva (sep=) si existe
       if (lines.length > 0 && lines[0].toLowerCase().startsWith('sep=')) {
@@ -229,7 +229,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
               break;
             case 'date':
               item.date = value;
-              item.displayDate = value ? String(value).split('-').reverse().join('/') : '';
+              item.displayDate = value ? safeSplit(value, '-').reverse().join('/') : '';
               break;
             case 'displayDate':
               item.displayDate = value;
@@ -494,7 +494,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         serial: searchSerial,
         found: !!match,
         status: match ? match.status : 'NO REGISTRADO',
-        date: match ? (match.displayDate || String(match.date || '').split('-').reverse().join('/')) : '-'
+        date: match ? (match.displayDate || safeSplit(match.date || '', '-').reverse().join('/')) : '-'
       };
     });
 
@@ -619,7 +619,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
         return;
       }
       
-      const displayDate = bulkEditDate.split('-').reverse().join('/');
+      const displayDate = safeSplit(bulkEditDate || '', '-').reverse().join('/');
       
       setSerials(prev => prev.map(s => {
         if (!targetIds.has(s.id)) return s;
@@ -837,7 +837,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
   };
 
   const handleRegister = () => {
-    const rawLines = bulkInput.split(/\n+/).map(l => l.trim()).filter(Boolean);
+    const rawLines = safeSplit(bulkInput || '', /\n+/).map(l => l.trim()).filter(Boolean);
     if (rawLines.length === 0) {
       alert('POR FAVOR INGRESE AL MENOS UN SERIAL');
       return;
@@ -849,7 +849,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     }
 
     const today = currentDateStr();
-    const displayToday = today.split('-').reverse().join('/');
+    const displayToday = safeSplit(today || '', '-').reverse().join('/');
     const isCas = !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || costoUsdt || banco || sinCosto);
 
     let maxId = serials.reduce((max, s) => (s && s.id && typeof s.id === 'number') ? Math.max(max, s.id) : max, 0);
@@ -1073,11 +1073,11 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     let internalDate = '';
     let displayVal = textVal;
     if (textVal.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-      const [d, m, y] = String(textVal || '').split('/');
+      const [d, m, y] = safeSplit(textVal || '', '/');
       internalDate = `${y}-${m}-${d}`;
     } else if (textVal.match(/^\d{4}-\d{2}-\d{2}$/)) {
       internalDate = textVal;
-      displayVal = String(textVal || '').split('-').reverse().join('/');
+      displayVal = safeSplit(textVal || '', '-').reverse().join('/');
     }
     setSerials(prev => prev.map(s => {
       if (s.id === id) {
@@ -1103,7 +1103,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
     }
 
     const internalDate = bulkEditDate;
-    const displayDate = bulkEditDate.split('-').reverse().join('/');
+    const displayDate = safeSplit(bulkEditDate || '', '-').reverse().join('/');
 
     setSerials(prev => prev.map(s => {
       if (s.selected) {
@@ -1534,7 +1534,7 @@ export const GestionGeneral: React.FC<GestionGeneralProps> = ({
                         <td className="py-3 px-4">
                           <input
                             type="text"
-                            value={s.displayDate || String(s.date || '').split('-').reverse().join('/')}
+                            value={s.displayDate || safeSplit(s.date || '', '-').reverse().join('/')}
                             onChange={e => handleUpdateDateText(s.id, e.target.value)}
                             placeholder="DD/MM/YYYY"
                             className="bg-slate-100 border border-transparent rounded-none font-bold font-arial text-xs p-1 text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-200 w-24 text-center"

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { POSItem } from '../types';
 import { PackageCheck, FileText, Layers, Calendar, ArrowUpRight, X } from 'lucide-react';
-
+import { safeSplit } from '../utils';
 interface InicioProps {
   serials: POSItem[];
   activeCruceBatchId: string;
@@ -17,7 +17,7 @@ export const Inicio: React.FC<InicioProps> = ({ serials, activeCruceBatchId, set
   }, []);
 
   const currentDisplayDate = useMemo(() => {
-    return String(currentDateStr || '').split('-').reverse().join('/');
+    return safeSplit(currentDateStr || '', '-').reverse().join('/');
   }, [currentDateStr]);
 
   // 1. Ultimo lote añadido

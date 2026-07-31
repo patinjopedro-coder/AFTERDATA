@@ -5,6 +5,7 @@
 
 import { POSItem, ModelConfig } from './types';
 
+import { safeSplit } from './utils';
 export const INITIAL_MODELS: Record<string, ModelConfig> = {
   'V200C': { modelo: 'VERIFONE V200C', so: 'LINUX' },
   'V205C': { modelo: 'VERIFONE V205C', so: 'LINUX' },

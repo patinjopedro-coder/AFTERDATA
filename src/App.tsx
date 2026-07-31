@@ -317,7 +317,7 @@ export default function App() {
       reader.onload = (fileEvent) => {
         try {
           const csvText = fileEvent.target?.result as string;
-          const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+          const lines = safeSplit(csvText || '', /\r?\n/).map(l => l.trim()).filter(Boolean);
           if (lines.length < 2) {
             alert("Archivo inválido o vacío.");
             return;
@@ -327,7 +327,7 @@ export default function App() {
           let separator = ',';
 
           if (lines[0].toLowerCase().startsWith('sep=')) {
-            separator = lines[0].split('=')[1] || ',';
+            separator = safeSplit(lines[0] || '', '=')[1] || ',';
             headerLineIndex = 1;
           } else {
             // Auto-detect separator by counting occurrences
@@ -339,7 +339,7 @@ export default function App() {
             }
           }
 
-          const parsedHeaders = lines[headerLineIndex].split(separator).map(h => h.toUpperCase().replace(/_/g, '').replace(/\s/g, '').trim());
+          const parsedHeaders = safeSplit(lines[headerLineIndex] || '', separator).map(h => h.toUpperCase().replace(/_/g, '').replace(/\s/g, '').trim());
           const hasSerialHeader = parsedHeaders.some(h => h.includes('SERIAL') || h.includes('SERIALCRUCE') || h.includes('SERIALCASILLERO'));
           if (!hasSerialHeader) {
             alert("Formato no reconocido o falto de columna SERIAL.");
@@ -398,7 +398,7 @@ export default function App() {
             const parsedRecords: ParsedRecord[] = [];
 
             for (let i = headerLineIndex + 1; i < lines.length; i++) {
-              const cols = lines[i].split(separator).map(c => c.replace(/^"|"$/g, '').trim());
+              const cols = safeSplit(lines[i] || '', separator).map(c => c.replace(/^"|"$/g, '').trim());
               if (cols.length < 2) continue;
 
               let cleanSerial = '';
@@ -422,7 +422,7 @@ export default function App() {
               const d = new Date();
               const defaultLocal = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
               const rawDate = cols[idxFecha] || defaultLocal;
-              const formatDisplayDate = String(rawDate || '').split('-').reverse().join('/');
+              const formatDisplayDate = safeSplit(rawDate || '', '-').reverse().join('/');
 
               const idStr = idxID !== -1 ? cols[idxID].trim() : '';
               const rawIdVal = idStr && !isNaN(parseInt(idStr)) ? parseInt(idStr) : 0;
@@ -1247,7 +1247,7 @@ export default function App() {
                               <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER EQUIPO</span>
                             </div>
                             <div className="text-[10px] text-slate-600 font-sans mt-1">
-                              El serial del terminal se encuentra registrado en múltiples fechas ({item.dates.map(d => String(d || '').split('-').reverse().join('/')).join(' / ')}). Haga clic para revisar y corregir.
+                              El serial del terminal se encuentra registrado en múltiples fechas ({item.dates.map(d => safeSplit(d || '', '-').reverse().join('/')).join(' / ')}). Haga clic para revisar y corregir.
                             </div>
                           </div>
                         ))}
@@ -1266,7 +1266,7 @@ export default function App() {
                               <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER ANULACIÓN</span>
                             </div>
                             <div className="text-[10px] text-slate-600 font-sans mt-1">
-                              La tarjeta SIM aparece registrada en múltiples lotes de anulación ({item.occurrences.map(o => `${o.batchTitle} - ${String(o.date || '').split('-').reverse().join('/')}`).join(' | ')}).
+                              La tarjeta SIM aparece registrada en múltiples lotes de anulación ({item.occurrences.map(o => `${o.batchTitle} - ${safeSplit(o.date || '', '-').reverse().join('/')}`).join(' | ')}).
                             </div>
                           </div>
                         ))}

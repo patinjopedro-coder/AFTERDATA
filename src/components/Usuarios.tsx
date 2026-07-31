@@ -515,7 +515,7 @@ export const Usuarios: React.FC<UsuariosProps> = ({
                     <div className="divide-y divide-slate-100 bg-slate-50/50 font-arial text-[11px] text-slate-700">
                       {datesSorted.map(dateStr => {
                         const items = datesMap.get(dateStr)!;
-                        const displayDate = String(dateStr || '').split('-').reverse().join('/');
+                        const displayDate = safeSplit(dateStr || '', '-').reverse().join('/');
 
                         return (
                           <div key={dateStr} className="p-4 flex flex-col sm:flex-row sm:items-start gap-4">

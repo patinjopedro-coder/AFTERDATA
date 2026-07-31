@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { safeSplit } from '../utils';
 import { ModelConfig, OperatingSystem } from '../types';
 import { Settings, Plus, Edit, Trash, Layers, Search } from 'lucide-react';
 
