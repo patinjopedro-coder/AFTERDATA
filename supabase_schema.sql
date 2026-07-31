@@ -44,9 +44,11 @@
 
 create table if not exists registros (
     key          text primary key,
-    value        text,
-    created_at   timestamptz not null default now()
+    value        text
 );
+
+-- Asegurar que created_at exista (para futuras filas y ordenación)
+alter table registros add column if not exists created_at timestamptz default now();
 
 -- Habilitar cambios en tiempo real (opcional) para la suscripción de la app
 -- alter publication supabase_realtime add table registros;
@@ -135,7 +137,7 @@ create table if not exists seriales_staging (
 -- Convertir fecha DD/MM/YYYY → YYYY-MM-DD para el campo 'date'
 -- y mantener DD/MM/YYYY para 'displayDate'
 -- Insertar como JSON string en registros con key 'serialesDB'
-insert into registros (key, value, created_at)
+insert into registros (key, value)
 values (
     'serialesDB',
     (
@@ -197,8 +199,7 @@ values (
     now()
 )
 on conflict (key) do update
-    set value = excluded.value,
-        created_at = now();
+    set value = excluded.value;
 
 -- ============================================================================
 -- VERIFICACIÓN
