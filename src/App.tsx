@@ -114,6 +114,8 @@ export default function App() {
   const [registros, setRegistros] = useState<Array<{time:string; action:string; target:string; actor?:string; details?:string}>>([]);
   const prevSerialsRef = useRef<POSItem[]>([]);
   const prevEnviosRef = useRef<EnvioExterno[]>([]);
+  // Evita sobrescribir la DB con defaults durante la carga inicial
+  const initialPersistedKeys = useRef<Set<string>>(new Set());
 
   const pushRegistro = (action: string, target: string, details?: string) => {
     const time = new Date().toISOString();
@@ -207,37 +209,87 @@ export default function App() {
   // -------------------------------------------------------------
   // PERSIST STATES TO INDEXEDDB ON EVERY CHANGE
   // Guard with !isLoading to avoid overwriting real data with empty defaults
+  // Guard with initialPersistedKeys to skip the FIRST write after load
+  // (prevents overwriting Supabase data with fallback defaults)
   // -------------------------------------------------------------
   useEffect(() => {
-    if (!isLoading) setDBItem('serialesDB', serials);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('serialesDB')) {
+        setDBItem('serialesDB', serials);
+      } else {
+        initialPersistedKeys.current.add('serialesDB');
+      }
+    }
   }, [serials, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) setDBItem('enviosExternosDB', enviosExternos);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('enviosExternosDB')) {
+        setDBItem('enviosExternosDB', enviosExternos);
+      } else {
+        initialPersistedKeys.current.add('enviosExternosDB');
+      }
+    }
   }, [enviosExternos, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) setDBItem('modelosDB', modelosDB);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('modelosDB')) {
+        setDBItem('modelosDB', modelosDB);
+      } else {
+        initialPersistedKeys.current.add('modelosDB');
+      }
+    }
   }, [modelosDB, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) setDBItem('usersProfilesDB', usersProfiles);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('usersProfilesDB')) {
+        setDBItem('usersProfilesDB', usersProfiles);
+      } else {
+        initialPersistedKeys.current.add('usersProfilesDB');
+      }
+    }
   }, [usersProfiles, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) setDBItem('currentTab', currentTab);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('currentTab')) {
+        setDBItem('currentTab', currentTab);
+      } else {
+        initialPersistedKeys.current.add('currentTab');
+      }
+    }
   }, [currentTab, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) setDBItem('simCardBatchesDB', simCardBatches);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('simCardBatchesDB')) {
+        setDBItem('simCardBatchesDB', simCardBatches);
+      } else {
+        initialPersistedKeys.current.add('simCardBatchesDB');
+      }
+    }
   }, [simCardBatches, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) setDBItem('standbyListDB', standbyList);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('standbyListDB')) {
+        setDBItem('standbyListDB', standbyList);
+      } else {
+        initialPersistedKeys.current.add('standbyListDB');
+      }
+    }
   }, [standbyList, isLoading]);
 
   useEffect(() => {
-    if (!isLoading) setDBItem('activeCruceBatchIdDB', activeCruceBatchId);
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('activeCruceBatchIdDB')) {
+        setDBItem('activeCruceBatchIdDB', activeCruceBatchId);
+      } else {
+        initialPersistedKeys.current.add('activeCruceBatchIdDB');
+      }
+    }
   }, [activeCruceBatchId, isLoading]);
 
   // Reactively monitor serials to match standbyList pending items and fire notifications
