@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, ModelConfig } from '../types';
 import { getTerminalModel } from '../data';
-import { formatRif, copyToClipboard } from '../utils';
+import { formatRif, copyToClipboard, safeSplit } from '../utils';
 import { Users, ChevronDown, ChevronUp, Calendar, Copy, Box, Check, Briefcase, Building } from 'lucide-react';
 
 const MaleAvatar: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => (

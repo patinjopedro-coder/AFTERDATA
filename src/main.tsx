@@ -3,6 +3,7 @@ import { safeSplit } from './utils';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Capturador de excepciones no controladas para prevenir pantalla blanca
 window.addEventListener('error', (event) => {
@@ -15,6 +16,8 @@ window.addEventListener('unhandledrejection', (event) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );
