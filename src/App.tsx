@@ -25,7 +25,7 @@ import {
   Database, FileSpreadsheet, Download, RefreshCw,
   Trash2, Layers, Search, Calendar, FolderCheck, Clock,
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
-  Home, Key, Flag, ArrowUpRight, Smartphone, Bell, CardSim, LogOut, Landmark, PlusCircle
+  Home, Key, Flag, ArrowUpRight, Smartphone, CardSim, LogOut, Landmark, PlusCircle
 } from 'lucide-react';
 import { Pencil } from 'lucide-react';
 
@@ -112,8 +112,7 @@ export default function App() {
   // Global User Profile Modal State
   const [viewingProfile, setViewingProfile] = useState<string | null>(null);
 
-  // Notifications Menu State
-  const [showNotificationsMenu, setShowNotificationsMenu] = useState(false);
+  // Notifications Menu State (replaced by auto-toast system)
 
   // Registros (audit trail) state
   const [registros, setRegistros] = useState<Array<{time:string; action:string; target:string; actor?:string; details?:string}>>([]);
@@ -951,19 +950,29 @@ export default function App() {
     return list;
   }, [simCardBatches]);
 
-  const [showNotificationBadge, setShowNotificationBadge] = useState(true);
-  const prevNotificationsLength = useRef(0);
-
-  const totalNotificationsLen = duplicateSerialsList.length + duplicateSimsList.length;
+  // Auto-toast on new duplicates or stand-by received
+  const prevDupSerialsLen = useRef(0);
+  const prevDupSimsLen = useRef(0);
 
   useEffect(() => {
-    if (totalNotificationsLen > prevNotificationsLength.current) {
-      setShowNotificationBadge(true);
+    const newSerialDups = duplicateSerialsList.length - prevDupSerialsLen.current;
+    if (newSerialDups > 0) {
+      duplicateSerialsList.slice(prevDupSerialsLen.current).forEach(item => {
+        addToast(`⚠️ Duplicado: Serial ${item.serial} registrado en múltiples fechas`);
+      });
     }
-    prevNotificationsLength.current = totalNotificationsLen;
-  }, [totalNotificationsLen]);
+    prevDupSerialsLen.current = duplicateSerialsList.length;
+  }, [duplicateSerialsList]);
 
-  const notificationCount = totalNotificationsLen;
+  useEffect(() => {
+    const newSimDups = duplicateSimsList.length - prevDupSimsLen.current;
+    if (newSimDups > 0) {
+      duplicateSimsList.slice(prevDupSimsLen.current).forEach(item => {
+        addToast(`🔴 SIM Repetida: ${item.sim} en múltiples lotes de anulación`);
+      });
+    }
+    prevDupSimsLen.current = duplicateSimsList.length;
+  }, [duplicateSimsList]);
 
   // Batch processing logic
   const uniqueBatches = useMemo(() => {
@@ -1058,23 +1067,39 @@ export default function App() {
     <div className="min-h-screen bg-[#08080a] text-zinc-300 flex font-sans antialiased overflow-hidden h-screen relative">
 
       {/* FLOATING TOAST NOTIFICATIONS (ESQUINA SUPERIOR DERECHA) */}
-      <div className="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm">
-        {toasts.map(toast => (
-          <div
-            key={toast.id}
-            className="pointer-events-auto bg-slate-900 text-white p-3.5 shadow-2xl border-l-4 border-emerald-500 text-xs font-mono font-bold uppercase tracking-wider animate-fade-in flex items-center justify-between gap-3"
-            style={{ borderRadius: '0px' }}
-          >
-            <span>{toast.mensaje}</span>
-            <button
-              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-              className="text-slate-400 hover:text-white cursor-pointer"
+      <div className="fixed top-5 right-5 z-[9999] flex flex-col gap-2.5 pointer-events-none max-w-xs w-full">
+        {toasts.map(toast => {
+          const isWarning = toast.mensaje.includes('⚠️') || toast.mensaje.includes('Duplicado');
+          const isDanger  = toast.mensaje.includes('🔴') || toast.mensaje.includes('SIM');
+          const isSuccess = !isWarning && !isDanger;
+          const borderColor = isDanger ? '#ef4444' : isWarning ? '#f59e0b' : '#10b981';
+          return (
+            <div
+              key={toast.id}
+              className="pointer-events-auto bg-white border border-slate-200 shadow-2xl rounded-xl overflow-hidden text-slate-800 animate-toast-in"
+              style={{ borderLeft: `4px solid ${borderColor}` }}
             >
-              ✕
-            </button>
-          </div>
-        ))}
+              <div className="px-4 py-3 flex items-start gap-3">
+                <span className="text-[11px] font-bold tracking-wide leading-snug font-sans flex-1">
+                  {toast.mensaje}
+                </span>
+                <button
+                  onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                  className="text-slate-400 hover:text-slate-700 cursor-pointer text-[13px] font-bold shrink-0 mt-0.5 border-none bg-transparent"
+                >
+                  ✕
+                </button>
+              </div>
+              {/* Progress bar that shrinks over 4s */}
+              <div
+                className="h-0.5 animate-toast-progress"
+                style={{ background: borderColor }}
+              />
+            </div>
+          );
+        })}
       </div>
+
 
       {/* 1. SIDEBAR IZQUIERDA VERTICAL */}
       <aside className={`transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'} bg-[#f8fafc] border-r border-slate-200 flex flex-col justify-between shrink-0 h-full select-none z-10`}>
@@ -1199,82 +1224,6 @@ export default function App() {
               >
                 <Database size={15} className="text-black" />
               </button>
-            </div>
-
-            <div className="h-6 w-px bg-slate-200"></div>
-
-            {/* NOTIFICATION BELL */}
-            <div className="relative notification-container">
-              <div
-                onClick={() => {
-                  setShowNotificationsMenu(!showNotificationsMenu);
-                  setShowNotificationBadge(false);
-                }}
-                className="cursor-pointer hover:bg-slate-50 p-2 rounded-full border border-slate-200 flex items-center justify-center text-slate-600"
-              >
-                <Bell size={16} />
-                {notificationCount > 0 && showNotificationBadge && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] font-black font-sans leading-none border border-white">
-                    {notificationCount}
-                  </span>
-                )}
-              </div>
-
-              {/* Dropdown Menu for Notifications */}
-              {showNotificationsMenu && (
-                <div className="absolute right-0 top-full mt-2 bg-white border border-slate-200 rounded-xl shadow-xl w-72 z-50 animate-fade-in overflow-hidden font-arial text-left">
-                  <div className="p-3 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                    <div className="text-[10px] font-bold text-slate-800 uppercase tracking-wider">Alertas de Duplicados</div>
-                    <span className="text-[9px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">{notificationCount}</span>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
-                    {duplicateSerialsList.length === 0 && duplicateSimsList.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-400 font-semibold uppercase">Sin Notificaciones Pendientes</div>
-                    ) : (
-                      <>
-                        {duplicateSerialsList.map(item => (
-                          <div
-                            key={`serial-${item.serial}`}
-                            className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
-                            onClick={() => {
-                              setGlobalSearch(item.serial);
-                              setCurrentTab('general');
-                              setShowNotificationsMenu(false);
-                            }}
-                          >
-                            <div className="text-xs font-bold text-slate-800 tracking-wider font-mono flex items-center justify-between">
-                              <span>ALERTA DUPLICADO DE SERIAL: {item.serial}</span>
-                              <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER EQUIPO</span>
-                            </div>
-                            <div className="text-[10px] text-slate-600 font-sans mt-1">
-                              El serial del terminal se encuentra registrado en múltiples fechas ({item.dates.map(d => safeSplit(d || '', '-').reverse().join('/')).join(' / ')}). Haga clic para revisar y corregir.
-                            </div>
-                          </div>
-                        ))}
-                        {duplicateSimsList.map(item => (
-                          <div
-                            key={`sim-${item.sim}`}
-                            className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
-                            onClick={() => {
-                              setGlobalSearch(item.sim);
-                              setCurrentTab('simcards');
-                              setShowNotificationsMenu(false);
-                            }}
-                          >
-                            <div className="text-xs font-bold text-slate-800 tracking-wider font-mono flex items-center justify-between">
-                              <span className="text-red-750 font-extrabold">ALERTA REPETICIÓN SIM-CARD: {item.sim}</span>
-                              <span className="text-[9px] bg-red-100 text-red-800 px-1.5 py-0.5 rounded font-bold uppercase font-sans">VER ANULACIÓN</span>
-                            </div>
-                            <div className="text-[10px] text-slate-600 font-sans mt-1">
-                              La tarjeta SIM aparece registrada en múltiples lotes de anulación ({item.occurrences.map(o => `${o.batchTitle} - ${safeSplit(o.date || '', '-').reverse().join('/')}`).join(' | ')}).
-                            </div>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
             <div className="h-6 w-px bg-slate-200"></div>
