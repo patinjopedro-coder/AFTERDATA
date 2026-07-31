@@ -30,8 +30,17 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+      # Vite incrusta las variables VITE_ en el bundle EN TIEMPO DE COMPILACION.
+      # Sin ellas aqui, el sitio publicado no sabe a que Supabase conectarse y se
+      # queda sin datos. Definirlas en:
+      #   Settings > Secrets and variables > Actions > Secrets
+      # Debe ser la clave ANON (publica), nunca la service_role: lo que se compila
+      # aqui queda visible en el JavaScript del sitio.
       - name: Build
         run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact

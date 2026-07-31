@@ -21,6 +21,8 @@ interface CasilleroProps {
   setUsersProfiles?: React.Dispatch<React.SetStateAction<Record<string, UserProfile>>>;
   activeCruceBatchId: string;
   isReadOnly?: boolean;
+  /** Usuario de la sesión activa. Llega desde App, que lo obtiene del token de Supabase. */
+  usuarioActual?: string;
 }
 
 export const Casillero: React.FC<CasilleroProps> = ({
@@ -35,7 +37,8 @@ export const Casillero: React.FC<CasilleroProps> = ({
   usersProfiles,
   setUsersProfiles,
   activeCruceBatchId,
-  isReadOnly = false
+  isReadOnly = false,
+  usuarioActual = ''
 }) => {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const handleCopyText = async (text: string, key: string) => {
@@ -109,8 +112,8 @@ export const Casillero: React.FC<CasilleroProps> = ({
   const responsableSuggestions = useMemo(() => {
     const suggestions = new Set<string>();
     
-    // Add current logged-in user (Pedro)
-    const loggedInUser = (localStorage.getItem('disglobal_username') || '').toUpperCase().trim();
+    // Add current logged-in user
+    const loggedInUser = usuarioActual.toUpperCase().trim();
     if (loggedInUser) {
       suggestions.add(loggedInUser);
       // Look up in usersProfiles for the full name or matching key
@@ -133,7 +136,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
     });
 
     return Array.from(suggestions).sort((a, b) => a.localeCompare(b));
-  }, [disglobalUsers, usersProfiles]);
+  }, [disglobalUsers, usersProfiles, usuarioActual]);
 
   const detectModelFromSerial = (serial: string): string => {
     if (!serial || !modelosDB) return '';
