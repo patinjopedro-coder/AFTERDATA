@@ -215,7 +215,8 @@ export const Casillero: React.FC<CasilleroProps> = ({
                   type={f.type || 'text'}
                   value={(editDraft[f.key] as string) || ''}
                   onChange={e => setEditDraft(d => {
-                    const next = { ...d, [f.key]: e.target.value.toUpperCase() };
+                    const val = f.key === 'date' ? e.target.value : e.target.value.toUpperCase();
+                    const next = { ...d, [f.key]: val };
                     if (f.key === 'bsf') {
                       next.usdt = '';
                     }
