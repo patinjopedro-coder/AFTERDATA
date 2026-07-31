@@ -1,39 +1,35 @@
 import React, { useState } from 'react';
-import { safeSplit } from '../utils';
 import { Lock, User } from 'lucide-react';
 import { LogoIcon } from './LogoIcon';
+import { iniciarSesion, Perfil } from '../lib/auth';
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (perfil: Perfil) => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [enviando, setEnviando] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const normalized = username.trim();
-    const upper = normalized.toUpperCase();
-    if ((normalized === 'Pedro' && password === 'Blackopioum12') || (normalized === 'Genyerling' && password === '1234') || (normalized === 'Murachi' && password === '1234')) {
-      localStorage.setItem('disglobal_authenticated', 'true');
-      const storeUser = normalized === 'Pedro' ? 'Pedro' : (normalized === 'Genyerling' ? 'Genyerling' : 'Murachi');
-      localStorage.setItem('disglobal_username', storeUser);
-      localStorage.setItem('disglobal_role', 'admin');
-      onLoginSuccess();
-    } else if (upper === 'PAIVA' && password === '1234') {
-      localStorage.setItem('disglobal_authenticated', 'true');
-      localStorage.setItem('disglobal_username', 'J. PAIVA');
-      localStorage.setItem('disglobal_role', 'observer');
-      onLoginSuccess();
-    } else if (upper === 'MIRNA' && password === '1234') {
-      localStorage.setItem('disglobal_authenticated', 'true');
-      localStorage.setItem('disglobal_username', 'M. ARMAS');
-      localStorage.setItem('disglobal_role', 'observer');
-      onLoginSuccess();
-    } else {
-      setError('Usuario o contraseña incorrectos.');
+    if (enviando) return;
+
+    setError('');
+    setEnviando(true);
+    try {
+      // La verificación ocurre en el servidor de Supabase. El navegador ya no
+      // conoce ninguna contraseña, y el rol llega firmado dentro del token.
+      const { perfil, error: errorLogin } = await iniciarSesion(username, password);
+      if (errorLogin || !perfil) {
+        setError(errorLogin || 'No se pudo iniciar sesión.');
+        return;
+      }
+      onLoginSuccess(perfil);
+    } finally {
+      setEnviando(false);
     }
   };
 
@@ -88,9 +84,10 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
 
           <button
             type="submit"
-            className="w-full py-3 bg-[#2c3e50] hover:bg-[#1a252f] text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border-none shadow-md mt-2 text-white-force"
+            disabled={enviando}
+            className="w-full py-3 bg-[#2c3e50] hover:bg-[#1a252f] disabled:bg-slate-400 disabled:cursor-wait text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 border-none shadow-md mt-2 text-white-force"
           >
-            <span>Ingresar al Sistema</span>
+            <span>{enviando ? 'Verificando…' : 'Ingresar al Sistema'}</span>
           </button>
         </form>
       </div>

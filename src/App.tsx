@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { POSItem, EnvioExterno, ModelConfig, POSStatus, UserProfile, StandbyItem } from './types';
 import { INITIAL_SERIALS, INITIAL_MODELS } from './data';
-import { getDBItem, setDBItem } from './db';
+import { getDBItem, setDBItem, getLocalItem, setLocalItem } from './db';
 import { getSupabaseConfigError } from './lib/supabase';
+import { Perfil, cerrarSesion, obtenerPerfilActual, alCambiarSesion } from './lib/auth';
 import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords, downloadBlob, safeSplit } from './utils';
 
 import { GestionGeneral } from './components/GestionGeneral';
@@ -41,9 +42,11 @@ export default function App() {
   // -------------------------------------------------------------
   // STATE DEFINITIONS — start with empty defaults, load from IndexedDB
   // -------------------------------------------------------------
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('disglobal_authenticated') === 'true';
-  });
+  // La sesión la gobierna Supabase Auth. Ya no se confía en localStorage: antes
+  // bastaba con escribir disglobal_authenticated='true' en la consola para entrar.
+  const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [sesionCargando, setSesionCargando] = useState(true);
+  const isAuthenticated = perfil !== null;
   const [isLoading, setIsLoading] = useState(true);
   const [serials, setSerials] = useState<POSItem[]>([]);
   const [enviosExternos, setEnviosExternos] = useState<EnvioExterno[]>([]);
@@ -78,11 +81,29 @@ export default function App() {
     mensaje: string;
   }[]>([]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('disglobal_authenticated');
-    localStorage.removeItem('disglobal_username');
-    setIsAuthenticated(false);
+  // Restaura la sesión guardada al abrir y escucha cambios (incluidos los de
+  // otras pestañas y la expiración del token).
+  useEffect(() => {
+    let vigente = true;
+
+    obtenerPerfilActual()
+      .then(p => { if (vigente) setPerfil(p); })
+      .catch(e => console.error('Error al restaurar la sesión:', e))
+      .finally(() => { if (vigente) setSesionCargando(false); });
+
+    const desuscribir = alCambiarSesion(p => {
+      if (!vigente) return;
+      setPerfil(p);
+      setSesionCargando(false);
+    });
+
+    return () => { vigente = false; desuscribir(); };
+  }, []);
+
+  const handleLogout = async () => {
     setShowUserMenu(false);
+    await cerrarSesion();
+    setPerfil(null);
   };
 
   // Global Filter States (shared reactively between tables)
@@ -123,7 +144,7 @@ export default function App() {
 
   const pushRegistro = (action: string, target: string, details?: string) => {
     const time = new Date().toISOString();
-    const actor = (localStorage.getItem('disglobal_username') || 'PEDRO');
+    const actor = perfil?.nombreMostrado || perfil?.usuario || 'DESCONOCIDO';
     setRegistros(prev => [{ time, action, target, actor, details }, ...prev]);
   };
 
@@ -133,6 +154,15 @@ export default function App() {
   // db.ts handles automatic migration from localStorage automatically
   // -------------------------------------------------------------
   useEffect(() => {
+    // Con RLS activo, Supabase solo devuelve datos a una sesión válida. Cargar
+    // antes de iniciar sesión traería cero filas y la app las tomaría por buenas.
+    if (!isAuthenticated) {
+      // Al cerrar sesión volvemos al estado de carga para que el próximo inicio
+      // no muestre los datos del usuario anterior mientras llegan los suyos.
+      setIsLoading(true);
+      return;
+    }
+
     async function loadAll() {
       try {
         const errorConfig = getSupabaseConfigError();
@@ -157,7 +187,10 @@ export default function App() {
           getDBItem<EnvioExterno[]>('enviosExternosDB', []),
           getDBItem<Record<string, ModelConfig>>('modelosDB', INITIAL_MODELS),
           getDBItem<Record<string, UserProfile>>('usersProfilesDB', {}),
-          getDBItem<string>('currentTab', 'general'),
+          // La pestaña activa es preferencia de cada persona, no un dato compartido:
+          // vive solo en este navegador. Antes se guardaba en Supabase y todos los
+          // usuarios se pisaban la pestaña entre sí.
+          getLocalItem<string>('currentTab', 'general'),
           getDBItem<any[]>('simCardBatchesDB', []),
           getDBItem<StandbyItem[]>('standbyListDB', []),
           getDBItem<string>('activeCruceBatchIdDB', '')
@@ -192,7 +225,10 @@ export default function App() {
       }
     }
     loadAll();
-  }, []);
+    // Depende de isAuthenticated: al montar todavía no hay sesión y el efecto
+    // sale por el return de arriba. Debe volver a ejecutarse cuando la sesión
+    // se restaura o el usuario inicia sesión, o la carga nunca ocurriría.
+  }, [isAuthenticated]);
 
   // Handle ESC key press globally to close user profile, history tooltip, and user menu
   useEffect(() => {
@@ -267,7 +303,7 @@ export default function App() {
   useEffect(() => {
     if (!isLoading) {
       if (initialPersistedKeys.current.has('currentTab')) {
-        setDBItem('currentTab', currentTab);
+        setLocalItem('currentTab', currentTab);
       } else {
         initialPersistedKeys.current.add('currentTab');
       }
@@ -1075,9 +1111,22 @@ export default function App() {
   // -------------------------------------------------------------
   // LOADING SCREEN
   // -------------------------------------------------------------
+  // Mientras se comprueba si hay sesión guardada, no mostramos el login: evita
+  // que parpadee la pantalla de acceso a quien ya está dentro.
+  if (sesionCargando) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center gap-6 font-sans">
+        <LogoIcon className="w-24 h-24 animate-pulse shrink-0" color="#2c3e50" />
+        <p className="text-slate-800 font-mono text-xs uppercase tracking-[0.2em]">
+          Verificando sesión...
+        </p>
+      </div>
+    );
+  }
+
   // Show Login screen if not authenticated
   if (!isAuthenticated) {
-    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
+    return <Login onLoginSuccess={p => setPerfil(p)} />;
   }
 
   if (isLoading) {
@@ -1102,9 +1151,9 @@ export default function App() {
     );
   }
 
-  const storedUserRaw = localStorage.getItem('disglobal_username') || 'PEDRO';
-  const storedRole = localStorage.getItem('disglobal_role') || 'admin';
-  const isObserverRole = storedRole === 'observer';
+  // Identidad y rol salen del token firmado por Supabase, no del navegador.
+  const storedUserRaw = perfil!.nombreMostrado;
+  const isObserverRole = perfil!.esObservador;
   const currentUserKey = storedUserRaw.toUpperCase();
   const currentProfile = usersProfiles[currentUserKey] || { nombreCompleto: storedUserRaw, cargo: '' };
   const displayName = (currentProfile.nombreCompleto || storedUserRaw).toUpperCase();
@@ -1461,6 +1510,7 @@ export default function App() {
               setUsersProfiles={setUsersProfiles}
               activeCruceBatchId={activeCruceBatchId}
               isReadOnly={isObserverRole}
+              usuarioActual={storedUserRaw}
             />
           </div>
 
