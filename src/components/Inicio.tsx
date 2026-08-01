@@ -163,14 +163,6 @@ export const Inicio: React.FC<InicioProps> = ({ serials, activeCruceBatchId, set
               )}
             </div>
           </div>
-
-          <button
-            onClick={() => setCurrentTab('general')}
-            className="mt-6 w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2 transition-all"
-          >
-            <span>Ir a Gestión General</span>
-            <ArrowUpRight size={14} />
-          </button>
         </div>
 
         {/* PANEL 2: EQUIPOS ENVIADOS HOY (COMPLETADOS EN CASILLERO) */}
@@ -219,14 +211,6 @@ export const Inicio: React.FC<InicioProps> = ({ serials, activeCruceBatchId, set
               )}
             </div>
           </div>
-
-          <button
-            onClick={() => setCurrentTab('casillero')}
-            className="mt-6 w-full py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2 transition-all"
-          >
-            <span>Ver Casillero Completados</span>
-            <ArrowUpRight size={14} />
-          </button>
         </div>
 
         {/* PANEL 3: ÚLTIMO LOTE AÑADIDO */}
@@ -266,14 +250,6 @@ export const Inicio: React.FC<InicioProps> = ({ serials, activeCruceBatchId, set
               </div>
             </div>
           </div>
-
-          <button
-            onClick={() => setCurrentTab('cruce')}
-            className="mt-6 w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer flex items-center justify-center gap-2 transition-all"
-          >
-            <span>Ver Cruce de Seriales</span>
-            <ArrowUpRight size={14} />
-          </button>
         </div>
 
       </div>

@@ -27,14 +27,32 @@ import {
   Database, FileSpreadsheet, Download, RefreshCw,
   Trash2, Layers, Search, Calendar, FolderCheck, Clock,
   Settings, BarChart3, Users, Network, Terminal, ShieldAlert, Send,
-  Home, Key, Flag, ArrowUpRight, Smartphone, CardSim, LogOut, Landmark, PlusCircle, Bell
+  Home, Key, Flag, ArrowUpRight, Smartphone, CardSim, LogOut, Landmark, PlusCircle, Bell, Wrench
 } from 'lucide-react';
 import { Pencil } from 'lucide-react';
 
 const CasilleroKeyIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18, className = '' }) => (
-  <div className="relative inline-flex items-center justify-center">
-    <Home size={size} className={className} />
-    <Key size={Math.max(10, Math.round(size * 0.55))} className={`absolute -right-1 -bottom-0.5 ${className}`} />
+  <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="5" y="3" width="10" height="18" rx="2" />
+      <path d="M8 3v4" />
+      <circle cx="10" cy="11" r="1.8" />
+    </svg>
+    <Wrench
+      size={Math.max(10, Math.round(size * 0.6))}
+      className={`absolute -right-1 -bottom-0.5 ${className}`}
+      strokeWidth={2.2}
+    />
   </div>
 );
 
@@ -1238,17 +1256,17 @@ export default function App() {
             {[
               { id: 'inicio', label: 'Inicio', icon: Home },
               { id: 'nuevoserial', label: 'Nuevo Serial', icon: PlusCircle },
-              { id: 'general', label: 'Gestión General', icon: Layers },
               { id: 'casillero', label: 'Casillero', icon: CasilleroKeyIcon },
-              { id: 'bancos', label: 'Bancos', icon: Landmark },
               { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
+              { id: 'general', label: 'Gestión General', icon: Layers },
+              { id: 'bancos', label: 'Bancos', icon: Landmark },
               { id: 'standby', label: 'Stand-by', icon: Clock },
               { id: 'envios', label: 'Equipos Enviados', icon: Send },
               { id: 'simcards', label: 'Gestión de SIM-Cards', icon: CardSim },
               { id: 'modelos', label: 'Modelos Registrados', icon: Smartphone },
               { id: 'estadisticas', label: 'Estadísticas', icon: BarChart3 },
-              { id: 'registros', label: 'Registros', icon: Pencil },
-              { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users }
+              { id: 'usuarios', label: 'Usuarios / Clientes', icon: Users },
+              { id: 'registros', label: 'Registros', icon: Pencil }
             ].map(t => {
               const Icon = t.icon;
               const isActive = currentTab === t.id;

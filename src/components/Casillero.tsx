@@ -1069,15 +1069,6 @@ export const Casillero: React.FC<CasilleroProps> = ({
             <span>EXPORTAR RECUPERADOS</span>
           </button>
 
-          <button
-            onClick={handleImportMatriz}
-            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase rounded-lg border border-transparent transition-colors cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-98 pagination-btn"
-            title="Importar Matriz de Envíos"
-          >
-            <FileSpreadsheet size={14} className="text-white" />
-            <span>Importar Matriz</span>
-          </button>
-
           {!isReadOnly && (
             <button
               onClick={deleteSelectedCasillero}
@@ -1133,7 +1124,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                 <th className="py-3 px-4 w-44">Accesorios</th>
                 <th className="py-3 px-4 w-72">Observaciones</th>
                 <th className="py-3 px-4 w-52">Sustitución</th>
-                <th className="py-3 px-4 w-72">Liberación / Despacho</th>
+                <th className="py-3 px-4 w-72">ENTREGA</th>
                 <th className="py-3 px-4 w-10"></th>
               </tr>
             </thead>
@@ -1409,7 +1400,7 @@ export const Casillero: React.FC<CasilleroProps> = ({
                       {/* BITÁCORA / OBSERVACIONES */}
                       <td className="py-4 px-3 text-xs w-72">
                         <div className="flex flex-col gap-1 pr-2">
-                          <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Nota de reparación o estado físico</label>
+                          <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Nota de reparación</label>
                           <select
                             disabled={!!s.fechaConfirmada}
                             value={s.notaReparacion || ''}
@@ -1436,24 +1427,14 @@ export const Casillero: React.FC<CasilleroProps> = ({
                                 return o;
                               }));
                             }}
-                            className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input cursor-pointer ${
-                              s.fechaConfirmada ? 'bg-slate-50 border-transparent text-slate-400 cursor-not-allowed select-none' : ''
-                            }`}
+                             className={`w-full text-xs p-2 bg-slate-100 border border-transparent rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-200 transition-all casillero-input cursor-pointer ${
+                               s.fechaConfirmada ? 'bg-slate-50 border-transparent text-slate-400 cursor-not-allowed select-none' : ''
+                             } ${s.notaReparacion === 'RECUPERACION' ? '!bg-green-600 !text-white !border-green-700' : ''}`}
                           >
                             <option value="">NINGUNA</option>
                             <option value="RECUPERACION">RECUPERACIÓN</option>
                             <option value="SUSTITUCION">SUSTITUCIÓN</option>
                           </select>
-                          {isRecuperado && (
-                            <span className="text-[10px] text-emerald-700 font-extrabold mt-1.5 uppercase tracking-wider block">
-                              SE RECUPERÓ {new Date().toLocaleDateString('es-ES')}
-                            </span>
-                          )}
-                          {s.entregadoTecnico && (
-                            <span className="text-[9px] text-black font-extrabold mt-1">
-                              ASIGNACION CONFIRMADA
-                            </span>
-                          )}
                           <div className="mt-2 flex flex-col gap-1">
                             <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Responsable</label>
                             <input
@@ -1473,47 +1454,45 @@ export const Casillero: React.FC<CasilleroProps> = ({
                             />
                           </div>
 
-                          {/* ENTREGADO A DISGLOBAL */}
-                          <div className="mt-2 grid grid-cols-1 gap-1 border-t border-slate-100 pt-2">
-                            <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Entregado a Disglobal?</label>
-                            <div className="flex items-center gap-2">
-                              <label className="flex items-center gap-1.5 text-[10px] text-slate-700 font-bold select-none cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  disabled={isRecuperado || !!s.entregadoTecnico}
-                                  checked={!!s.entregadoDisglobal}
-                                  onChange={e => {
-                                    setSerials(prev => prev.map(o => {
-                                      if (o.id === s.id) {
-                                        return trackAndLogChanges(o, {
-                                          entregadoDisglobal: e.target.checked,
-                                          entregadoA: e.target.checked ? (o.entregadoA || disglobalUsers[0] || '') : ''
-                                        });
-                                      }
-                                      return o;
-                                    }));
-                                  }}
-                                  className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
-                                />
-                                <span>ENTREGADO A</span>
-                              </label>
-                              <select
-                                disabled={isRecuperado || !!s.entregadoTecnico || !s.entregadoDisglobal}
-                                value={s.entregadoA || ''}
-                                onChange={e => handleUpdateTextVal(s.id, 'entregadoA', e.target.value)}
-                                className={`flex-1 text-[11px] p-1 bg-slate-100 border border-transparent rounded text-slate-900 font-arial uppercase focus:outline-none focus:ring-1 focus:ring-slate-200 casillero-input ${
-                                  (!s.entregadoDisglobal || isRecuperado || s.entregadoTecnico) ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
-                              >
-                                <option value="">SELECCIONAR</option>
+                           {/* ENTREGADO A DISGLOBAL */}
+                           <div className="mt-2 grid grid-cols-1 gap-1 border-t border-slate-100 pt-2">
+                             <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Entregado a Disglobal?</label>
+                             <label className="flex items-center gap-1.5 text-[9px] text-slate-700 font-bold select-none cursor-pointer whitespace-nowrap">
+                               <input
+                                 type="checkbox"
+                                 disabled={isRecuperado || !!s.entregadoTecnico}
+                                 checked={!!s.entregadoDisglobal}
+                                 onChange={e => {
+                                   setSerials(prev => prev.map(o => {
+                                     if (o.id === s.id) {
+                                       return trackAndLogChanges(o, {
+                                         entregadoDisglobal: e.target.checked,
+                                         entregadoA: e.target.checked ? (o.entregadoA || disglobalUsers[0] || '') : ''
+                                       });
+                                     }
+                                     return o;
+                                   }));
+                                 }}
+                                 className="rounded text-amber-600 bg-slate-100 border-slate-200 focus:ring-0"
+                               />
+                               <span>ENTREGADO A</span>
+                             </label>
+                             <select
+                               disabled={isRecuperado || !!s.entregadoTecnico || !s.entregadoDisglobal}
+                               value={s.entregadoA || ''}
+                               onChange={e => handleUpdateTextVal(s.id, 'entregadoA', e.target.value)}
+                               className={`w-full text-[11px] p-1 bg-slate-100 border border-transparent rounded text-slate-900 font-arial uppercase focus:outline-none focus:ring-1 focus:ring-slate-200 casillero-input ${
+                                 (!s.entregadoDisglobal || isRecuperado || s.entregadoTecnico) ? 'opacity-50 cursor-not-allowed' : ''
+                               }`}
+                             >
+                               <option value="">SELECCIONAR</option>
                                 {disglobalUsers.map(name => (
                                   <option key={name} value={name}>{name}</option>
                                 ))}
-                              </select>
-                            </div>
-                          </div>
+                               </select>
+                             </div>
 
-                          <div className="mt-2 flex flex-col gap-1 border-t border-slate-100 pt-2">
+                           <div className="mt-2 flex flex-col gap-1 border-t border-slate-100 pt-2">
                             <label className="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-0.5">Observaciones</label>
                             <textarea
                               disabled={isRecuperado || !!s.entregadoTecnico}

@@ -44,6 +44,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
   const [accCaja, setAccCaja] = useState(false);
   const [accBateria, setAccBateria] = useState(false);
   const [accSim, setAccSim] = useState(false);
+  const [accEstacion, setAccEstacion] = useState(false);
   const [costoBsf, setCostoBsf] = useState('');
   const [banco, setBanco] = useState('');
   const [sinCosto, setSinCosto] = useState(false);
@@ -70,7 +71,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
     const displayToday = safeSplit(today || '', '-').reverse().join('/');
     const dNow = new Date();
     const horaStr = `${String(dNow.getHours()).padStart(2, '0')}:${String(dNow.getMinutes()).padStart(2, '0')}:${String(dNow.getSeconds()).padStart(2, '0')}`;
-    const isCas = !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || ticket || costoBsf || banco || sinCosto);
+    const isCas = !!(guia || rif || razonSocial || destino || (simNumber && simNumber !== 'NO POSEE') || modeloManual || operadora || modeloNegocio || accForro || accCargador || accCaja || accBateria || accSim || accEstacion || ticket || costoBsf || banco || sinCosto);
 
     let maxId = serials.reduce((max, s) => (s && s.id && typeof s.id === 'number') ? Math.max(max, s.id) : max, 0);
 
@@ -167,6 +168,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
     setAccCaja(false);
     setAccBateria(false);
     setAccSim(false);
+    setAccEstacion(false);
     setCostoBsf('');
     setBanco('');
     setSinCosto(false);
@@ -191,31 +193,28 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            {/* Campo Seriales Masivos */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-black uppercase tracking-wider text-slate-800">
-                SERIAL
-              </label>
-              <textarea
-                value={bulkInput}
-                onChange={e => {
-                  const val = e.target.value;
-                  setBulkInput(val);
-                  const firstSerial = safeSplit(val || '', /\n+/).map(s => s.trim()).find(Boolean);
-                  if (firstSerial) {
-                    const detected = getTerminalModel(firstSerial, modelosDB);
-                    if (detected && detected.modelo && !detected.modelo.includes('DESCONOCIDO')) {
-                      setModeloManual(detected.modelo);
-                    }
-                  }
-                }}
-                placeholder=""
-                className="w-full min-h-[120px] p-3 bg-slate-100 border border-slate-250 font-mono text-xs uppercase font-semibold focus:outline-none focus:bg-white focus:border-slate-800"
-              />
-            </div>
-
             {/* Grid de Formulario */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">SERIAL</label>
+                <textarea
+                  value={bulkInput}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setBulkInput(val);
+                    const firstSerial = safeSplit(val || '', /\n+/).map(s => s.trim()).find(Boolean);
+                    if (firstSerial) {
+                      const detected = getTerminalModel(firstSerial, modelosDB);
+                      if (detected && detected.modelo && !detected.modelo.includes('DESCONOCIDO')) {
+                        setModeloManual(detected.modelo);
+                      }
+                    }
+                  }}
+                  placeholder=""
+                  className="w-full h-[38px] p-2.5 bg-slate-100 border border-slate-250 text-xs uppercase font-semibold focus:outline-none focus:bg-white focus:border-slate-800 resize-none"
+                />
+              </div>
+
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">N° GUIA</label>
                 <input
@@ -330,37 +329,37 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
               </div>
 
               <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">COSTO</label>
-                  <label className="flex items-center gap-1 text-[9px] text-slate-500 font-semibold uppercase select-none cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={sinCosto}
-                      onChange={e => {
-                        const checked = e.target.checked;
-                        setSinCosto(checked);
-                        if (checked) {
-                          setCostoBsf('SIN COSTO');
-                        } else {
-                          if (costoBsf === 'SIN COSTO') setCostoBsf('');
-                        }
-                      }}
-                      className="rounded text-blue-600 bg-slate-100 border-slate-300 focus:ring-0 w-3 h-3"
-                    />
-                    <span>SIN COSTO</span>
-                  </label>
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">COSTO</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={costoBsf}
+                    onChange={e => setCostoBsf(e.target.value)}
+                    disabled={sinCosto}
+                    className={`w-full text-xs p-2.5 pr-20 bg-slate-100 border border-slate-250 uppercase font-semibold ${sinCosto ? 'bg-slate-200 border-slate-350 text-slate-800 cursor-not-allowed font-bold' : ''}`}
+                  />
+                  <button
+                    onClick={() => {
+                      const newVal = !sinCosto;
+                      setSinCosto(newVal);
+                      if (newVal) {
+                        setCostoBsf('SIN COSTO');
+                      } else {
+                        if (costoBsf === 'SIN COSTO') setCostoBsf('');
+                      }
+                    }}
+                    className={`absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-1 text-[10px] font-bold uppercase border transition-all cursor-pointer ${
+                      sinCosto ? 'bg-green-600 text-white border-green-700' : 'bg-white text-black border-slate-300'
+                    }`}
+                    style={{ borderRadius: '9999px' }}
+                  >
+                    {sinCosto ? 'SIN COSTO' : '¿SIN COSTO?'}
+                  </button>
                 </div>
-                <input
-                  type="text"
-                  value={costoBsf}
-                  onChange={e => setCostoBsf(e.target.value)}
-                  disabled={sinCosto}
-                  className={`w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold ${sinCosto ? 'bg-slate-200 border-slate-350 text-slate-800 cursor-not-allowed font-bold' : ''}`}
-                />
               </div>
 
               {/* Campo Banco con datalist editable/desplegable */}
-              <div className="flex flex-col gap-1 md:col-span-2">
+              <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Banco</label>
                 <input
                   type="text"
@@ -381,27 +380,28 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
             {/* Accesorios */}
             <div className="bg-slate-50 p-3 border border-slate-200 space-y-2">
               <span className="text-[10px] font-black uppercase text-slate-600 block">ACCESORIOS INCLUIDOS</span>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                {[
-                  { label: 'FORRO', val: accForro, set: setAccForro },
-                  { label: 'CARGADOR', val: accCargador, set: setAccCargador },
-                  { label: 'CAJA', val: accCaja, set: setAccCaja },
-                  { label: 'BATERÍA', val: accBateria, set: setAccBateria },
-                  { label: 'SIM', val: accSim, set: setAccSim },
-                ].map((item) => (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => item.set(!item.val)}
-                    className={`py-2 px-2 text-[10px] font-bold uppercase border transition-all flex items-center justify-between cursor-pointer ${
-                      item.val ? 'bg-slate-800 text-white border-slate-900' : 'bg-white text-slate-700 border-slate-300'
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    {item.val && <Check size={12} />}
-                  </button>
-                ))}
-              </div>
+                <div className="grid grid-cols-3 gap-2">
+                 {[
+                   { label: 'FORRO', val: accForro, set: setAccForro },
+                   { label: 'CARGADOR', val: accCargador, set: setAccCargador },
+                   { label: 'CAJA', val: accCaja, set: setAccCaja },
+                   { label: 'BATERÍA', val: accBateria, set: setAccBateria },
+                   { label: 'SIM', val: accSim, set: setAccSim },
+                   { label: 'ESTACION', val: accEstacion, set: setAccEstacion },
+                 ].map((item) => (
+                   <button
+                     key={item.label}
+                     type="button"
+                     onClick={() => item.set(!item.val)}
+                     className={`py-2 px-2 text-[10px] font-bold uppercase border transition-all flex items-center justify-between cursor-pointer rounded-full ${
+                       item.val ? 'bg-green-600 text-white border-green-700' : 'bg-white text-black border-slate-300'
+                     }`}
+                   >
+                     <span>{item.label}</span>
+                     {item.val && <Check size={12} />}
+                   </button>
+                 ))}
+               </div>
             </div>
 
             {accSim && (
@@ -418,7 +418,7 @@ export const NuevoSerial: React.FC<NuevoSerialProps> = ({
 
             <button
               onClick={handleRegister}
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 mt-2 rounded-full"
             >
               <Plus size={16} />
               <span>REGISTRAR EN GESTIÓN GENERAL</span>

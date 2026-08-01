@@ -122,6 +122,8 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
   const [modalRemitenteValue, setModalRemitenteValue] = useState('');
   const [showMainSuggestions, setShowMainSuggestions] = useState(false);
   const [showModalSuggestions, setShowModalSuggestions] = useState(false);
+  const [flatRemitente, setFlatRemitente] = useState('');
+  const [showFlatSuggestions, setShowFlatSuggestions] = useState(false);
 
   const existingRemitentes = useMemo(() => {
     const names = new Set<string>();
@@ -165,6 +167,12 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     if (!query) return [];
     return existingRemitentes.filter(r => r.startsWith(query));
   }, [modalRemitenteValue, existingRemitentes]);
+
+  const flatSuggestions = useMemo(() => {
+    const query = flatRemitente.toUpperCase().trim();
+    if (!query) return [];
+    return existingRemitentes.filter(r => r.startsWith(query));
+  }, [flatRemitente, existingRemitentes]);
 
   // Modals view state
   const [isIMSModalOpen, setIsIMSModalOpen] = useState(false);
@@ -728,6 +736,20 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
     proceedWithAdding(remitenteCorreo);
   };
 
+  const handleFlatAddMatches = () => {
+    if (coincidencias.length === 0) {
+      alert('No hay coincidencias detectadas para agregar en este momento.');
+      return;
+    }
+
+    if (!flatRemitente.trim()) {
+      alert('Por favor ingrese un remitente.');
+      return;
+    }
+
+    proceedWithAdding(flatRemitente);
+  };
+
   const handleExportCruceReport = () => {
     const allSetKeys = Array.from(new Set([...emailUniques, ...fisicoUniques]));
     if (allSetKeys.length === 0) return;
@@ -1254,34 +1276,102 @@ export const CruceSeriales: React.FC<CruceSerialesProps> = ({
                 Puede arrastrar el ratón para seleccionar una parte de la lista o hacer clic dentro del cuadro para seleccionarlos todos y copiarlos directamente a su correo:
               </p>
               
-              <textarea
-                readOnly
-                value={fisicoUniques.join('\n')}
-                onClick={(e) => (e.target as HTMLTextAreaElement).select()}
-                className="w-full h-64 font-mono text-xs p-3.5 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none select-text cursor-text"
-                title="Haga clic para seleccionar todo"
-              />
+                <textarea
+                  readOnly
+                  value={fisicoUniques.join('\n')}
+                  onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                  className="w-full h-64 font-mono text-xs p-3.5 bg-slate-100 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300 resize-none select-text cursor-text"
+                  title="Haga clic para seleccionar todo"
+                />
 
-              <div className="flex gap-2 justify-end mt-1">
-                 <button
-                  onClick={() => {
-                    copyToClipboard(fisicoUniques.join('\n'));
-                    alert('⚡ Todos los seriales han sido copiados al portapapeles.');
-                  }}
-                  className="btn-green font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 cursor-pointer transition-all flex items-center gap-1.5 text-white-force"
-                  style={{ color: '#ffffff' }}
-                >
-                  <Clipboard size={12} />
-                  Copiar Todo
-                </button>
-                <button
-                  onClick={() => setIsFlatModalOpen(false)}
-                  className="px-4 py-2 toggle-inactive text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all"
-                >
-                  Cerrar
-                </button>
+                <div className="flex gap-2 justify-end mt-1">
+                  <button
+                    onClick={handleFlatAddMatches}
+                    disabled={coincidencias.length === 0}
+                    className="btn-green font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 cursor-pointer transition-all flex items-center gap-1.5 text-white-force disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ color: '#ffffff' }}
+                  >
+                    <Send size={12} />
+                    <span>Añadir Coincidencias a Gestión</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      copyToClipboard(fisicoUniques.join('\n'));
+                      alert('⚡ Todos los seriales han sido copiados al portapapeles.');
+                    }}
+                    className="btn-green font-arial font-bold uppercase text-[10px] tracking-wider px-4 py-2 cursor-pointer transition-all flex items-center gap-1.5 text-white-force"
+                    style={{ color: '#ffffff' }}
+                  >
+                    <Clipboard size={12} />
+                    Copiar Todo
+                  </button>
+                  <button
+                    onClick={() => setIsFlatModalOpen(false)}
+                    className="px-4 py-2 toggle-inactive text-[10px] font-bold uppercase tracking-wider cursor-pointer transition-all"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <label className="text-[10px] font-black uppercase text-slate-600 block mb-1">REMITENTE</label>
+                  <input
+                    type="text"
+                    value={flatRemitente}
+                    onChange={e => {
+                      const val = e.target.value.toUpperCase();
+                      setFlatRemitente(val);
+                      if (val.trim().length >= 3) {
+                        setShowFlatSuggestions(true);
+                      } else {
+                        setShowFlatSuggestions(false);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (flatRemitente.trim().length >= 3) {
+                        setShowFlatSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowFlatSuggestions(false), 200);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    onKeyUp={e => {
+                      if (e.key === 'Enter') {
+                        const val = (e.target as HTMLInputElement).value.toUpperCase().trim();
+                        const matches = existingRemitentes.filter(r => r.startsWith(val));
+                        if (val && matches.length > 0) {
+                          setFlatRemitente(matches[0]);
+                          setShowFlatSuggestions(false);
+                        }
+                      }
+                    }}
+                    placeholder="Escriba 3 letras para ver usuarios..."
+                    className="w-full text-xs font-semibold p-2.5 bg-slate-100 border border-slate-250 uppercase focus:outline-none focus:bg-white focus:border-slate-800 transition-all"
+                  />
+                  {showFlatSuggestions && flatSuggestions.length > 0 && (
+                    <div className="absolute left-0 right-0 z-40 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                      {flatSuggestions.map((suggestion) => (
+                        <div
+                          key={suggestion}
+                          onMouseDown={() => {
+                            setFlatRemitente(suggestion);
+                            setShowFlatSuggestions(false);
+                          }}
+                          className="px-3.5 py-2 hover:bg-slate-50 text-xs font-semibold text-slate-700 cursor-pointer uppercase border-b border-slate-50 last:border-b-0"
+                        >
+                          {suggestion}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
 
           </div>
         </div>,
