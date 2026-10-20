@@ -4,7 +4,7 @@ import { POSItem, EnvioExterno, ModelConfig, POSStatus, UserProfile, StandbyItem
 import { INITIAL_SERIALS, INITIAL_MODELS } from './data';
 import { getDBItem, setDBItem, getLocalItem, setLocalItem } from './db';
 import { getSupabaseConfigError } from './lib/supabase';
-import { Perfil, cerrarSesion, obtenerPerfilActual, alCambiarSesion } from './lib/auth';
+import { Perfil } from './lib/auth';
 import { sanitizeSerials, formatRif, prepareExportRecords, mergeImportedRecords, downloadBlob, safeSplit } from './utils';
 
 import { GestionGeneral } from './components/GestionGeneral';
@@ -16,7 +16,6 @@ import { Modelos } from './components/Modelos';
 import { Estadisticas } from './components/Estadisticas';
 import { Usuarios } from './components/Usuarios';
 import { GestionSimCards } from './components/GestionSimCards';
-import { Login } from './components/Login';
 import { StandBy } from './components/StandBy';
 import { Inicio } from './components/Inicio';
 import { Bancos } from './components/Bancos';
@@ -62,11 +61,14 @@ export default function App() {
   // -------------------------------------------------------------
   // STATE DEFINITIONS — start with empty defaults, load from IndexedDB
   // -------------------------------------------------------------
-  // La sesión la gobierna Supabase Auth. Ya no se confía en localStorage: antes
-  // bastaba con escribir disglobal_authenticated='true' en la consola para entrar.
-  const [perfil, setPerfil] = useState<Perfil | null>(null);
-  const [sesionCargando, setSesionCargando] = useState(true);
-  const isAuthenticated = perfil !== null;
+  const [perfil, setPerfil] = useState<Perfil>({
+    id: 'local-pedro',
+    usuario: 'pedro',
+    nombreMostrado: 'PEDRO',
+    rol: 'admin',
+    esObservador: false,
+  });
+  const isAuthenticated = true;
   const [isLoading, setIsLoading] = useState(true);
   const [serials, setSerials] = useState<POSItem[]>([]);
   const [enviosExternos, setEnviosExternos] = useState<EnvioExterno[]>([]);
@@ -109,29 +111,8 @@ export default function App() {
     mensaje: string;
   }[]>([]);
 
-  // Restaura la sesión guardada al abrir y escucha cambios (incluidos los de
-  // otras pestañas y la expiración del token).
-  useEffect(() => {
-    let vigente = true;
-
-    obtenerPerfilActual()
-      .then(p => { if (vigente) setPerfil(p); })
-      .catch(e => console.error('Error al restaurar la sesión:', e))
-      .finally(() => { if (vigente) setSesionCargando(false); });
-
-    const desuscribir = alCambiarSesion(p => {
-      if (!vigente) return;
-      setPerfil(p);
-      setSesionCargando(false);
-    });
-
-    return () => { vigente = false; desuscribir(); };
-  }, []);
-
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setShowUserMenu(false);
-    await cerrarSesion();
-    setPerfil(null);
   };
 
   // Global Filter States (shared reactively between tables)
@@ -182,15 +163,6 @@ export default function App() {
   // db.ts handles automatic migration from localStorage automatically
   // -------------------------------------------------------------
   useEffect(() => {
-    // Con RLS activo, Supabase solo devuelve datos a una sesión válida. Cargar
-    // antes de iniciar sesión traería cero filas y la app las tomaría por buenas.
-    if (!isAuthenticated) {
-      // Al cerrar sesión volvemos al estado de carga para que el próximo inicio
-      // no muestre los datos del usuario anterior mientras llegan los suyos.
-      setIsLoading(true);
-      return;
-    }
-
     async function loadAll() {
       try {
         const errorConfig = getSupabaseConfigError();
@@ -259,10 +231,7 @@ export default function App() {
       }
     }
     loadAll();
-    // Depende de isAuthenticated: al montar todavía no hay sesión y el efecto
-    // sale por el return de arriba. Debe volver a ejecutarse cuando la sesión
-    // se restaura o el usuario inicia sesión, o la carga nunca ocurriría.
-  }, [isAuthenticated]);
+  }, []);
 
   // Handle ESC key press globally to close user profile, history tooltip, and user menu
   useEffect(() => {
@@ -1198,24 +1167,6 @@ export default function App() {
   // -------------------------------------------------------------
   // LOADING SCREEN
   // -------------------------------------------------------------
-  // Mientras se comprueba si hay sesión guardada, no mostramos el login: evita
-  // que parpadee la pantalla de acceso a quien ya está dentro.
-  if (sesionCargando) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center gap-6 font-sans">
-        <LogoIcon className="w-24 h-24 animate-pulse shrink-0" color="#2c3e50" />
-        <p className="text-slate-800 font-mono text-xs uppercase tracking-[0.2em]">
-          Verificando sesión...
-        </p>
-      </div>
-    );
-  }
-
-  // Show Login screen if not authenticated
-  if (!isAuthenticated) {
-    return <Login onLoginSuccess={p => setPerfil(p)} />;
-  }
-
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center gap-6 font-sans">
