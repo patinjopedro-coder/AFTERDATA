@@ -111,6 +111,18 @@ export interface StandbyItem {
   status: 'PENDIENTE' | 'PROCESADO';
   processedDate?: string;
 }
+
+export interface AliadoRegistro {
+  id: string;
+  modelo: string;
+  serial: string;
+  aliado: string;
+  fecha: string;
+  hora: string;
+  fechaHora: string;
+  createdAt?: string;
+}
+
 export interface BancoItem {
   id: string;
   nombre: string;

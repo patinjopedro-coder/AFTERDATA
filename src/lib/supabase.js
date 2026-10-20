@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
+const viteEnv = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
+
 // Estas líneas leen automáticamente las variables que guardamos en Vercel y en tu entorno local
 // Soportamos tanto VITE_ (Vite) como NEXT_PUBLIC_ (Vercel/Supabase integration)
-const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim() || import.meta.env.NEXT_PUBLIC_SUPABASE_URL?.trim()
-const rawSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim() || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
-const rawTableName = import.meta.env.VITE_SUPABASE_TABLE_NAME?.trim() || import.meta.env.NEXT_PUBLIC_SUPABASE_TABLE_NAME?.trim() || 'registros'
+const rawSupabaseUrl = viteEnv.VITE_SUPABASE_URL?.trim() || viteEnv.NEXT_PUBLIC_SUPABASE_URL?.trim()
+const rawSupabaseAnonKey = viteEnv.VITE_SUPABASE_ANON_KEY?.trim() || viteEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || viteEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim()
+const rawTableName = viteEnv.VITE_SUPABASE_TABLE_NAME?.trim() || viteEnv.NEXT_PUBLIC_SUPABASE_TABLE_NAME?.trim() || 'registros'
 
 const supabaseUrl = rawSupabaseUrl?.replace(/\/+$/, '') || ''
 const supabaseAnonKey = rawSupabaseAnonKey || ''

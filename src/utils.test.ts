@@ -5,9 +5,134 @@
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { formatRif, sanitizeSerials, prepareExportRecords, mergeImportedRecords, safeSplit } from './utils';
+import React from 'react';
+import { renderToString } from 'react-dom/server';
+import { formatRif, sanitizeSerials, prepareExportRecords, mergeImportedRecords, safeSplit, buildAliadoRegistro } from './utils';
 import { getTerminalModel } from './data';
 import { POSItem, ModelConfig } from './types';
+import { RecepcionAliados } from './components/RecepcionAliados';
+import { Diagnostico } from './components/Diagnostico';
+import { iniciarSesion } from './lib/auth';
+
+describe('RecepcionAliados component', () => {
+  test('should keep the receive tab as a form and the channel tab as a read-only log', () => {
+    const formHtml = renderToString(
+      React.createElement(RecepcionAliados, {
+        registrosAliados: [],
+        setRegistrosAliados: () => {},
+        mode: 'form',
+      })
+    );
+
+    const viewHtml = renderToString(
+      React.createElement(RecepcionAliados, {
+        registrosAliados: [],
+        setRegistrosAliados: () => {},
+        mode: 'view',
+      })
+    );
+
+    assert.match(formHtml, /RECEPCION ALIADOS/);
+    assert.match(formHtml, /Registrar/);
+    assert.doesNotMatch(formHtml, /Total registrados:|No hay equipos registrados/);
+    assert.doesNotMatch(viewHtml, /Registrar/);
+    assert.match(viewHtml, /CANAL ALIADOS/);
+  });
+});
+
+describe('Diagnostico component', () => {
+  test('should expose a diagnosis form and its separate diagnostic channel log', () => {
+    const formHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosDiagnosticos: [],
+        setRegistrosDiagnosticos: () => {},
+        mode: 'form',
+      })
+    );
+
+    const viewHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosDiagnosticos: [],
+        setRegistrosDiagnosticos: () => {},
+        mode: 'view',
+      })
+    );
+
+    const repairHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosDiagnosticos: [{
+          id: '1',
+          serial: 'ABC123',
+          modelo: 'N980',
+          origen: 'NEXGO',
+          responsable: 'PEDRO',
+          status: 'REPARACION',
+          laboratorio: 'LAB-1',
+          resultadoReparacion: 'CARGA DE LLAVES',
+          fecha: '2026-10-19',
+          hora: '12:00:00',
+          fechaHora: '2026-10-19T12:00:00.000Z',
+        }],
+        setRegistrosDiagnosticos: () => {},
+        mode: 'repair',
+      })
+    );
+
+    const historyHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosDiagnosticos: [{
+          id: '1',
+          serial: 'ABC123',
+          modelo: 'N980',
+          origen: 'ALIADO',
+          aliado: 'NANCY',
+          responsable: 'PEDRO',
+          status: 'REPARACION',
+          laboratorio: 'LAB-1',
+          resultadoReparacion: 'CARGA DE LLAVES',
+          fecha: '2026-10-19',
+          hora: '12:00:00',
+          fechaHora: '2026-10-19T12:00:00.000Z',
+        }],
+        setRegistrosDiagnosticos: () => {},
+        mode: 'view',
+      })
+    );
+
+    assert.match(formHtml, /DIAGNOSTICO/);
+    assert.match(formHtml, /Registrar Diagnostico/);
+    assert.match(viewHtml, /CANAL DE DIAGNOSTICOS/);
+    assert.doesNotMatch(viewHtml, /Registrar Diagnostico/);
+    assert.match(repairHtml, /REPARACION/);
+    assert.match(repairHtml, /Serial del equipo/);
+    assert.match(repairHtml, /Modelo/);
+    assert.match(repairHtml, /LAB-1/);
+    assert.match(historyHtml, /ABC123/);
+    assert.match(historyHtml, /CARGA DE LLAVES/);
+  });
+});
+
+describe('local auth fallback', () => {
+  test('should allow the Pedro local login with the configured password when Supabase is unavailable', async () => {
+    const store = new Map<string, string>();
+    Object.defineProperty(globalThis, 'localStorage', {
+      value: {
+        getItem: (key: string) => store.has(key) ? store.get(key) ?? null : null,
+        setItem: (key: string, value: string) => { store.set(key, value); },
+        removeItem: (key: string) => { store.delete(key); },
+        clear: () => { store.clear(); },
+      },
+      configurable: true,
+    });
+
+    const result = await iniciarSesion('pedro', '123456');
+
+    assert.equal(result.error, null);
+    assert.equal(result.perfil?.usuario, 'pedro');
+    assert.equal(result.perfil?.rol, 'admin');
+    assert.match(String(localStorage.getItem('afterdata_local_session')), /pedro/i);
+  });
+});
 
 describe('formatRif utility', () => {
   test('should handle empty or whitespace-only RIFs', () => {
@@ -46,6 +171,25 @@ describe('safeSplit utility', () => {
   });
 });
 
+
+describe('buildAliadoRegistro utility', () => {
+  test('should create a separate record with model, serial, ally and timestamps', () => {
+    const now = new Date('2026-10-19T12:34:56');
+    const result = buildAliadoRegistro({
+      modelo: 'N980',
+      serial: 'ABC123',
+      aliado: 'NEXGO',
+      createdAt: now,
+    });
+
+    assert.strictEqual(result.modelo, 'N980');
+    assert.strictEqual(result.serial, 'ABC123');
+    assert.strictEqual(result.aliado, 'NEXGO');
+    assert.strictEqual(result.fecha, '2026-10-19');
+    assert.strictEqual(result.hora, '12:34:56');
+    assert.strictEqual(result.fechaHora, now.toISOString());
+  });
+});
 
 describe('sanitizeSerials utility', () => {
   test('should return an empty array if empty input is provided', () => {

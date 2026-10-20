@@ -21,7 +21,9 @@ import { StandBy } from './components/StandBy';
 import { Inicio } from './components/Inicio';
 import { Bancos } from './components/Bancos';
 import { NuevoSerial } from './components/NuevoSerial';
-import { BancoItem, ToastNotification } from './types';
+import { RecepcionAliados } from './components/RecepcionAliados';
+import { Diagnostico, DiagnosticoRegistro } from './components/Diagnostico';
+import { AliadoRegistro, BancoItem, ToastNotification } from './types';
 
 import {
   Database, FileSpreadsheet, Download, RefreshCw,
@@ -71,10 +73,18 @@ export default function App() {
   const [modelosDB, setModelosDB] = useState<Record<string, ModelConfig>>(INITIAL_MODELS);
   const [usersProfiles, setUsersProfiles] = useState<Record<string, UserProfile>>({});
   const [currentTab, setCurrentTab] = useState<string>('inicio');
+  const [allySubTab, setAllySubTab] = useState<'form' | 'view'>('form');
+  const [diagnosticoSubTab, setDiagnosticoSubTab] = useState<'form' | 'view' | 'repair'>('form');
+  const [expandedMenu, setExpandedMenu] = useState<Record<string, boolean>>({
+    diagnostico: false,
+    recepcionaliados: false,
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [simCardBatches, setSimCardBatches] = useState<any[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [bancosList, setBancosList] = useState<BancoItem[]>([]);
+  const [registrosAliados, setRegistrosAliados] = useState<AliadoRegistro[]>([]);
+  const [registrosDiagnosticos, setRegistrosDiagnosticos] = useState<DiagnosticoRegistro[]>([]);
   const [toasts, setToasts] = useState<ToastNotification[]>([]);
   // Aviso visible cuando la nube no está disponible: sin esto la app degradaba
   // en silencio al almacenamiento del navegador y parecía que "no hay datos".
@@ -199,7 +209,9 @@ export default function App() {
           loadedTab,
           loadedSimBatches,
           loadedStandby,
-          loadedActiveBatch
+          loadedActiveBatch,
+          loadedAliados,
+          loadedDiagnosticos
         ] = await Promise.all([
           getDBItem<POSItem[]>('serialesDB', INITIAL_SERIALS),
           getDBItem<EnvioExterno[]>('enviosExternosDB', []),
@@ -211,7 +223,9 @@ export default function App() {
           getLocalItem<string>('currentTab', 'general'),
           getDBItem<any[]>('simCardBatchesDB', []),
           getDBItem<StandbyItem[]>('standbyListDB', []),
-          getDBItem<string>('activeCruceBatchIdDB', '')
+          getDBItem<string>('activeCruceBatchIdDB', ''),
+          getDBItem<AliadoRegistro[]>('registrosAliadosDB', []),
+          getDBItem<DiagnosticoRegistro[]>('registrosDiagnosticosDB', [])
         ]);
 
         const rawSerials = Array.isArray(loadedSerials) ? loadedSerials : INITIAL_SERIALS;
@@ -236,6 +250,8 @@ export default function App() {
         setSimCardBatches(Array.isArray(loadedSimBatches) ? loadedSimBatches : []);
         setStandbyList(Array.isArray(loadedStandby) ? loadedStandby : []);
         setActiveCruceBatchId(typeof loadedActiveBatch === 'string' ? loadedActiveBatch : '');
+        setRegistrosAliados(Array.isArray(loadedAliados) ? loadedAliados : []);
+        setRegistrosDiagnosticos(Array.isArray(loadedDiagnosticos) ? loadedDiagnosticos : []);
       } catch (e) {
         console.error('Error loading from DB:', e);
       } finally {
@@ -357,6 +373,59 @@ export default function App() {
       }
     }
   }, [activeCruceBatchId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('registrosAliadosDB')) {
+        setDBItem('registrosAliadosDB', registrosAliados);
+      } else {
+        initialPersistedKeys.current.add('registrosAliadosDB');
+      }
+    }
+  }, [registrosAliados, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('registrosDiagnosticosDB')) {
+        setDBItem('registrosDiagnosticosDB', registrosDiagnosticos);
+      } else {
+        initialPersistedKeys.current.add('registrosDiagnosticosDB');
+      }
+    }
+  }, [registrosDiagnosticos, isLoading]);
+
+  const handleParentMenuToggle = (parentId: string) => {
+    if (parentId === 'diagnostico') {
+      setCurrentTab('diagnostico');
+      setDiagnosticoSubTab('form');
+      setExpandedMenu(prev => ({ ...prev, diagnostico: !prev.diagnostico }));
+      return;
+    }
+
+    if (parentId === 'recepcionaliados') {
+      setCurrentTab('recepcionaliados');
+      setAllySubTab('form');
+      setExpandedMenu(prev => ({ ...prev, recepcionaliados: !prev.recepcionaliados }));
+      return;
+    }
+
+    setCurrentTab(parentId);
+  };
+
+  const handleSubMenuSelect = (parentId: string, subTab: 'form' | 'view' | 'repair') => {
+    if (parentId === 'diagnostico') {
+      setCurrentTab('diagnostico');
+      setDiagnosticoSubTab(subTab);
+      setExpandedMenu(prev => ({ ...prev, diagnostico: true }));
+      return;
+    }
+
+    if (parentId === 'recepcionaliados') {
+      setCurrentTab('recepcionaliados');
+      setAllySubTab(subTab as 'form' | 'view');
+      setExpandedMenu(prev => ({ ...prev, recepcionaliados: true }));
+    }
+  };
 
   // Reactively monitor serials to match standbyList pending items and fire notifications
   useEffect(() => {
@@ -1256,6 +1325,8 @@ export default function App() {
             {[
               { id: 'inicio', label: 'Inicio', icon: Home },
               { id: 'nuevoserial', label: 'Nuevo Serial', icon: PlusCircle },
+              { id: 'diagnostico', label: 'Diagnostico', icon: Wrench },
+              { id: 'recepcionaliados', label: 'Recepción Aliados', icon: ArrowUpRight },
               { id: 'casillero', label: 'Casillero', icon: CasilleroKeyIcon },
               { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
               { id: 'general', label: 'Gestión General', icon: Layers },
@@ -1270,20 +1341,55 @@ export default function App() {
             ].map(t => {
               const Icon = t.icon;
               const isActive = currentTab === t.id;
+              const isParent = t.id === 'diagnostico' || t.id === 'recepcionaliados';
+              const subMenu = t.id === 'diagnostico'
+                ? [
+                    { label: 'Reparacion', value: 'repair' },
+                    { label: 'Canal de Diagnosticos', value: 'view' },
+                  ]
+                : t.id === 'recepcionaliados'
+                  ? [
+                      { label: 'Canal Aliados', value: 'view' },
+                    ]
+                  : [];
+
               return (
-                <button
-                  key={t.id}
-                  onClick={() => setCurrentTab(t.id)}
-                  title={t.label}
-                  className={`sidebar-btn flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer text-left w-full ${isActive
-                      ? 'bg-slate-800 text-white border-black shadow-sm font-black active-tab'
-                      : 'bg-white text-black hover:bg-slate-100 border-black'
-                    }`}
-                  style={{ borderRadius: '0px' }}
-                >
-                  <Icon size={18} className={isActive ? 'text-white' : 'text-black'} />
-                  {!isSidebarCollapsed && <span className="truncate">{t.label}</span>}
-                </button>
+                <div key={t.id} className="flex flex-col gap-1">
+                  <button
+                    onClick={() => isParent ? handleParentMenuToggle(t.id) : setCurrentTab(t.id)}
+                    title={t.label}
+                    className={`sidebar-btn flex items-center ${isSidebarCollapsed ? 'justify-center p-3' : 'gap-3.5 px-4 py-3'} text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer text-left w-full ${isActive
+                        ? 'bg-slate-800 text-white border-black shadow-sm font-black active-tab'
+                        : 'bg-white text-black hover:bg-slate-100 border-black'
+                      }`}
+                    style={{ borderRadius: '0px' }}
+                  >
+                    <Icon size={18} className={isActive ? 'text-white' : 'text-black'} />
+                    {!isSidebarCollapsed && <span className="truncate">{t.label}</span>}
+                  </button>
+
+                  {isParent && expandedMenu[t.id] && !isSidebarCollapsed && (
+                    <div className="ml-4 flex flex-col gap-1 border-l border-slate-200 pl-2">
+                      {subMenu.map(item => {
+                        const isSubActive = t.id === 'diagnostico'
+                          ? diagnosticoSubTab === item.value
+                          : allySubTab === item.value;
+
+                        return (
+                          <button
+                            key={`${t.id}-${item.value}`}
+                            onClick={() => handleSubMenuSelect(t.id, item.value as 'form' | 'view')}
+                            className={`text-left text-[10px] font-bold uppercase tracking-wider py-2 px-2 border cursor-pointer transition-all ${isSubActive
+                              ? 'bg-slate-800 text-white border-black'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'}`}
+                          >
+                            {item.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               );
             })}
           </nav>
@@ -1310,6 +1416,8 @@ export default function App() {
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
               {currentTab === 'inicio' && 'Inicio — Panel de Control y Métricas'}
               {currentTab === 'nuevoserial' && 'Nuevo Serial — Formulario de Registro'}
+              {currentTab === 'diagnostico' && (diagnosticoSubTab === 'view' ? 'Canal de Diagnosticos — Registro histórico' : 'Diagnostico — Registro de equipos')}
+              {currentTab === 'recepcionaliados' && (allySubTab === 'view' ? 'Canal Aliados — Registro histórico' : 'Recepción Aliados — Registro de equipos externos')}
               {currentTab === 'general' && 'Gestión General de Seriales'}
               {currentTab === 'casillero' && 'Control de Casillero'}
               {currentTab === 'bancos' && 'Directorio de Bancos'}
@@ -1478,6 +1586,23 @@ export default function App() {
               activeCruceBatchId={activeCruceBatchId}
               uniqueBancos={uniqueBancos}
               onAddToast={addToast}
+              isReadOnly={isObserverRole}
+            />
+          </div>
+
+          <div className={currentTab === 'diagnostico' ? '' : 'hidden'}>
+            <Diagnostico
+              registrosDiagnosticos={registrosDiagnosticos}
+              setRegistrosDiagnosticos={setRegistrosDiagnosticos}
+              mode={diagnosticoSubTab}
+            />
+          </div>
+
+          <div className={currentTab === 'recepcionaliados' ? '' : 'hidden'}>
+            <RecepcionAliados
+              registrosAliados={registrosAliados}
+              setRegistrosAliados={setRegistrosAliados}
+              mode={allySubTab}
               isReadOnly={isObserverRole}
             />
           </div>

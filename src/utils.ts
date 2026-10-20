@@ -5,7 +5,7 @@
 
 import * as XLSX from 'xlsx';
 
-import { POSItem } from './types';
+import { POSItem, AliadoRegistro } from './types';
 
 /**
  * Normalizes RIF strings into standard formats like V-12345678 or J-123456789.
@@ -15,10 +15,10 @@ import { POSItem } from './types';
 export function formatRif(rawRif: string): string {
   const clean = rawRif.trim().toUpperCase().replace(/[-.]/g, '');
   if (!clean) return '';
-  
+
   const firstChar = clean[0];
   const isLetter = /^[A-Z]$/i.test(firstChar);
-  
+
   if (isLetter) {
     return `${firstChar}-${clean.slice(1)}`;
   } else {
@@ -30,6 +30,33 @@ export function formatRif(rawRif: string): string {
       return `J-${clean}`;
     }
   }
+}
+
+export function buildAliadoRegistro({
+  modelo,
+  serial,
+  aliado,
+  createdAt = new Date(),
+}: {
+  modelo: string;
+  serial: string;
+  aliado: string;
+  createdAt?: Date;
+}): AliadoRegistro {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const fecha = `${createdAt.getFullYear()}-${pad(createdAt.getMonth() + 1)}-${pad(createdAt.getDate())}`;
+  const hora = `${pad(createdAt.getHours())}:${pad(createdAt.getMinutes())}:${pad(createdAt.getSeconds())}`;
+
+  return {
+    id: `${serial.trim().toUpperCase()}-${createdAt.getTime()}`,
+    modelo: modelo.trim().toUpperCase(),
+    serial: serial.trim().toUpperCase(),
+    aliado: aliado.trim().toUpperCase(),
+    fecha,
+    hora,
+    fechaHora: createdAt.toISOString(),
+    createdAt: createdAt.toISOString(),
+  };
 }
 
 /**
