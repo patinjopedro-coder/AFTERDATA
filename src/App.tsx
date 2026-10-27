@@ -21,7 +21,7 @@ import { Inicio } from './components/Inicio';
 import { Bancos } from './components/Bancos';
 import { NuevoSerial } from './components/NuevoSerial';
 import { RecepcionAliados } from './components/RecepcionAliados';
-import { Diagnostico, DiagnosticoRegistro } from './components/Diagnostico';
+import { Diagnostico, DiagnosticoLaboratorioRegistro, DiagnosticoRegistro } from './components/Diagnostico';
 import { AliadoRegistro, BancoItem, ToastNotification } from './types';
 
 import {
@@ -76,7 +76,9 @@ export default function App() {
   const [usersProfiles, setUsersProfiles] = useState<Record<string, UserProfile>>({});
   const [currentTab, setCurrentTab] = useState<string>('inicio');
   const [allySubTab, setAllySubTab] = useState<'form' | 'view'>('form');
-  const [diagnosticoSubTab, setDiagnosticoSubTab] = useState<'form' | 'view' | 'repair'>('form');
+  const [serialesCargaLlaves, setSerialesCargaLlaves] = useState<string[]>([]);
+  const [registrosLaboratorio, setRegistrosLaboratorio] = useState<DiagnosticoLaboratorioRegistro[]>([]);
+  const [diagnosticoSubTab, setDiagnosticoSubTab] = useState<'form' | 'view' | 'repair' | 'keys' | 'laboratorio'>('form');
   const [expandedMenu, setExpandedMenu] = useState<Record<string, boolean>>({
     diagnostico: false,
     recepcionaliados: false,
@@ -183,7 +185,9 @@ export default function App() {
           loadedStandby,
           loadedActiveBatch,
           loadedAliados,
-          loadedDiagnosticos
+          loadedDiagnosticos,
+          loadedSerialesCargaLlaves,
+          loadedRegistrosLaboratorio
         ] = await Promise.all([
           getDBItem<POSItem[]>('serialesDB', INITIAL_SERIALS),
           getDBItem<EnvioExterno[]>('enviosExternosDB', []),
@@ -197,7 +201,9 @@ export default function App() {
           getDBItem<StandbyItem[]>('standbyListDB', []),
           getDBItem<string>('activeCruceBatchIdDB', ''),
           getDBItem<AliadoRegistro[]>('registrosAliadosDB', []),
-          getDBItem<DiagnosticoRegistro[]>('registrosDiagnosticosDB', [])
+          getDBItem<DiagnosticoRegistro[]>('registrosDiagnosticosDB', []),
+          getDBItem<string[]>('serialesCargaLlavesDB', []),
+          getDBItem<DiagnosticoLaboratorioRegistro[]>('registrosLaboratorioDB', [])
         ]);
 
         const rawSerials = Array.isArray(loadedSerials) ? loadedSerials : INITIAL_SERIALS;
@@ -224,6 +230,8 @@ export default function App() {
         setActiveCruceBatchId(typeof loadedActiveBatch === 'string' ? loadedActiveBatch : '');
         setRegistrosAliados(Array.isArray(loadedAliados) ? loadedAliados : []);
         setRegistrosDiagnosticos(Array.isArray(loadedDiagnosticos) ? loadedDiagnosticos : []);
+        setSerialesCargaLlaves(Array.isArray(loadedSerialesCargaLlaves) ? loadedSerialesCargaLlaves : []);
+        setRegistrosLaboratorio(Array.isArray(loadedRegistrosLaboratorio) ? loadedRegistrosLaboratorio : []);
       } catch (e) {
         console.error('Error loading from DB:', e);
       } finally {
@@ -363,6 +371,26 @@ export default function App() {
     }
   }, [registrosDiagnosticos, isLoading]);
 
+  useEffect(() => {
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('serialesCargaLlavesDB')) {
+        setDBItem('serialesCargaLlavesDB', serialesCargaLlaves);
+      } else {
+        initialPersistedKeys.current.add('serialesCargaLlavesDB');
+      }
+    }
+  }, [serialesCargaLlaves, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (initialPersistedKeys.current.has('registrosLaboratorioDB')) {
+        setDBItem('registrosLaboratorioDB', registrosLaboratorio);
+      } else {
+        initialPersistedKeys.current.add('registrosLaboratorioDB');
+      }
+    }
+  }, [registrosLaboratorio, isLoading]);
+
   const handleParentMenuToggle = (parentId: string) => {
     if (parentId === 'diagnostico') {
       setCurrentTab('diagnostico');
@@ -381,17 +409,21 @@ export default function App() {
     setCurrentTab(parentId);
   };
 
-  const handleSubMenuSelect = (parentId: string, subTab: 'form' | 'view' | 'repair') => {
+  const handleSubMenuSelect = (parentId: string, subTab: 'form' | 'view' | 'repair' | 'keys' | 'laboratorio') => {
     if (parentId === 'diagnostico') {
       setCurrentTab('diagnostico');
-      setDiagnosticoSubTab(subTab);
+      if (subTab === 'form' || subTab === 'view' || subTab === 'repair' || subTab === 'keys' || subTab === 'laboratorio') {
+        setDiagnosticoSubTab(subTab);
+      }
       setExpandedMenu(prev => ({ ...prev, diagnostico: true }));
       return;
     }
 
     if (parentId === 'recepcionaliados') {
       setCurrentTab('recepcionaliados');
-      setAllySubTab(subTab as 'form' | 'view');
+      if (subTab === 'form' || subTab === 'view') {
+        setAllySubTab(subTab);
+      }
       setExpandedMenu(prev => ({ ...prev, recepcionaliados: true }));
     }
   };
@@ -1297,7 +1329,9 @@ export default function App() {
                 ? [
                     { label: 'Reparacion', value: 'repair' },
                     { label: 'Canal de Diagnosticos', value: 'view' },
-                  ]
+                    { label: 'Carga de Llaves', value: 'keys' },
+                      { label: 'Laboratorio', value: 'laboratorio' },
+                    ]
                 : t.id === 'recepcionaliados'
                   ? [
                       { label: 'Canal Aliados', value: 'view' },
@@ -1329,7 +1363,7 @@ export default function App() {
                         return (
                           <button
                             key={`${t.id}-${item.value}`}
-                            onClick={() => handleSubMenuSelect(t.id, item.value as 'form' | 'view')}
+                            onClick={() => handleSubMenuSelect(t.id, item.value as 'form' | 'view' | 'repair' | 'keys' | 'laboratorio')}
                             className={`text-left text-[10px] font-bold uppercase tracking-wider py-2 px-2 border cursor-pointer transition-all ${isSubActive
                               ? 'bg-slate-800 text-white border-black'
                               : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'}`}
@@ -1367,8 +1401,22 @@ export default function App() {
             <h2 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
               {currentTab === 'inicio' && 'Inicio — Panel de Control y Métricas'}
               {currentTab === 'nuevoserial' && 'Nuevo Serial — Formulario de Registro'}
-              {currentTab === 'diagnostico' && (diagnosticoSubTab === 'view' ? 'Canal de Diagnosticos — Registro histórico' : 'Diagnostico — Registro de equipos')}
-              {currentTab === 'recepcionaliados' && (allySubTab === 'view' ? 'Canal Aliados — Registro histórico' : 'Recepción Aliados — Registro de equipos externos')}
+              {currentTab === 'diagnostico' && (
+                diagnosticoSubTab === 'view'
+                  ? 'Canal de Diagnosticos — Registro histórico'
+                  : diagnosticoSubTab === 'keys'
+                    ? 'Carga de Llaves — Marcar serial'
+                    : diagnosticoSubTab === 'laboratorio'
+                      ? 'Laboratorio — Diagnóstico y responsable'
+                      : diagnosticoSubTab === 'repair'
+                        ? 'Reparacion — Equipos asignados al laboratorio'
+                        : 'Diagnostico — Registro de equipos'
+              )}
+              {currentTab === 'recepcionaliados' && (
+                allySubTab === 'view'
+                  ? 'Canal Aliados — Registro histórico'
+                  : 'Recepción Aliados — Registro de equipos externos'
+              )}
               {currentTab === 'general' && 'Gestión General de Seriales'}
               {currentTab === 'casillero' && 'Control de Casillero'}
               {currentTab === 'bancos' && 'Directorio de Bancos'}
@@ -1545,7 +1593,12 @@ export default function App() {
             <Diagnostico
               registrosDiagnosticos={registrosDiagnosticos}
               setRegistrosDiagnosticos={setRegistrosDiagnosticos}
+              serialesCargaLlaves={serialesCargaLlaves}
+              setSerialesCargaLlaves={setSerialesCargaLlaves}
+              registrosLaboratorio={registrosLaboratorio}
+              setRegistrosLaboratorio={setRegistrosLaboratorio}
               mode={diagnosticoSubTab}
+              isReadOnly={isObserverRole}
             />
           </div>
 

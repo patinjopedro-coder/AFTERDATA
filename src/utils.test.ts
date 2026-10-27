@@ -37,6 +37,7 @@ describe('RecepcionAliados component', () => {
     assert.doesNotMatch(formHtml, /Total registrados:|No hay equipos registrados/);
     assert.doesNotMatch(viewHtml, /Registrar/);
     assert.match(viewHtml, /CANAL ALIADOS/);
+    assert.doesNotMatch(viewHtml, /Carga de llaves/i);
   });
 });
 
@@ -46,6 +47,8 @@ describe('Diagnostico component', () => {
       React.createElement(Diagnostico, {
         registrosDiagnosticos: [],
         setRegistrosDiagnosticos: () => {},
+        registrosLaboratorio: [],
+        setRegistrosLaboratorio: () => {},
         mode: 'form',
       })
     );
@@ -54,6 +57,8 @@ describe('Diagnostico component', () => {
       React.createElement(Diagnostico, {
         registrosDiagnosticos: [],
         setRegistrosDiagnosticos: () => {},
+        registrosLaboratorio: [],
+        setRegistrosLaboratorio: () => {},
         mode: 'view',
       })
     );
@@ -74,6 +79,8 @@ describe('Diagnostico component', () => {
           fechaHora: '2026-10-19T12:00:00.000Z',
         }],
         setRegistrosDiagnosticos: () => {},
+        registrosLaboratorio: [],
+        setRegistrosLaboratorio: () => {},
         mode: 'repair',
       })
     );
@@ -94,8 +101,51 @@ describe('Diagnostico component', () => {
           hora: '12:00:00',
           fechaHora: '2026-10-19T12:00:00.000Z',
         }],
+        serialesCargaLlaves: ['ABC123'],
         setRegistrosDiagnosticos: () => {},
+        registrosLaboratorio: [{
+          id: 'lab-1',
+          serial: 'ABC123',
+          responsable: 'RICHARD',
+          diagnostico: 'CAMBIO DE COMPONENTE',
+          fecha: '2026-10-19',
+          hora: '13:00:00',
+          createdAt: '2026-10-19T13:00:00.000Z',
+        }],
+        setRegistrosLaboratorio: () => {},
         mode: 'view',
+      })
+    );
+
+    const keyLoadOnlyHistoryHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosDiagnosticos: [],
+        setRegistrosDiagnosticos: () => {},
+        serialesCargaLlaves: ['SERIAL-SOLO-LLAVES'],
+        registrosLaboratorio: [],
+        setRegistrosLaboratorio: () => {},
+        mode: 'view',
+      })
+    );
+
+    const keyLoadHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosDiagnosticos: [],
+        setRegistrosDiagnosticos: () => {},
+        setSerialesCargaLlaves: () => {},
+        registrosLaboratorio: [],
+        setRegistrosLaboratorio: () => {},
+        mode: 'keys',
+      })
+    );
+
+    const laboratoryHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosDiagnosticos: [],
+        setRegistrosDiagnosticos: () => {},
+        registrosLaboratorio: [],
+        setRegistrosLaboratorio: () => {},
+        mode: 'laboratorio',
       })
     );
 
@@ -109,6 +159,17 @@ describe('Diagnostico component', () => {
     assert.match(repairHtml, /LAB-1/);
     assert.match(historyHtml, /ABC123/);
     assert.match(historyHtml, /CARGA DE LLAVES/);
+    assert.match(historyHtml, /overflow-x-auto/);
+    assert.match(historyHtml, /Carga de llaves marcada/);
+    assert.match(keyLoadHtml, /Marcar carga de llaves/);
+    assert.match(historyHtml, /Responsable laboratorio/);
+    assert.match(historyHtml, /RICHARD/);
+    assert.match(historyHtml, /CAMBIO DE COMPONENTE/);
+    assert.match(keyLoadOnlyHistoryHtml, /SERIAL-SOLO-LLAVES/);
+    assert.match(keyLoadOnlyHistoryHtml, /Carga de llaves marcada/);
+    assert.match(laboratoryHtml, /Serial/);
+    assert.match(laboratoryHtml, /Diagnóstico/);
+    assert.match(laboratoryHtml, /Responsable/);
   });
 });
 

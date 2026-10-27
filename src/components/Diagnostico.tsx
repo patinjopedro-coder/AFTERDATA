@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Layers, ArrowRight, Wrench, CheckCircle2 } from 'lucide-react';
+import { Plus, Layers, ArrowRight, Wrench, CheckCircle2, Check } from 'lucide-react';
 
 export type DiagnosticoStatus = 'REPARACION' | 'LISTO PARA LA ENTREGA';
 export type ResultadoReparacion = 'LISTO PARA LA ENTREGA' | 'CARGA DE LLAVES' | 'IRREPARABLE';
@@ -20,10 +20,25 @@ export interface DiagnosticoRegistro {
   createdAt?: string;
 }
 
+export interface DiagnosticoLaboratorioRegistro {
+  id: string;
+  serial: string;
+  diagnostico: string;
+  responsable: string;
+  fecha: string;
+  hora: string;
+  createdAt: string;
+}
+
 interface DiagnosticoProps {
   registrosDiagnosticos: DiagnosticoRegistro[];
   setRegistrosDiagnosticos: React.Dispatch<React.SetStateAction<DiagnosticoRegistro[]>>;
-  mode?: 'form' | 'view' | 'repair';
+  serialesCargaLlaves?: string[];
+  setSerialesCargaLlaves?: React.Dispatch<React.SetStateAction<string[]>>;
+  registrosLaboratorio: DiagnosticoLaboratorioRegistro[];
+  setRegistrosLaboratorio: React.Dispatch<React.SetStateAction<DiagnosticoLaboratorioRegistro[]>>;
+  mode?: 'form' | 'view' | 'repair' | 'keys' | 'laboratorio';
+  isReadOnly?: boolean;
 }
 
 const buildDiagnosticoRegistro = ({
@@ -65,9 +80,18 @@ const buildDiagnosticoRegistro = ({
 export const Diagnostico: React.FC<DiagnosticoProps> = ({
   registrosDiagnosticos,
   setRegistrosDiagnosticos,
+  serialesCargaLlaves = [],
+  setSerialesCargaLlaves,
+  registrosLaboratorio,
+  setRegistrosLaboratorio,
   mode = 'form',
+  isReadOnly = false,
 }) => {
   const [serial, setSerial] = useState('');
+  const [serialCargaLlaves, setSerialCargaLlaves] = useState('');
+  const [serialLaboratorio, setSerialLaboratorio] = useState('');
+  const [diagnosticoLaboratorio, setDiagnosticoLaboratorio] = useState('');
+  const [responsableLaboratorio, setResponsableLaboratorio] = useState('');
   const [modelo, setModelo] = useState('');
   const [origen, setOrigen] = useState<'NEXGO' | 'ALIADO'>('NEXGO');
   const [aliado, setAliado] = useState('');
@@ -113,7 +137,53 @@ export const Diagnostico: React.FC<DiagnosticoProps> = ({
     setStatus('REPARACION');
   };
 
-  const total = useMemo(() => registrosDiagnosticos.length, [registrosDiagnosticos]);
+  const registrosCanal = useMemo(() => {
+    const serialesDiagnostico = new Set(
+      registrosDiagnosticos.map(registro => registro.serial.trim().toUpperCase())
+    );
+    const serialesLaboratorioIncluidos = new Set<string>();
+    const laboratoriosSinDiagnostico = registrosLaboratorio.filter(registro => {
+      const serialNormalizado = registro.serial.trim().toUpperCase();
+      if (serialesDiagnostico.has(serialNormalizado) || serialesLaboratorioIncluidos.has(serialNormalizado)) {
+        return false;
+      }
+      serialesLaboratorioIncluidos.add(serialNormalizado);
+      return true;
+    });
+
+    const serialesRepresentados = new Set([
+      ...serialesDiagnostico,
+      ...registrosLaboratorio.map(registro => registro.serial.trim().toUpperCase()),
+    ]);
+    const cargasLlavesSinDiagnostico = serialesCargaLlaves
+      .map(serial => serial.trim().toUpperCase())
+      .filter(serial => serial && !serialesRepresentados.has(serial))
+      .filter((serial, index, seriales) => seriales.indexOf(serial) === index);
+
+    return [
+      ...registrosDiagnosticos.map(registro => ({
+        key: `diagnostico-${registro.id}`,
+        serial: registro.serial,
+        diagnostico: registro,
+        laboratorio: registrosLaboratorio.find(
+          item => item.serial.trim().toUpperCase() === registro.serial.trim().toUpperCase()
+        ) || null,
+      })),
+      ...laboratoriosSinDiagnostico.map(laboratorio => ({
+        key: `laboratorio-${laboratorio.id}`,
+        serial: laboratorio.serial,
+        diagnostico: null,
+        laboratorio,
+      })),
+      ...cargasLlavesSinDiagnostico.map(serial => ({
+        key: `carga-llaves-${serial}`,
+        serial,
+        diagnostico: null,
+        laboratorio: null,
+      })),
+    ];
+  }, [registrosDiagnosticos, registrosLaboratorio, serialesCargaLlaves]);
+  const total = useMemo(() => registrosCanal.length, [registrosCanal]);
 
   const getRegistroEstado = (registro: DiagnosticoRegistro) => registro.resultadoReparacion || registro.status;
 
@@ -127,6 +197,170 @@ export const Diagnostico: React.FC<DiagnosticoProps> = ({
       status: resultado === 'LISTO PARA LA ENTREGA' ? 'LISTO PARA LA ENTREGA' : 'REPARACION',
     });
   };
+
+  const handleMarkKeyLoad = () => {
+    if (isReadOnly || !setSerialesCargaLlaves) return;
+    const serialNormalizado = serialCargaLlaves.trim().toUpperCase();
+    if (!serialNormalizado) {
+      alert('Debe ingresar un serial.');
+      return;
+    }
+
+    setSerialesCargaLlaves(prev => (
+      prev.some(item => item.trim().toUpperCase() === serialNormalizado)
+        ? prev
+        : [...prev, serialNormalizado]
+    ));
+    setSerialCargaLlaves('');
+  };
+
+  const handleRegisterLaboratorio = () => {
+    if (isReadOnly) return;
+    const serialNormalizado = serialLaboratorio.trim().toUpperCase();
+    const diagnosticoTrim = diagnosticoLaboratorio.trim();
+    const responsableTrim = responsableLaboratorio.trim();
+
+    if (!serialNormalizado || !diagnosticoTrim || !responsableTrim) {
+      alert('Debe completar serial, diagnóstico y responsable del laboratorio.');
+      return;
+    }
+
+    const createdAt = new Date();
+    const pad = (value: number) => String(value).padStart(2, '0');
+    setRegistrosLaboratorio(prev => [{
+      id: `lab-${createdAt.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+      serial: serialNormalizado,
+      diagnostico: diagnosticoTrim,
+      responsable: responsableTrim,
+      fecha: `${createdAt.getFullYear()}-${pad(createdAt.getMonth() + 1)}-${pad(createdAt.getDate())}`,
+      hora: `${pad(createdAt.getHours())}:${pad(createdAt.getMinutes())}:${pad(createdAt.getSeconds())}`,
+      createdAt: createdAt.toISOString(),
+    }, ...prev]);
+    setSerialLaboratorio('');
+    setDiagnosticoLaboratorio('');
+    setResponsableLaboratorio('');
+  };
+
+  if (mode === 'laboratorio') {
+    return (
+      <div className="flex flex-col gap-6 text-slate-800 pb-16 font-arial max-w-6xl mx-auto">
+        <div className="bg-white border border-slate-200 shadow-md overflow-hidden">
+          <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+            <div className="p-1 bg-transparent text-black">
+              <Wrench size={26} className="text-black" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black uppercase text-slate-900 tracking-tight">LABORATORIO</h2>
+              <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">Registre la observación y responsable del serial</p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {isReadOnly ? (
+              <div className="p-6 bg-slate-100 border border-slate-200 text-slate-600 font-bold uppercase text-center text-xs">
+                Modo Observador Activo: No tiene permisos para registrar información del laboratorio.
+              </div>
+            ) : (
+              <form
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end"
+                onSubmit={event => {
+                  event.preventDefault();
+                  handleRegisterLaboratorio();
+                }}
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial</label>
+                  <input
+                    type="text"
+                    value={serialLaboratorio}
+                    onChange={event => setSerialLaboratorio(event.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Diagnóstico</label>
+                  <textarea
+                    value={diagnosticoLaboratorio}
+                    onChange={event => setDiagnosticoLaboratorio(event.target.value)}
+                    className="w-full min-h-[42px] text-xs p-2.5 bg-slate-100 border border-slate-250 font-semibold"
+                    rows={1}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Responsable</label>
+                  <input
+                    type="text"
+                    value={responsableLaboratorio}
+                    onChange={event => setResponsableLaboratorio(event.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="md:col-span-3 w-full md:w-auto md:justify-self-end py-3 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 rounded-full"
+                >
+                  <CheckCircle2 size={16} />
+                  <span>Guardar diagnóstico de laboratorio</span>
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'keys') {
+    return (
+      <div className="flex flex-col gap-6 text-slate-800 pb-16 font-arial max-w-6xl mx-auto">
+        <div className="bg-white border border-slate-200 shadow-md overflow-hidden">
+          <div className="flex items-center gap-3 border-b border-slate-100 px-6 py-4">
+            <div className="p-1 bg-transparent text-black">
+              <Wrench size={26} className="text-black" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black uppercase text-slate-900 tracking-tight">CARGA DE LLAVES</h2>
+              <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">Marque los seriales que completaron la carga de llaves</p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {isReadOnly ? (
+              <div className="p-6 bg-slate-100 border border-slate-200 text-slate-600 font-bold uppercase text-center text-xs">
+                Modo Observador Activo: No tiene permisos para marcar cargas de llaves.
+              </div>
+            ) : (
+              <form
+                className="flex flex-col sm:flex-row gap-3 items-end"
+                onSubmit={event => {
+                  event.preventDefault();
+                  handleMarkKeyLoad();
+                }}
+              >
+                <div className="flex flex-col gap-1 flex-1 w-full">
+                  <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Serial</label>
+                  <input
+                    type="text"
+                    value={serialCargaLlaves}
+                    onChange={event => setSerialCargaLlaves(event.target.value)}
+                    className="w-full text-xs p-2.5 bg-slate-100 border border-slate-250 uppercase font-semibold"
+                    placeholder="Ingrese el serial"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto py-3 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider cursor-pointer shadow-md transition-all flex items-center justify-center gap-2 rounded-full"
+                >
+                  <Check size={16} />
+                  <span>Marcar carga de llaves</span>
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (mode === 'repair') {
     return (
@@ -335,28 +569,53 @@ export const Diagnostico: React.FC<DiagnosticoProps> = ({
             </div>
           </div>
 
-          {registrosDiagnosticos.length === 0 ? (
+          {registrosCanal.length === 0 ? (
             <div className="px-4 py-8 text-center text-[11px] font-bold uppercase text-slate-400 border border-slate-200">
               No hay diagnósticos registrados.
             </div>
           ) : (
-            <div className="space-y-4">
-              {registrosDiagnosticos.map((registro) => (
-                <div key={registro.id} className="border border-slate-200 bg-slate-50 p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 text-[11px] font-semibold text-slate-700">
-                    <div><span className="block text-[9px] uppercase text-slate-500 font-black">Fecha</span>{registro.fecha}</div>
-                    <div><span className="block text-[9px] uppercase text-slate-500 font-black">Hora</span>{registro.hora}</div>
-                    <div><span className="block text-[9px] uppercase text-slate-500 font-black">Serial</span>{registro.serial}</div>
-                    <div><span className="block text-[9px] uppercase text-slate-500 font-black">Modelo</span>{registro.modelo}</div>
-                    <div><span className="block text-[9px] uppercase text-slate-500 font-black">Origen</span>{registro.origen === 'ALIADO' ? `ALIADO (${registro.aliado || 'SIN ALIADO'})` : 'NEXGO'}</div>
-                    <div><span className="block text-[9px] uppercase text-slate-500 font-black">Responsable</span>{registro.responsable}</div>
-                    <div className="xl:col-span-2"><span className="block text-[9px] uppercase text-slate-500 font-black">Status</span>{getRegistroEstado(registro)}</div>
-                    {registro.laboratorio && (
-                      <div className="xl:col-span-2"><span className="block text-[9px] uppercase text-slate-500 font-black">Laboratorio</span>{registro.laboratorio}</div>
-                    )}
-                  </div>
+            <div className="overflow-x-auto border border-slate-200">
+              <div className="min-w-[1650px]">
+                <div className="grid grid-cols-[130px_100px_180px_140px_180px_140px_180px_130px_190px_280px] bg-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-600 border-b border-slate-200">
+                  <div className="px-3 py-3">Fecha</div>
+                  <div className="px-3 py-3">Hora</div>
+                  <div className="px-3 py-3">Serial</div>
+                  <div className="px-3 py-3">Modelo</div>
+                  <div className="px-3 py-3">Origen</div>
+                  <div className="px-3 py-3">Responsable</div>
+                  <div className="px-3 py-3">Status</div>
+                  <div className="px-3 py-3 text-center">Carga de llaves</div>
+                  <div className="px-3 py-3">Responsable laboratorio</div>
+                  <div className="px-3 py-3">Diagnóstico laboratorio</div>
                 </div>
-              ))}
+                {registrosCanal.map(({ key, serial, diagnostico, laboratorio }) => {
+                  const serialRegistro = serial;
+                  const cargaLlavesMarcada = serialRegistro && serialesCargaLlaves.some(
+                    item => item.trim().toUpperCase() === serialRegistro.trim().toUpperCase()
+                  );
+                  return (
+                    <div
+                      key={key}
+                      className="grid grid-cols-[130px_100px_180px_140px_180px_140px_180px_130px_190px_280px] border-b border-slate-200 last:border-b-0 text-[11px] font-semibold text-slate-700"
+                    >
+                      <div className="px-3 py-3 whitespace-nowrap">{diagnostico?.fecha || laboratorio?.fecha || '-'}</div>
+                      <div className="px-3 py-3 whitespace-nowrap">{diagnostico?.hora || laboratorio?.hora || '-'}</div>
+                      <div className="px-3 py-3 uppercase font-mono whitespace-nowrap">{serialRegistro}</div>
+                      <div className="px-3 py-3 uppercase whitespace-nowrap">{diagnostico?.modelo || '-'}</div>
+                      <div className="px-3 py-3 uppercase whitespace-nowrap">{diagnostico ? (diagnostico.origen === 'ALIADO' ? `ALIADO (${diagnostico.aliado || 'SIN ALIADO'})` : 'NEXGO') : '-'}</div>
+                      <div className="px-3 py-3 uppercase whitespace-nowrap">{diagnostico?.responsable || '-'}</div>
+                      <div className="px-3 py-3 uppercase whitespace-nowrap">{diagnostico ? getRegistroEstado(diagnostico) : '-'}</div>
+                      <div className="px-3 py-3 flex justify-center">
+                        {cargaLlavesMarcada && (
+                          <Check size={16} className="text-emerald-600" aria-label="Carga de llaves marcada" />
+                        )}
+                      </div>
+                      <div className="px-3 py-3 uppercase whitespace-nowrap">{laboratorio?.responsable || '-'}</div>
+                      <div className="px-3 py-3 whitespace-nowrap">{laboratorio?.diagnostico || '-'}</div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
