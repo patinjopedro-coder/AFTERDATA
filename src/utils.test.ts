@@ -11,7 +11,8 @@ import { formatRif, sanitizeSerials, prepareExportRecords, mergeImportedRecords,
 import { getTerminalModel } from './data';
 import { POSItem, ModelConfig } from './types';
 import { RecepcionAliados } from './components/RecepcionAliados';
-import { Diagnostico } from './components/Diagnostico';
+import { Diagnostico, DiagnosticoRegistro } from './components/Diagnostico';
+import { Salida } from './components/Salida';
 import { iniciarSesion } from './lib/auth';
 
 describe('RecepcionAliados component', () => {
@@ -20,6 +21,7 @@ describe('RecepcionAliados component', () => {
       React.createElement(RecepcionAliados, {
         registrosAliados: [],
         setRegistrosAliados: () => {},
+        registrosDiagnosticos: [],
         mode: 'form',
       })
     );
@@ -28,6 +30,7 @@ describe('RecepcionAliados component', () => {
       React.createElement(RecepcionAliados, {
         registrosAliados: [],
         setRegistrosAliados: () => {},
+        registrosDiagnosticos: [],
         mode: 'view',
       })
     );
@@ -39,12 +42,78 @@ describe('RecepcionAliados component', () => {
     assert.match(viewHtml, /CANAL ALIADOS/);
     assert.doesNotMatch(viewHtml, /Carga de llaves/i);
   });
+
+  test('should keep ally records as inventory entries without creating or sending another serial', () => {
+    const registro = {
+      id: 'ally-1',
+      modelo: 'N980',
+      serial: 'ABC123',
+      aliado: 'NANCY',
+      fecha: '2026-10-29',
+      hora: '08:00:00',
+      fechaHora: '2026-10-29T12:00:00.000Z',
+    };
+    const inventoryHtml = renderToString(
+      React.createElement(RecepcionAliados, {
+        registrosAliados: [registro],
+        setRegistrosAliados: () => {},
+        registrosDiagnosticos: [],
+        mode: 'view',
+      })
+    );
+    const trackedHtml = renderToString(
+      React.createElement(RecepcionAliados, {
+        registrosAliados: [registro],
+        setRegistrosAliados: () => {},
+        registrosDiagnosticos: [{
+          id: 'diag-1',
+          serial: registro.serial,
+          modelo: registro.modelo,
+          origen: 'ALIADO',
+          aliado: registro.aliado,
+          responsable: '',
+          status: 'PENDIENTE DIAGNOSTICO',
+          sourceAliadoId: registro.id,
+          fecha: registro.fecha,
+          hora: registro.hora,
+          fechaHora: registro.fechaHora,
+        }],
+        mode: 'view',
+      })
+    );
+
+    assert.match(inventoryHtml, /Disponible en diagnóstico/);
+    assert.match(trackedHtml, /En flujo/);
+    assert.doesNotMatch(inventoryHtml, /Enviar a Diagnóstico/);
+  });
 });
 
 describe('Diagnostico component', () => {
   test('should expose a diagnosis form and its separate diagnostic channel log', () => {
+    const existingSerials: POSItem[] = [{
+      id: 1,
+      serial: 'EXISTING-NEXGO',
+      date: '2026-10-29',
+      displayDate: '29/10/2026',
+      status: 'SIN ESTATUS',
+      remitente: 'PEDRO',
+      source: '',
+      isCasillero: false,
+      modeloManual: 'N980',
+    }];
+    const existingAllies = [{
+      id: 'ally-2',
+      modelo: 'N86',
+      serial: 'EXISTING-ALLY',
+      aliado: 'NANCY',
+      fecha: '2026-10-29',
+      hora: '08:00:00',
+      fechaHora: '2026-10-29T12:00:00.000Z',
+    }];
     const formHtml = renderToString(
       React.createElement(Diagnostico, {
+        serials: existingSerials,
+        registrosAliados: existingAllies,
         registrosDiagnosticos: [],
         setRegistrosDiagnosticos: () => {},
         registrosLaboratorio: [],
@@ -55,6 +124,8 @@ describe('Diagnostico component', () => {
 
     const viewHtml = renderToString(
       React.createElement(Diagnostico, {
+        serials: existingSerials,
+        registrosAliados: existingAllies,
         registrosDiagnosticos: [],
         setRegistrosDiagnosticos: () => {},
         registrosLaboratorio: [],
@@ -65,6 +136,7 @@ describe('Diagnostico component', () => {
 
     const repairHtml = renderToString(
       React.createElement(Diagnostico, {
+        serials: [{ ...existingSerials[0], serial: 'ABC123' }],
         registrosDiagnosticos: [{
           id: '1',
           serial: 'ABC123',
@@ -77,6 +149,16 @@ describe('Diagnostico component', () => {
           fecha: '2026-10-19',
           hora: '12:00:00',
           fechaHora: '2026-10-19T12:00:00.000Z',
+        }, {
+          id: 'legacy-duplicate',
+          serial: 'ABC123',
+          modelo: 'N980',
+          origen: 'NEXGO',
+          responsable: 'PEDRO',
+          status: 'REPARACION',
+          fecha: '2026-10-18',
+          hora: '12:00:00',
+          fechaHora: '2026-10-18T12:00:00.000Z',
         }],
         setRegistrosDiagnosticos: () => {},
         registrosLaboratorio: [],
@@ -87,6 +169,16 @@ describe('Diagnostico component', () => {
 
     const historyHtml = renderToString(
       React.createElement(Diagnostico, {
+        serials: [],
+        registrosAliados: [{
+          id: 'ally-1',
+          modelo: 'N980',
+          serial: 'ABC123',
+          aliado: 'NANCY',
+          fecha: '2026-10-19',
+          hora: '12:00:00',
+          fechaHora: '2026-10-19T12:00:00.000Z',
+        }],
         registrosDiagnosticos: [{
           id: '1',
           serial: 'ABC123',
@@ -101,7 +193,6 @@ describe('Diagnostico component', () => {
           hora: '12:00:00',
           fechaHora: '2026-10-19T12:00:00.000Z',
         }],
-        serialesCargaLlaves: ['ABC123'],
         setRegistrosDiagnosticos: () => {},
         registrosLaboratorio: [{
           id: 'lab-1',
@@ -119,6 +210,7 @@ describe('Diagnostico component', () => {
 
     const keyLoadOnlyHistoryHtml = renderToString(
       React.createElement(Diagnostico, {
+        serials: existingSerials,
         registrosDiagnosticos: [],
         setRegistrosDiagnosticos: () => {},
         serialesCargaLlaves: ['SERIAL-SOLO-LLAVES'],
@@ -141,6 +233,7 @@ describe('Diagnostico component', () => {
 
     const laboratoryHtml = renderToString(
       React.createElement(Diagnostico, {
+        serials: [{ ...existingSerials[0], serial: 'ABC123' }],
         registrosDiagnosticos: [],
         setRegistrosDiagnosticos: () => {},
         registrosLaboratorio: [],
@@ -148,28 +241,122 @@ describe('Diagnostico component', () => {
         mode: 'laboratorio',
       })
     );
+    const pendingDiagnosisHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosAliados: [{
+          id: 'ally-pending',
+          modelo: 'N980',
+          serial: 'ALLY123',
+          aliado: 'NANCY',
+          fecha: '2026-10-29',
+          hora: '08:00:00',
+          fechaHora: '2026-10-29T12:00:00.000Z',
+        }],
+        registrosDiagnosticos: [{
+          id: 'pending-1',
+          serial: 'ALLY123',
+          modelo: 'N980',
+          origen: 'ALIADO',
+          aliado: 'NANCY',
+          responsable: '',
+          status: 'PENDIENTE DIAGNOSTICO',
+          fecha: '2026-10-29',
+          hora: '08:00:00',
+          fechaHora: '2026-10-29T12:00:00.000Z',
+        }],
+        setRegistrosDiagnosticos: () => {},
+        registrosLaboratorio: [],
+        setRegistrosLaboratorio: () => {},
+        mode: 'view',
+      })
+    );
+    const pendingDiagnosisActionsHtml = renderToString(
+      React.createElement(Diagnostico, {
+        registrosAliados: [{
+          id: 'ally-pending',
+          modelo: 'N980',
+          serial: 'ALLY123',
+          aliado: 'NANCY',
+          fecha: '2026-10-29',
+          hora: '08:00:00',
+          fechaHora: '2026-10-29T12:00:00.000Z',
+        }],
+        registrosDiagnosticos: [{
+          id: 'pending-1',
+          serial: 'ALLY123',
+          modelo: 'N980',
+          origen: 'ALIADO',
+          aliado: 'NANCY',
+          responsable: '',
+          status: 'PENDIENTE DIAGNOSTICO',
+          fecha: '2026-10-29',
+          hora: '08:00:00',
+          fechaHora: '2026-10-29T12:00:00.000Z',
+        }],
+        setRegistrosDiagnosticos: () => {},
+        mode: 'form',
+      })
+    );
 
     assert.match(formHtml, /DIAGNOSTICO/);
-    assert.match(formHtml, /Registrar Diagnostico/);
+    assert.match(formHtml, /EXISTING-NEXGO/);
+    assert.match(formHtml, /EXISTING-ALLY/);
+    assert.match(formHtml, /Guardar diagnóstico/);
     assert.match(viewHtml, /CANAL DE DIAGNOSTICOS/);
     assert.doesNotMatch(viewHtml, /Registrar Diagnostico/);
     assert.match(repairHtml, /REPARACION/);
-    assert.match(repairHtml, /Serial del equipo/);
-    assert.match(repairHtml, /Modelo/);
-    assert.match(repairHtml, /LAB-1/);
+    assert.match(repairHtml, /Responsable laboratorio/);
+    assert.match(repairHtml, /Guardar acción/);
     assert.match(historyHtml, /ABC123/);
     assert.match(historyHtml, /CARGA DE LLAVES/);
     assert.match(historyHtml, /overflow-x-auto/);
-    assert.match(historyHtml, /Carga de llaves marcada/);
+    assert.doesNotMatch(historyHtml, /<button|<select/);
+    assert.equal((repairHtml.match(/Guardar acción/g) || []).length, 1);
     assert.match(keyLoadHtml, /Marcar carga de llaves/);
-    assert.match(historyHtml, /Responsable laboratorio/);
     assert.match(historyHtml, /RICHARD/);
     assert.match(historyHtml, /CAMBIO DE COMPONENTE/);
-    assert.match(keyLoadOnlyHistoryHtml, /SERIAL-SOLO-LLAVES/);
-    assert.match(keyLoadOnlyHistoryHtml, /Carga de llaves marcada/);
-    assert.match(laboratoryHtml, /Serial/);
-    assert.match(laboratoryHtml, /Diagnóstico/);
-    assert.match(laboratoryHtml, /Responsable/);
+    assert.doesNotMatch(keyLoadOnlyHistoryHtml, /SERIAL-SOLO-LLAVES/);
+    assert.match(laboratoryHtml, /LABORATORIO \/ REPARACION/);
+    assert.match(laboratoryHtml, /No hay seriales en reparación/);
+    assert.match(pendingDiagnosisHtml, /PENDIENTE DIAGNOSTICO/);
+    assert.doesNotMatch(pendingDiagnosisHtml, /<button|<select/);
+    assert.match(pendingDiagnosisActionsHtml, /Guardar diagnóstico/);
+  });
+});
+
+describe('Salida component', () => {
+  test('should offer the configured output destinations and mark devices already outside the base', () => {
+    const registro: DiagnosticoRegistro = {
+      id: 'out-1',
+      serial: 'ABC123',
+      modelo: 'N980',
+      origen: 'ALIADO',
+      aliado: 'NANCY',
+      responsable: 'PEDRO',
+      status: 'LISTO PARA LA ENTREGA',
+      salida: {
+        responsable: 'CARLOS',
+        destino: 'ALMACEN',
+        fecha: '2026-10-29',
+        hora: '08:00:00',
+        createdAt: '2026-10-29T12:00:00.000Z',
+      },
+      fecha: '2026-10-29',
+      hora: '07:00:00',
+      fechaHora: '2026-10-29T11:00:00.000Z',
+    };
+    const html = renderToString(
+      React.createElement(Salida, {
+        registrosDiagnosticos: [registro],
+        onRegistrarSalida: () => {},
+      })
+    );
+
+    assert.match(html, /SALIDA/);
+    assert.match(html, /CARLOS/);
+    assert.match(html, /ALMACEN/);
+    assert.match(html, /Salida registrada/);
+    assert.match(html, /Equipo fuera de la base/);
   });
 });
 

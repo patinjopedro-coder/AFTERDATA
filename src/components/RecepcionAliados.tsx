@@ -2,10 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { Plus, Layers, ArrowRight } from 'lucide-react';
 import { AliadoRegistro } from '../types';
 import { buildAliadoRegistro } from '../utils';
+import { DiagnosticoRegistro } from './Diagnostico';
+import { SerialConSalida } from './SerialConSalida';
 
 interface RecepcionAliadosProps {
   registrosAliados: AliadoRegistro[];
   setRegistrosAliados: React.Dispatch<React.SetStateAction<AliadoRegistro[]>>;
+  registrosDiagnosticos: DiagnosticoRegistro[];
   mode?: 'form' | 'view';
   isReadOnly?: boolean;
 }
@@ -13,6 +16,7 @@ interface RecepcionAliadosProps {
 export const RecepcionAliados: React.FC<RecepcionAliadosProps> = ({
   registrosAliados,
   setRegistrosAliados,
+  registrosDiagnosticos,
   mode = 'form',
   isReadOnly = false,
 }) => {
@@ -121,7 +125,7 @@ export const RecepcionAliados: React.FC<RecepcionAliadosProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-black uppercase text-slate-900 tracking-tight">CANAL ALIADOS</h2>
-            <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">Registro histórico y visual sin opciones</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase mt-0.5">Inventario de equipos ya registrados para el flujo de diagnóstico</p>
           </div>
         </div>
 
@@ -133,17 +137,18 @@ export const RecepcionAliados: React.FC<RecepcionAliadosProps> = ({
             </div>
             <div className="flex items-center gap-2 text-slate-500">
               <ArrowRight size={14} />
-              <span className="text-[10px] font-bold uppercase">Solo lectura</span>
+              <span className="text-[10px] font-bold uppercase">Canal de recepción</span>
             </div>
           </div>
 
           <div className="overflow-hidden border border-slate-200">
-            <div className="grid grid-cols-[1.2fr_1.2fr_1.2fr_1fr_1fr] bg-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-600 border-b border-slate-200">
+            <div className="grid grid-cols-[1.2fr_1.2fr_1.2fr_1fr_1fr_1.2fr] bg-slate-100 text-[10px] font-black uppercase tracking-wider text-slate-600 border-b border-slate-200">
               <div className="px-3 py-2">Fecha</div>
               <div className="px-3 py-2">Hora</div>
               <div className="px-3 py-2">Aliado</div>
               <div className="px-3 py-2">Modelo</div>
               <div className="px-3 py-2">Serial</div>
+              <div className="px-3 py-2">Flujo</div>
             </div>
 
             {registrosAliados.length === 0 ? (
@@ -152,12 +157,24 @@ export const RecepcionAliados: React.FC<RecepcionAliadosProps> = ({
               </div>
             ) : (
               registrosAliados.map((registro) => (
-                <div key={registro.id} className="grid grid-cols-[1.2fr_1.2fr_1.2fr_1fr_1fr] border-b border-slate-200 last:border-b-0 text-[11px] font-semibold text-slate-700">
+                <div key={registro.id} className="grid grid-cols-[1.2fr_1.2fr_1.2fr_1fr_1fr_1.2fr] border-b border-slate-200 last:border-b-0 text-[11px] font-semibold text-slate-700">
                   <div className="px-3 py-3">{registro.fecha}</div>
                   <div className="px-3 py-3">{registro.hora}</div>
                   <div className="px-3 py-3">{registro.aliado}</div>
                   <div className="px-3 py-3 uppercase">{registro.modelo}</div>
-                  <div className="px-3 py-3 uppercase font-mono">{registro.serial}</div>
+                  <div className="px-3 py-3 uppercase font-mono">
+                    <SerialConSalida
+                      serial={registro.serial}
+                      salida={registrosDiagnosticos.some(item => item.serial.trim().toUpperCase() === registro.serial.trim().toUpperCase() && !!item.salida)}
+                    />
+                  </div>
+                  <div className="px-3 py-2">
+                    <span className="py-2 text-[10px] font-black uppercase text-slate-600">
+                      {registrosDiagnosticos.some(item => item.serial.trim().toUpperCase() === registro.serial.trim().toUpperCase())
+                        ? 'En flujo'
+                        : 'Disponible en diagnóstico'}
+                    </span>
+                  </div>
                 </div>
               ))
             )}

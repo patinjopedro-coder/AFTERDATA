@@ -22,6 +22,7 @@ import { Bancos } from './components/Bancos';
 import { NuevoSerial } from './components/NuevoSerial';
 import { RecepcionAliados } from './components/RecepcionAliados';
 import { Diagnostico, DiagnosticoLaboratorioRegistro, DiagnosticoRegistro } from './components/Diagnostico';
+import { Salida } from './components/Salida';
 import { AliadoRegistro, BancoItem, ToastNotification } from './types';
 
 import {
@@ -1230,6 +1231,28 @@ export default function App() {
   const displayCargo = isObserverRole ? 'OBSERVADOR' : ((currentProfile.cargo || '').toUpperCase());
   const displayInitial = (currentProfile.nombreCompleto ? currentProfile.nombreCompleto.charAt(0) : storedUserRaw.charAt(0)).toUpperCase();
 
+  const handleRegistrarSalida = (registroId: string, salida: NonNullable<DiagnosticoRegistro['salida']>) => {
+    if (isObserverRole) return;
+    setRegistrosDiagnosticos(prev => prev.map(registro => (
+      registro.id === registroId && registro.status === 'LISTO PARA LA ENTREGA' && !registro.salida
+        ? {
+            ...registro,
+            salida,
+            historial: [...(registro.historial || []), {
+              id: `evento-salida-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+              etapa: 'SALIDA',
+              responsable: salida.responsable,
+              status: 'SALIDA REGISTRADA',
+              detalle: `Equipo enviado a ${salida.destino}.`,
+              fecha: salida.fecha,
+              hora: salida.hora,
+              createdAt: salida.createdAt,
+            }],
+          }
+        : registro
+    )));
+  };
+
   return (
     <div className="min-h-screen bg-[#08080a] text-zinc-300 flex font-sans antialiased overflow-hidden h-screen relative">
 
@@ -1310,6 +1333,7 @@ export default function App() {
               { id: 'nuevoserial', label: 'Nuevo Serial', icon: PlusCircle },
               { id: 'diagnostico', label: 'Diagnostico', icon: Wrench },
               { id: 'recepcionaliados', label: 'Recepción Aliados', icon: ArrowUpRight },
+              { id: 'salida', label: 'Salida', icon: LogOut },
               { id: 'casillero', label: 'Casillero', icon: CasilleroKeyIcon },
               { id: 'cruce', label: 'Cruce de Seriales', icon: Network },
               { id: 'general', label: 'Gestión General', icon: Layers },
@@ -1327,10 +1351,9 @@ export default function App() {
               const isParent = t.id === 'diagnostico' || t.id === 'recepcionaliados';
               const subMenu = t.id === 'diagnostico'
                 ? [
-                    { label: 'Reparacion', value: 'repair' },
+                    { label: 'Laboratorio / Reparación', value: 'laboratorio' },
                     { label: 'Canal de Diagnosticos', value: 'view' },
                     { label: 'Carga de Llaves', value: 'keys' },
-                      { label: 'Laboratorio', value: 'laboratorio' },
                     ]
                 : t.id === 'recepcionaliados'
                   ? [
@@ -1407,9 +1430,9 @@ export default function App() {
                   : diagnosticoSubTab === 'keys'
                     ? 'Carga de Llaves — Marcar serial'
                     : diagnosticoSubTab === 'laboratorio'
-                      ? 'Laboratorio — Diagnóstico y responsable'
+                      ? 'Laboratorio / Reparación — Acciones sobre seriales existentes'
                       : diagnosticoSubTab === 'repair'
-                        ? 'Reparacion — Equipos asignados al laboratorio'
+                        ? 'Laboratorio / Reparación — Equipos en proceso'
                         : 'Diagnostico — Registro de equipos'
               )}
               {currentTab === 'recepcionaliados' && (
@@ -1417,6 +1440,7 @@ export default function App() {
                   ? 'Canal Aliados — Registro histórico'
                   : 'Recepción Aliados — Registro de equipos externos'
               )}
+              {currentTab === 'salida' && 'Salida — Registro de equipos entregados'}
               {currentTab === 'general' && 'Gestión General de Seriales'}
               {currentTab === 'casillero' && 'Control de Casillero'}
               {currentTab === 'bancos' && 'Directorio de Bancos'}
@@ -1591,6 +1615,9 @@ export default function App() {
 
           <div className={currentTab === 'diagnostico' ? '' : 'hidden'}>
             <Diagnostico
+              serials={serials}
+              registrosAliados={registrosAliados}
+              modelosDB={modelosDB}
               registrosDiagnosticos={registrosDiagnosticos}
               setRegistrosDiagnosticos={setRegistrosDiagnosticos}
               serialesCargaLlaves={serialesCargaLlaves}
@@ -1606,7 +1633,16 @@ export default function App() {
             <RecepcionAliados
               registrosAliados={registrosAliados}
               setRegistrosAliados={setRegistrosAliados}
+              registrosDiagnosticos={registrosDiagnosticos}
               mode={allySubTab}
+              isReadOnly={isObserverRole}
+            />
+          </div>
+
+          <div className={currentTab === 'salida' ? '' : 'hidden'}>
+            <Salida
+              registrosDiagnosticos={registrosDiagnosticos}
+              onRegistrarSalida={handleRegistrarSalida}
               isReadOnly={isObserverRole}
             />
           </div>
